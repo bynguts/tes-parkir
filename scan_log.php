@@ -2,6 +2,8 @@
 require_once 'includes/auth_guard.php';
 require_once 'config/connection.php';
 
+// scan_log query hanya menggunakan plate_scan_log — tidak ada JOIN ke parking_slot,
+// jadi tidak ada perubahan 3NF di sini. File ini sudah benar.
 $logs = $pdo->query("
     SELECT
         e.ticket_code,

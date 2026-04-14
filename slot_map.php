@@ -2,16 +2,19 @@
 require_once 'includes/auth_guard.php';
 require_once 'config/connection.php';
 
-// Get all slots grouped by floor
+// [3NF FIX] JOIN tabel floor untuk mendapatkan floor_code dan floor_name
+// parking_slot kini menyimpan floor_id (FK) bukan kolom floor varchar
 $stmt = $pdo->query("
-    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.floor, ps.status,
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status,
+           f.floor_code AS floor, f.floor_name,
            t.check_in_time, t.ticket_code,
            v.plate_number, v.owner_name,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
     FROM parking_slot ps
-    LEFT JOIN transaction t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
+    JOIN floor f ON ps.floor_id = f.floor_id
+    LEFT JOIN `transaction` t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
     LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-    ORDER BY ps.floor, ps.slot_type, ps.slot_number
+    ORDER BY f.floor_code, ps.slot_type, ps.slot_number
 ");
 $all_slots = $stmt->fetchAll();
 
@@ -21,15 +24,17 @@ foreach ($all_slots as $slot) {
 }
 ksort($floors);
 
-// Summary per floor
+// [3NF FIX] Summary per floor via JOIN ke tabel floor
 $floor_summary = $pdo->query("
-    SELECT floor,
-           SUM(slot_type='car' AND status='available')        AS car_avail,
-           SUM(slot_type='car')                               AS car_total,
-           SUM(slot_type='motorcycle' AND status='available') AS moto_avail,
-           SUM(slot_type='motorcycle')                        AS moto_total
-    FROM parking_slot
-    GROUP BY floor ORDER BY floor
+    SELECT f.floor_code AS floor, f.floor_name,
+           SUM(ps.slot_type='car'        AND ps.status='available') AS car_avail,
+           SUM(ps.slot_type='car')                                  AS car_total,
+           SUM(ps.slot_type='motorcycle' AND ps.status='available') AS moto_avail,
+           SUM(ps.slot_type='motorcycle')                           AS moto_total
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    GROUP BY f.floor_id, f.floor_code, f.floor_name
+    ORDER BY f.floor_code
 ")->fetchAll();
 $fs = [];
 foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
@@ -47,13 +52,13 @@ foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
         .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
         .slot-box { border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: transform .15s, box-shadow .15s; position: relative; border: 2px solid transparent; }
         .slot-box:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-        .slot-box.available { background: #d4edda; border-color: #28a745; }
-        .slot-box.occupied  { background: #f8d7da; border-color: #dc3545; }
-        .slot-box.reserved  { background: #fff3cd; border-color: #ffc107; }
+        .slot-box.available   { background: #d4edda; border-color: #28a745; }
+        .slot-box.occupied    { background: #f8d7da; border-color: #dc3545; }
+        .slot-box.reserved    { background: #fff3cd; border-color: #ffc107; }
         .slot-box.maintenance { background: #e2e3e5; border-color: #6c757d; }
-        .slot-box .slot-num { font-weight: 700; font-size: 13px; }
+        .slot-box .slot-num  { font-weight: 700; font-size: 13px; }
         .slot-box .slot-icon { font-size: 22px; display: block; }
-        .slot-box .slot-plate { font-size: 10px; color: #555; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+        .slot-box .slot-plate    { font-size: 10px; color: #555; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
         .slot-box .slot-duration { font-size: 10px; color: #888; }
         .floor-card { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
         .floor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
@@ -82,7 +87,7 @@ foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
         <span><span class="legend-dot bg-success me-1"></span> Tersedia</span>
         <span><span class="legend-dot bg-danger me-1"></span> Terisi</span>
         <span><span class="legend-dot bg-warning me-1"></span> Dipesan</span>
-        <span><span class="legend-dot" style="background:#6c757d" class="me-1"></span> Maintenance</span>
+        <span><span class="legend-dot" style="background:#6c757d"></span> Maintenance</span>
     </div>
 
     <?php foreach ($floors as $floor_code => $types): ?>
@@ -90,7 +95,7 @@ foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
         <div class="floor-header">
             <div>
                 <h5 class="mb-0 fw-bold">
-                    <?= $floor_code === 'G' ? 'Ground Floor' : 'Level ' . str_replace('L', '', $floor_code) ?>
+                    <?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?>
                 </h5>
                 <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code]; ?>
                 <small class="text-muted">
@@ -144,7 +149,6 @@ foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Auto-refresh every 30 seconds
 let countdown = 30;
 const badge = document.getElementById('lastRefresh');
 setInterval(() => {

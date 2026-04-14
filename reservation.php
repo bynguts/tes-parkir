@@ -14,12 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {
-        $plate       = strtoupper(trim($_POST['plate_number'] ?? ''));
-        $vtype       = $_POST['vehicle_type'] ?? '';
-        $owner       = trim($_POST['owner_name'] ?? 'Guest');
-        $phone       = trim($_POST['owner_phone'] ?? '');
-        $date_from   = $_POST['reserved_from'] ?? '';
-        $date_until  = $_POST['reserved_until'] ?? '';
+        $plate      = strtoupper(trim($_POST['plate_number'] ?? ''));
+        $vtype      = $_POST['vehicle_type'] ?? '';
+        $owner      = trim($_POST['owner_name'] ?? 'Guest');
+        $phone      = trim($_POST['owner_phone'] ?? '');
+        $date_from  = $_POST['reserved_from'] ?? '';
+        $date_until = $_POST['reserved_until'] ?? '';
 
         if (!$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from || !$date_until) {
             $error = 'Semua field wajib diisi.';
@@ -28,10 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (strtotime($date_from) < time() - 300) {
             $error = 'Waktu mulai tidak boleh di masa lalu.';
         } else {
-            // Find available slot for this type
-            // Slot available = not occupied AND not reserved during overlapping period
+            // [3NF FIX] Slot query tidak perlu JOIN floor untuk logika overlap,
+            // tapi tetap JOIN floor untuk ORDER BY yang benar
             $stmt = $pdo->prepare("
                 SELECT ps.slot_id FROM parking_slot ps
+                JOIN floor f ON ps.floor_id = f.floor_id
                 WHERE ps.slot_type = ?
                   AND ps.status = 'available'
                   AND ps.slot_id NOT IN (
@@ -39,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE status IN ('pending','confirmed')
                       AND NOT (reserved_until <= ? OR reserved_from >= ?)
                   )
-                ORDER BY ps.floor, ps.slot_number LIMIT 1
+                ORDER BY f.floor_code, ps.slot_number LIMIT 1
             ");
             $stmt->execute([$vtype, $date_from, $date_until]);
             $slot = $stmt->fetch();
@@ -73,14 +74,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch active reservations
+// [3NF FIX] Fetch reservations: JOIN floor untuk mendapatkan floor_code
 $reservations = $pdo->query("
     SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.reserved_until, r.status,
            v.plate_number, v.vehicle_type, v.owner_name,
-           ps.slot_number, ps.floor
+           ps.slot_number, f.floor_code AS floor
     FROM reservation r
-    JOIN vehicle v      ON r.vehicle_id = v.vehicle_id
-    JOIN parking_slot ps ON r.slot_id   = ps.slot_id
+    JOIN vehicle v       ON r.vehicle_id  = v.vehicle_id
+    JOIN parking_slot ps ON r.slot_id     = ps.slot_id
+    JOIN floor f         ON ps.floor_id   = f.floor_id
     WHERE r.status IN ('pending','confirmed')
     ORDER BY r.reserved_from
 ")->fetchAll();
@@ -207,7 +209,7 @@ $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
                                 <strong><?= htmlspecialchars($r['plate_number']) ?></strong><br>
                                 <small class="text-muted"><?= htmlspecialchars($r['owner_name']) ?></small>
                             </td>
-                            <td><?= htmlspecialchars($r['slot_number']) ?> / <?= $r['floor'] ?></td>
+                            <td><?= htmlspecialchars($r['slot_number']) ?> / <?= htmlspecialchars($r['floor']) ?></td>
                             <td>
                                 <small><?= date('d M H:i', strtotime($r['reserved_from'])) ?></small><br>
                                 <small class="text-muted">s/d <?= date('d M H:i', strtotime($r['reserved_until'])) ?></small>

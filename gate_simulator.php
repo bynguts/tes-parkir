@@ -57,7 +57,7 @@ $summary = get_slot_summary($pdo);
             <div class="gate-card text-center">
                 <div style="font-size:52px" class="mb-2">🟢</div>
                 <h4 class="fw-bold text-success mb-1">ENTRY GATE</h4>
-                <p class="text-muted small mb-4">Tekan tombol — tiket otomatis tercetak & slot teralokasi.</p>
+                <p class="text-muted small mb-4">Tekan tombol — tiket otomatis tercetak &amp; slot teralokasi.</p>
                 <button class="btn btn-success big-btn" onclick="cetakTiketOtomatis(this)">
                     <i class="fas fa-print me-2"></i>CETAK TIKET MASUK
                 </button>

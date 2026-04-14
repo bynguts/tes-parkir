@@ -2,13 +2,16 @@
 require_once 'includes/auth_guard.php';
 require_once 'config/connection.php';
 
+// [3NF FIX] JOIN tabel floor untuk mendapatkan floor_code
+// (parking_slot tidak lagi menyimpan floor sebagai varchar)
 $active = $pdo->query("
-    SELECT t.transaction_id, t.ticket_code, s.slot_number, s.floor,
+    SELECT t.transaction_id, t.ticket_code, s.slot_number, f.floor_code AS floor,
            t.check_in_time, v.plate_number, v.vehicle_type,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
     FROM `transaction` t
-    JOIN vehicle v      ON t.vehicle_id = v.vehicle_id
-    JOIN parking_slot s ON t.slot_id    = s.slot_id
+    JOIN vehicle v       ON t.vehicle_id  = v.vehicle_id
+    JOIN parking_slot s  ON t.slot_id     = s.slot_id
+    JOIN floor f         ON s.floor_id    = f.floor_id
     WHERE t.payment_status = 'unpaid'
     ORDER BY t.check_in_time
 ")->fetchAll();
@@ -66,7 +69,7 @@ $active = $pdo->query("
                     <td><code class="fw-bold"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
                     <td class="fw-semibold"><?= htmlspecialchars($row['plate_number']) ?></td>
                     <td><?= $row['vehicle_type'] === 'car' ? '🚗' : '🏍️' ?></td>
-                    <td><?= htmlspecialchars($row['slot_number']) ?> / <?= $row['floor'] ?></td>
+                    <td><?= htmlspecialchars($row['slot_number']) ?> / <?= htmlspecialchars($row['floor']) ?></td>
                     <td><?= htmlspecialchars($row['check_in_time']) ?></td>
                     <td>
                         <span class="badge <?= $mins >= 480 ? 'bg-warning text-dark' : 'bg-secondary' ?>">

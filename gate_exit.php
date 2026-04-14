@@ -9,8 +9,16 @@ if (empty($_GET['kode_tiket'])) {
 $code = trim($_GET['kode_tiket']);
 
 // ── 1. Validate ticket ────────────────────────────────────────────────────
-$stmt = $pdo->prepare("SELECT tk.ticket_id, tk.transaction_id, tk.plate_number
-                       FROM ticket tk WHERE tk.ticket_code = ? AND tk.status = 'active' LIMIT 1");
+// [3NF FIX] plate_number dihapus dari tabel ticket → ambil via JOIN ke vehicle
+$stmt = $pdo->prepare("
+    SELECT tk.ticket_id, tk.transaction_id,
+           v.plate_number
+    FROM ticket tk
+    JOIN `transaction` t ON tk.transaction_id = t.transaction_id
+    JOIN vehicle v       ON t.vehicle_id       = v.vehicle_id
+    WHERE tk.ticket_code = ? AND tk.status = 'active'
+    LIMIT 1
+");
 $stmt->execute([$code]);
 $tkt = $stmt->fetch();
 
@@ -19,19 +27,22 @@ if (!$tkt) {
     exit;
 }
 
-$trx_id      = (int)$tkt['transaction_id'];
-$plate       = $tkt['plate_number'];
+$trx_id = (int)$tkt['transaction_id'];
+$plate  = $tkt['plate_number'];
 
 // ── 2. Get transaction ────────────────────────────────────────────────────
+// [3NF FIX] parking_slot tidak lagi punya kolom floor (varchar),
+//           sekarang pakai floor_id FK → JOIN tabel floor untuk dapat floor_code
 $stmt = $pdo->prepare("
     SELECT t.*, v.vehicle_type, v.owner_name,
-           s.slot_number, s.floor,
+           s.slot_number, f.floor_code AS floor,
            r.first_hour_rate, r.next_hour_rate, r.daily_max_rate,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
     FROM `transaction` t
-    JOIN vehicle v      ON t.vehicle_id = v.vehicle_id
-    JOIN parking_slot s ON t.slot_id    = s.slot_id
-    JOIN parking_rate r ON t.rate_id    = r.rate_id
+    JOIN vehicle v       ON t.vehicle_id  = v.vehicle_id
+    JOIN parking_slot s  ON t.slot_id     = s.slot_id
+    JOIN floor f         ON s.floor_id    = f.floor_id
+    JOIN parking_rate r  ON t.rate_id     = r.rate_id
     WHERE t.transaction_id = ? AND t.payment_status = 'unpaid'
     LIMIT 1
 ");

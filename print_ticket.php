@@ -10,10 +10,14 @@ if (isset($_GET['auto'])) {
     $slot  = null;
     $vtype = null;
     foreach (['car', 'motorcycle'] as $try_type) {
-        $stmt = $pdo->prepare("SELECT slot_id, slot_number, floor, slot_type
-                               FROM parking_slot
-                               WHERE slot_type = ? AND status = 'available'
-                               ORDER BY floor, slot_number LIMIT 1");
+        // [3NF FIX] JOIN floor untuk mendapatkan floor_code
+        $stmt = $pdo->prepare("
+            SELECT ps.slot_id, ps.slot_number, f.floor_code AS floor, ps.slot_type
+            FROM parking_slot ps
+            JOIN floor f ON ps.floor_id = f.floor_id
+            WHERE ps.slot_type = ? AND ps.status = 'available'
+            ORDER BY f.floor_code, ps.slot_number LIMIT 1
+        ");
         $stmt->execute([$try_type]);
         $row = $stmt->fetch();
         if ($row) { $slot = $row; $vtype = $try_type; break; }
@@ -23,8 +27,8 @@ if (isset($_GET['auto'])) {
         echo json_encode(['error' => 'Semua slot penuh!']); exit;
     }
 
-    $plate  = generate_guest_plate($pdo);
-    $code   = generate_ticket_code($pdo);
+    $plate   = generate_guest_plate($pdo);
+    $code    = generate_ticket_code($pdo);
     $slot_id = (int)$slot['slot_id'];
 
     // Rate lookup
@@ -43,9 +47,9 @@ if (isset($_GET['auto'])) {
         ->execute([$vid, $slot_id, $rate_id, $code]);
     $trx_id = (int)$pdo->lastInsertId();
 
-    // Insert ticket
-    $pdo->prepare("INSERT INTO ticket (ticket_code, transaction_id, plate_number) VALUES (?,?,?)")
-        ->execute([$code, $trx_id, $plate]);
+    // [3NF FIX] INSERT ticket tanpa plate_number (kolom dihapus dari schema)
+    $pdo->prepare("INSERT INTO ticket (ticket_code, transaction_id) VALUES (?,?)")
+        ->execute([$code, $trx_id]);
 
     // Mark slot occupied
     $pdo->prepare("UPDATE parking_slot SET status = 'occupied' WHERE slot_id = ?")
@@ -70,14 +74,17 @@ if (isset($_GET['auto'])) {
 if (isset($_GET['ticket_code'])) {
     $code = trim($_GET['ticket_code']);
 
+    // [3NF FIX] plate_number diambil dari vehicle (bukan dari ticket),
+    //           floor diambil dari tabel floor via floor_id FK
     $stmt = $pdo->prepare("
-        SELECT tk.plate_number, tk.issued_at,
+        SELECT v.plate_number, tk.issued_at,
                v.vehicle_type,
-               s.slot_number, s.floor
+               s.slot_number, f.floor_code AS floor
         FROM ticket tk
         JOIN `transaction` t ON tk.transaction_id = t.transaction_id
         JOIN vehicle v       ON t.vehicle_id       = v.vehicle_id
         JOIN parking_slot s  ON t.slot_id          = s.slot_id
+        JOIN floor f         ON s.floor_id         = f.floor_id
         WHERE tk.ticket_code = ?
         LIMIT 1
     ");

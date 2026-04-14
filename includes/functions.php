@@ -1,6 +1,8 @@
 <?php
 /**
  * includes/functions.php — Shared utility functions
+ * [3NF FIX] get_slot_summary tidak perlu diubah karena hanya query parking_slot langsung.
+ *           Namun fungsi lain yang menyebut floor varchar perlu diperhatikan.
  */
 
 // ── CSRF ──────────────────────────────────────────────────────────────────
@@ -74,6 +76,8 @@ function fmt_idr(float $amount): string {
 }
 
 // ── Slot availability summary ─────────────────────────────────────────────
+// [3NF NOTE] Fungsi ini hanya query slot_type & status dari parking_slot,
+//            tidak membutuhkan JOIN ke floor — tidak ada perubahan diperlukan.
 function get_slot_summary(PDO $pdo): array {
     $stmt = $pdo->query("
         SELECT slot_type,

@@ -10,18 +10,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'add') {
-        $num   = strtoupper(trim($_POST['slot_number'] ?? ''));
-        $type  = $_POST['slot_type'] ?? '';
-        $floor = trim($_POST['floor'] ?? 'G');
-        if (!$num || !in_array($type, ['car','motorcycle'])) {
+        $num      = strtoupper(trim($_POST['slot_number'] ?? ''));
+        $type     = $_POST['slot_type'] ?? '';
+        // [3NF FIX] Terima floor_id (INT FK) bukan string floor
+        $floor_id = (int)($_POST['floor_id'] ?? 0);
+
+        if (!$num || !in_array($type, ['car','motorcycle']) || $floor_id <= 0) {
             $error = 'Data tidak lengkap.';
         } else {
-            try {
-                $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor) VALUES (?,?,?)")
-                    ->execute([$num, $type, $floor]);
-                $msg = "Slot {$num} berhasil ditambahkan.";
-            } catch (PDOException $e) {
-                $error = 'Nomor slot sudah ada.';
+            // Validate floor_id exists
+            $fcheck = $pdo->prepare("SELECT floor_id FROM floor WHERE floor_id = ?");
+            $fcheck->execute([$floor_id]);
+            if (!$fcheck->fetch()) {
+                $error = 'Lantai tidak valid.';
+            } else {
+                try {
+                    $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor_id) VALUES (?,?,?)")
+                        ->execute([$num, $type, $floor_id]);
+                    $msg = "Slot {$num} berhasil ditambahkan.";
+                } catch (PDOException $e) {
+                    $error = 'Nomor slot sudah ada.';
+                }
             }
         }
     }
@@ -39,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'delete') {
         $id = (int)$_POST['slot_id'];
-        // Only allow delete if slot is available (no active transactions)
         $occupied = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE slot_id=? AND payment_status='unpaid'");
         $occupied->execute([$id]);
         if ($occupied->fetchColumn() > 0) {
@@ -51,8 +59,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$slots = $pdo->query("SELECT * FROM parking_slot ORDER BY floor, slot_type, slot_number")->fetchAll();
-$floors_list = $pdo->query("SELECT DISTINCT floor FROM parking_slot ORDER BY floor")->fetchAll(PDO::FETCH_COLUMN);
+// [3NF FIX] JOIN floor untuk tampilkan floor_code dan floor_name
+$slots = $pdo->query("
+    SELECT ps.*, f.floor_code, f.floor_name
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY f.floor_code, ps.slot_type, ps.slot_number
+")->fetchAll();
+
+// [3NF FIX] Daftar lantai dari tabel floor (bukan DISTINCT floor varchar)
+$floors_list = $pdo->query("SELECT floor_id, floor_code, floor_name FROM floor ORDER BY floor_code")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -106,10 +122,15 @@ $floors_list = $pdo->query("SELECT DISTINCT floor FROM parking_slot ORDER BY flo
                             </select>
                         </div>
                         <div class="mb-3">
+                            <!-- [3NF FIX] Pilih lantai via floor_id (FK), bukan ketik string bebas -->
                             <label class="form-label fw-semibold">Lantai</label>
-                            <input type="text" name="floor" class="form-control text-uppercase"
-                                   placeholder="G / L1 / L2" required oninput="this.value=this.value.toUpperCase()">
-                            <div class="form-text">Lantai tersedia: <?= implode(', ', $floors_list) ?></div>
+                            <select name="floor_id" class="form-select" required>
+                                <?php foreach ($floors_list as $fl): ?>
+                                <option value="<?= $fl['floor_id'] ?>">
+                                    <?= htmlspecialchars($fl['floor_code']) ?> — <?= htmlspecialchars($fl['floor_name']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Tambah Slot</button>
                     </form>
@@ -136,7 +157,10 @@ $floors_list = $pdo->query("SELECT DISTINCT floor FROM parking_slot ORDER BY flo
                         <tr>
                             <td class="fw-bold"><?= htmlspecialchars($s['slot_number']) ?></td>
                             <td><?= $s['slot_type'] === 'car' ? '🚗 Mobil' : '🏍️ Motor' ?></td>
-                            <td><?= htmlspecialchars($s['floor']) ?></td>
+                            <td>
+                                <span class="badge bg-secondary"><?= htmlspecialchars($s['floor_code']) ?></span>
+                                <small class="text-muted"><?= htmlspecialchars($s['floor_name']) ?></small>
+                            </td>
                             <td>
                                 <span class="badge badge-<?= $s['status'] ?> px-2 py-1">
                                     <?= ucfirst($s['status']) ?>
