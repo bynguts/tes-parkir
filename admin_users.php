@@ -16,17 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fullname = trim($_POST['full_name'] ?? '');
 
         if (!$uname || !$pass || !in_array($role, ['superadmin','admin','operator'])) {
-            $error = 'Semua field wajib diisi.';
+            $error = 'Integritas entitas gagal: Semua field esensial wajib diisi.';
         } elseif (strlen($pass) < 8) {
-            $error = 'Password minimal 8 karakter.';
+            $error = 'Standar keamanan gagal: Password hash parameter terlalu pendek (min 8 char).';
         } else {
             try {
                 $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
                 $pdo->prepare("INSERT INTO admin_users (username, password_hash, role, full_name) VALUES (?,?,?,?)")
                     ->execute([$uname, $hash, $role, $fullname ?: $uname]);
-                $msg = "User '{$uname}' berhasil ditambahkan.";
+                $msg = "Identitas '{$uname}' berhasil di-provision dan mendapatkan autorisasi.";
             } catch (PDOException $e) {
-                $error = 'Username sudah digunakan.';
+                $error = 'Username yang anda coba registrasikan telah direservasi oleh sistem (Duplicate Key).';
             }
         }
     }
@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'toggle') {
         $uid = (int)$_POST['user_id'];
         if ($uid === (int)$_SESSION['user_id']) {
-            $error = 'Tidak bisa menonaktifkan akun sendiri.';
+            $error = 'Operasi ilegal: Tidak dapat memodifikasi state pada active session ID milik sendiri.';
         } else {
             $pdo->prepare("UPDATE admin_users SET is_active = NOT is_active WHERE user_id=?")->execute([$uid]);
-            $msg = 'Status user diperbarui.';
+            $msg = 'Access Control List user telah diperbarui dari database.';
         }
     }
 
@@ -45,104 +45,174 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $uid  = (int)$_POST['user_id'];
         $pass = $_POST['new_password'] ?? '';
         if (strlen($pass) < 8) {
-            $error = 'Password minimal 8 karakter.';
+            $error = 'Standar keamanan gagal: Password hash parameter terlalu pendek (min 8 char).';
         } else {
             $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
             $pdo->prepare("UPDATE admin_users SET password_hash=? WHERE user_id=?")->execute([$hash, $uid]);
-            $msg = 'Password berhasil direset.';
+            $msg = 'Pembaruan force cryptographic hash password akun berhasil.';
         }
     }
 }
 
 $users = $pdo->query("SELECT user_id, username, role, full_name, last_login, is_active, created_at FROM admin_users ORDER BY role, username")->fetchAll();
+
+$page_title = 'User & Role Administrator';
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Users — Parking System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body{background:#f0f2f5;padding-top:70px}.card{border:none;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}</style>
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark fixed-top">
-    <div class="container-fluid d-flex justify-content-between">
-        <button onclick="history.back()" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left"></i></button>
-        <span class="navbar-brand mb-0 h1">🛡️ Admin Users</span>
-        <a href="index.php" class="btn btn-outline-light btn-sm">Menu</a>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h4 class="mb-0 fw-bold">Management & Auth Access</h4>
+            <small class="text-muted">Akses tingkat Root (Superadmin Only) untuk mengontrol akun sistem manajemen.</small>
+        </div>
     </div>
-</nav>
-<div class="container mt-4">
-    <?php if ($msg): ?><div class="alert alert-success"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+
+    <?php if ($msg): ?>
+    <div class="alert alert-success glass-panel mb-4 p-3 border border-success border-opacity-50 d-flex align-items-center">
+        <i class="fas fa-shield-check fs-4 text-success me-3"></i>
+        <div class="text-white"><?= $msg ?></div>
+    </div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+    <div class="alert alert-danger glass-panel mb-4 p-3 border border-danger border-opacity-50 d-flex align-items-center">
+        <i class="fas fa-sensor-alert fs-4 text-danger me-3"></i>
+        <div class="text-white"><?= htmlspecialchars($error) ?></div>
+    </div>
+    <?php endif; ?>
 
     <div class="row g-4">
         <!-- Add user -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-dark text-white fw-bold"><i class="fas fa-user-plus me-2"></i>Tambah User</div>
-                <div class="card-body">
+        <div class="col-xl-4">
+            <div class="glass-panel sticky-top" style="top: 100px; border-top: 4px solid var(--danger);">
+                <div class="p-4 border-bottom" style="border-color: var(--border-glass) !important;">
+                    <h5 class="mb-0 fw-bold text-white"><i class="fas fa-user-shield text-danger me-2"></i>Provision Akun Auth Baru</h5>
+                </div>
+                <div class="p-4">
                     <form method="POST">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="add">
-                        <div class="mb-3"><label class="form-label fw-semibold">Username</label>
-                            <input type="text" name="username" class="form-control" required autocomplete="off"></div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Nama Lengkap</label>
-                            <input type="text" name="full_name" class="form-control"></div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Password</label>
-                            <input type="password" name="password" class="form-control" required minlength="8" autocomplete="new-password">
-                            <div class="form-text">Minimal 8 karakter.</div></div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Role</label>
-                            <select name="role" class="form-select" required>
-                                <option value="operator">Operator</option>
-                                <option value="admin">Admin</option>
-                                <option value="superadmin">Super Admin</option>
-                            </select></div>
-                        <button type="submit" class="btn btn-primary w-100">Tambah User</button>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Username (Global ID)</label>
+                            <input type="text" name="username" class="form-control form-control-lg bg-dark text-white border-secondary font-monospace" required autocomplete="off">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Display Name (Nama Profil)</label>
+                            <input type="text" name="full_name" class="form-control form-control-lg bg-dark text-white border-secondary">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Cryptography Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-key"></i></span>
+                                <input type="password" name="password" class="form-control form-control-lg bg-dark text-white border-secondary font-monospace" required minlength="8" autocomplete="new-password" placeholder="••••••••">
+                            </div>
+                            <div class="form-text text-muted mt-1"><i class="fas fa-info-circle me-1"></i>Kekuatan hash standard 12 rounds BCRYPT, min 8 char.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Access Control List (Role)</label>
+                            <select name="role" class="form-select form-control-lg bg-dark text-white border-secondary" required>
+                                <option value="operator">🔵 Tier 1: Operator (Frontend Only)</option>
+                                <option value="admin">🟡 Tier 2: Admin (Data Management)</option>
+                                <option value="superadmin" class="text-danger">🔴 Tier 3: Superadmin (Root Access)</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger w-100 py-3 fw-bold mt-2 shadow" style="border-radius: 12px; letter-spacing: 1px;">
+                            EKSEKUSI PROVISIONING AKUN
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
 
         <!-- User list -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-dark text-white fw-bold"><i class="fas fa-users me-2"></i>Daftar User (<?= count($users) ?>)</div>
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr><th>Username</th><th>Nama</th><th>Role</th><th>Last Login</th><th>Status</th><th>Aksi</th></tr>
+        <div class="col-xl-8">
+            <div class="glass-panel overflow-hidden">
+                <div class="p-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-glass) !important;">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-white"><i class="fas fa-server text-info me-2"></i>Auth Tables (<?= count($users) ?> nodes)</h5>
+                    </div>
+                </div>
+                
+                <div class="table-responsive" style="border: none;">
+                    <table class="table table-glass table-hover mb-0">
+                        <thead style="background: rgba(0,0,0,0.2);">
+                            <tr>
+                                <th class="ps-4">Identity / Profil</th>
+                                <th>Role Level</th>
+                                <th>Last Pulse (Login)</th>
+                                <th>Status Node</th>
+                                <th class="text-end pe-4">Command</th>
+                            </tr>
                         </thead>
                         <tbody>
                         <?php foreach ($users as $u):
-                            $role_badge = ['superadmin'=>'bg-danger','admin'=>'bg-warning text-dark','operator'=>'bg-secondary'][$u['role']];
+                            $role_badge = [
+                                'superadmin' => ['danger', '🛡️ Root'],
+                                'admin' => ['warning', '⚙️ Admin'],
+                                'operator' => ['info', '🖥️ Operator']
+                            ][$u['role']];
                             $is_self = $u['user_id'] == $_SESSION['user_id'];
                         ?>
-                        <tr class="<?= $u['is_active'] ? '' : 'table-secondary text-muted' ?>">
-                            <td class="fw-bold"><?= htmlspecialchars($u['username']) ?><?= $is_self ? ' <span class="badge bg-info text-dark">Kamu</span>' : '' ?></td>
-                            <td><?= htmlspecialchars($u['full_name'] ?? '-') ?></td>
-                            <td><span class="badge <?= $role_badge ?>"><?= ucfirst($u['role']) ?></span></td>
-                            <td><small><?= $u['last_login'] ? date('d M H:i', strtotime($u['last_login'])) : 'Belum pernah' ?></small></td>
-                            <td><span class="badge <?= $u['is_active'] ? 'bg-success' : 'bg-secondary' ?>"><?= $u['is_active'] ? 'Aktif' : 'Nonaktif' ?></span></td>
-                            <td>
-                                <div class="d-flex gap-1">
-                                    <!-- Toggle active -->
+                        <tr class="<?= $u['is_active'] ? '' : 'opacity-50' ?>">
+                            <td class="ps-4 align-middle">
+                                <div class="fw-bold font-monospace text-white fs-6 d-flex align-items-center">
+                                    <?= htmlspecialchars($u['username']) ?>
+                                    <?php if ($is_self): ?>
+                                        <span class="badge bg-primary ms-2 border border-primary px-2" style="font-size: 10px;">THIS SESSION</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="text-muted small mt-1"><?= htmlspecialchars($u['full_name'] ?? '-') ?></div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-<?= $role_badge[0] ?> bg-opacity-25 text-<?= $role_badge[0] ?> border border-<?= $role_badge[0] ?> px-3 py-1 rounded">
+                                    <?= $role_badge[1] ?>
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="small <?= $u['last_login'] ? 'text-white' : 'text-muted' ?>">
+                                    <i class="far fa-clock me-1 text-muted"></i>
+                                    <?= $u['last_login'] ? date('d M Y, H:i', strtotime($u['last_login'])) : 'Unknown Pulse' ?>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <?php if ($u['is_active']): ?>
+                                    <div class="d-flex align-items-center text-success small fw-bold">
+                                        <div class="spinner-grow spinner-grow-sm text-success me-2" style="width: 10px; height: 10px;" role="status"></div> ACTIVE
+                                    </div>
+                                <?php else: ?>
+                                    <div class="d-flex align-items-center text-secondary small fw-bold">
+                                        <i class="fas fa-power-off me-2"></i> DISABLED
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end pe-4 align-middle">
+                                <div class="d-flex gap-2 justify-content-end">
                                     <?php if (!$is_self): ?>
                                     <form method="POST">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="toggle">
                                         <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
-                                        <button class="btn btn-outline-<?= $u['is_active'] ? 'warning' : 'success' ?> btn-sm" title="<?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
-                                            <i class="fas fa-<?= $u['is_active'] ? 'ban' : 'check' ?>"></i>
-                                        </button>
+                                        <?php if ($u['is_active']): ?>
+                                            <button class="btn btn-outline-warning btn-sm rounded" title="Disable node access">
+                                                <i class="fas fa-ban"></i> Block
+                                            </button>
+                                        <?php else: ?>
+                                            <button class="btn btn-outline-success btn-sm rounded" title="Enable node access">
+                                                <i class="fas fa-check"></i> Restore
+                                            </button>
+                                        <?php endif; ?>
                                     </form>
                                     <?php endif; ?>
-                                    <!-- Reset password -->
-                                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#resetModal"
+                                    
+                                    <button class="btn btn-outline-info btn-sm rounded" data-bs-toggle="modal"
+                                            data-bs-target="#resetModal" title="Force Hash Reset"
                                             onclick="setResetId(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>')">
-                                        <i class="fas fa-key"></i>
+                                        <i class="fas fa-key"></i> Key
                                     </button>
                                 </div>
                             </td>
@@ -159,28 +229,42 @@ $users = $pdo->query("SELECT user_id, username, role, full_name, last_login, is_
 <!-- Reset Password Modal -->
 <div class="modal fade" id="resetModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white"><h5 class="modal-title">Reset Password</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-content glass-card border-0" style="background: #1e1e2d; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-top: 4px solid var(--info) !important;">
+            <div class="modal-header border-bottom border-secondary border-opacity-50">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-key me-2 text-info"></i> Force Key Reset Protocol</h5>
+                <button type="button" class="btn-close btn-close-white opacity-50" data-bs-dismiss="modal"></button>
+            </div>
             <form method="POST">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="reset_password">
                 <input type="hidden" name="user_id" id="reset_uid">
-                <div class="modal-body">
-                    <p>Reset password untuk: <strong id="reset_uname"></strong></p>
-                    <input type="password" name="new_password" class="form-control" placeholder="Password baru (min 8 karakter)" minlength="8" required autocomplete="new-password">
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border border-warning text-warning d-flex align-items-center mb-4 p-3 rounded">
+                        <i class="fas fa-exclamation-triangle fs-4 me-3"></i>
+                        <small>Memaksa penggantian payload cryptographic account. Membutuhkan hak otorisasi superadmin penuh.</small>
+                    </div>
+                    <div class="mb-2 text-muted fw-bold text-uppercase small">Target Identity ID:</div>
+                    <div id="reset_uname" class="font-monospace text-info fs-5 mb-4 p-2 bg-dark rounded border border-info border-opacity-25 text-center"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold text-uppercase">New Password Hash Signature</label>
+                        <input type="password" name="new_password" class="form-control bg-dark border-secondary text-white font-monospace fs-5 text-center" placeholder="••••••••" minlength="8" required autocomplete="new-password">
+                    </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger">Reset</button></div>
+                <div class="modal-footer border-top border-secondary border-opacity-50">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">ABORT</button>
+                    <button type="submit" class="btn btn-info px-4 fw-bold shadow">EXECUTE OVERRIDE</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function setResetId(id, uname) {
     document.getElementById('reset_uid').value = id;
     document.getElementById('reset_uname').textContent = uname;
 }
 </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>

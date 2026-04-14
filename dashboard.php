@@ -2,8 +2,6 @@
 require_once 'includes/auth_guard.php';
 require_once 'config/connection.php';
 
-// [3NF FIX] JOIN tabel floor untuk mendapatkan floor_code
-// (parking_slot tidak lagi menyimpan floor sebagai varchar)
 $active = $pdo->query("
     SELECT t.transaction_id, t.ticket_code, s.slot_number, f.floor_code AS floor,
            t.check_in_time, v.plate_number, v.vehicle_type,
@@ -15,76 +13,79 @@ $active = $pdo->query("
     WHERE t.payment_status = 'unpaid'
     ORDER BY t.check_in_time
 ")->fetchAll();
+
+$page_title = 'Kendaraan Aktif';
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kendaraan Aktif — Parking System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body{background:#f0f2f5;padding-top:70px}.card{border:none;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}</style>
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark fixed-top">
-    <div class="container-fluid d-flex justify-content-between">
-        <button onclick="history.back()" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left"></i></button>
-        <span class="navbar-brand mb-0 h1">🚗 Kendaraan Aktif</span>
-        <a href="index.php" class="btn btn-outline-light btn-sm">Menu</a>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h4 class="mb-0 fw-bold">Kendaraan Aktif</h4>
+            <small class="text-muted">Total: <?= count($active) ?> kendaraan terparkir</small>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <button onclick="location.reload()" class="btn btn-primary d-flex align-items-center gap-2" style="border-radius: 8px;">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
     </div>
-</nav>
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">Parkir Aktif (<?= count($active) ?> kendaraan)</h5>
-        <button onclick="location.reload()" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-sync me-1"></i>Refresh
-        </button>
-    </div>
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-dark">
+
+    <div class="glass-panel p-0">
+        <div class="table-responsive" style="border: none;">
+            <table class="table table-glass table-hover mb-0">
+                <thead>
                     <tr>
-                        <th>Trx ID</th>
+                        <th class="ps-4">Trx ID</th>
                         <th>Tiket</th>
-                        <th>Plat</th>
+                        <th>Plat Nomor</th>
                         <th>Tipe</th>
                         <th>Slot / Lantai</th>
-                        <th>Check-In</th>
-                        <th>Durasi</th>
+                        <th>Waktu Check-In</th>
+                        <th class="pe-4">Durasi Parkir</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($active)): ?>
-                <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada kendaraan yang sedang parkir.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-5"><i class="fas fa-car-slash fs-3 mb-3 d-block"></i>Tidak ada kendaraan yang sedang parkir saat ini.</td></tr>
                 <?php else: foreach ($active as $row):
                     $mins = (int)$row['minutes_parked'];
                     $dur  = floor($mins/60).'j '.($mins%60).'m';
-                    $warning = $mins >= 480 ? 'table-warning' : '';
+                    $is_overdue = $mins >= 480;
                 ?>
-                <tr class="<?= $warning ?>">
-                    <td class="text-muted small">#<?= $row['transaction_id'] ?></td>
-                    <td><code class="fw-bold"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
-                    <td class="fw-semibold"><?= htmlspecialchars($row['plate_number']) ?></td>
-                    <td><?= $row['vehicle_type'] === 'car' ? '🚗' : '🏍️' ?></td>
-                    <td><?= htmlspecialchars($row['slot_number']) ?> / <?= htmlspecialchars($row['floor']) ?></td>
-                    <td><?= htmlspecialchars($row['check_in_time']) ?></td>
+                <tr style="<?= $is_overdue ? 'background-color: rgba(245, 158, 11, 0.05);' : '' ?>">
+                    <td class="text-muted small ps-4">#<?= $row['transaction_id'] ?></td>
+                    <td><code class="text-primary-glow font-monospace fs-6"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
+                    <td class="fw-bold" style="letter-spacing: 1px;"><?= htmlspecialchars($row['plate_number']) ?></td>
                     <td>
-                        <span class="badge <?= $mins >= 480 ? 'bg-warning text-dark' : 'bg-secondary' ?>">
+                        <?php if ($row['vehicle_type'] === 'car'): ?>
+                            <i class="fas fa-car text-primary"></i> <span class="ms-1 small">Mobil</span>
+                        <?php else: ?>
+                            <i class="fas fa-motorcycle text-success"></i> <span class="ms-1 small">Motor</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <span class="badge bg-dark border border-secondary text-light">Str. <?= htmlspecialchars($row['floor']) ?></span>
+                        <span class="ms-1 fw-bold"><?= htmlspecialchars($row['slot_number']) ?></span>
+                    </td>
+                    <td class="text-muted"><i class="far fa-clock me-1"></i><?= date('H:i, d M', strtotime($row['check_in_time'])) ?></td>
+                    <td class="pe-4">
+                        <span class="badge <?= $is_overdue ? 'bg-warning text-dark border border-warning shadow-sm' : 'bg-primary bg-opacity-25 text-primary border border-primary' ?> px-3 py-2" style="border-radius: 20px;">
                             <?= $dur ?>
+                            <?php if ($is_overdue): ?> <i class="fas fa-exclamation-circle ms-1"></i> <?php endif; ?>
                         </span>
                     </td>
                 </tr>
                 <?php endforeach; endif; ?>
                 </tbody>
             </table>
-            </div>
         </div>
     </div>
-    <div class="text-muted small mt-2"><i class="fas fa-info-circle me-1"></i>Baris kuning = parkir lebih dari 8 jam.</div>
+    
+    <div class="mt-4 mb-2 text-muted small px-2">
+        <i class="fas fa-info-circle me-1 text-warning"></i>
+        Sorotan tabel peringatan kuning menandakan kendaraan telah parkir lebih dari 8 jam.
+    </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>

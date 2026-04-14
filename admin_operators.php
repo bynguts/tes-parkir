@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $pdo->prepare("INSERT INTO operator (full_name, shift, phone) VALUES (?,?,?)")
                 ->execute([$name, $shift, $phone ?: null]);
-            $msg = "Operator {$name} berhasil ditambahkan.";
+            $msg = "Operator {$name} berhasil terdaftar pada sistem HRD parkir.";
         }
     }
     if ($action === 'edit') {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = trim($_POST['phone'] ?? '');
         $pdo->prepare("UPDATE operator SET full_name=?, shift=?, phone=? WHERE operator_id=?")
             ->execute([$name, $shift, $phone ?: null, $id]);
-        $msg = 'Operator diperbarui.';
+        $msg = 'Basis data profil operator berhasil diperbarui.';
     }
     if ($action === 'delete') {
         $id = (int)$_POST['operator_id'];
@@ -36,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $used = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE operator_id=?");
         $used->execute([$id]);
         if ($used->fetchColumn() > 0) {
-            $error = 'Operator sedang memiliki transaksi, tidak bisa dihapus.';
+            $error = 'Pelanggaran Constraint: Operator ini memegang log transaksi aktif di database.';
         } else {
             $pdo->prepare("DELETE FROM operator WHERE operator_id=?")->execute([$id]);
-            $msg = 'Operator dihapus.';
+            $msg = 'Profil operator dihapus dari sistem.';
         }
     }
 }
@@ -48,77 +48,135 @@ $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
     FROM operator o
     LEFT JOIN `transaction` t ON t.operator_id = o.operator_id
     GROUP BY o.operator_id ORDER BY o.full_name")->fetchAll();
+
+$page_title = 'Kelola Operator';
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Operator — Parking System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body{background:#f0f2f5;padding-top:70px}.card{border:none;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}</style>
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark fixed-top">
-    <div class="container-fluid d-flex justify-content-between">
-        <button onclick="history.back()" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left"></i></button>
-        <span class="navbar-brand mb-0 h1">👥 Kelola Operator</span>
-        <a href="index.php" class="btn btn-outline-light btn-sm">Menu</a>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h4 class="mb-0 fw-bold">Human Resources: Operator Gate</h4>
+            <small class="text-muted">Kelola data petugas gate yang bertugas pada setiap shift.</small>
+        </div>
     </div>
-</nav>
-<div class="container mt-4">
-    <?php if ($msg): ?><div class="alert alert-success"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+
+    <?php if ($msg): ?>
+    <div class="alert alert-success glass-panel mb-4 p-3 border border-success border-opacity-50 d-flex align-items-center">
+        <i class="fas fa-check-circle fs-4 text-success me-3"></i>
+        <div class="text-white"><?= $msg ?></div>
+    </div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+    <div class="alert alert-danger glass-panel mb-4 p-3 border border-danger border-opacity-50 d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle fs-4 text-danger me-3"></i>
+        <div class="text-white"><?= htmlspecialchars($error) ?></div>
+    </div>
+    <?php endif; ?>
 
     <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-dark text-white fw-bold"><i class="fas fa-user-plus me-2"></i>Tambah Operator</div>
-                <div class="card-body">
+        <!-- Tambah Operator -->
+        <div class="col-xl-4">
+            <div class="glass-panel sticky-top" style="top: 100px;">
+                <div class="p-4 border-bottom" style="border-color: var(--border-glass) !important;">
+                    <h5 class="mb-0 fw-bold text-white"><i class="fas fa-user-plus text-primary me-2"></i>Rekrutmen Operator Baru</h5>
+                </div>
+                <div class="p-4">
                     <form method="POST">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="add">
-                        <div class="mb-3"><label class="form-label fw-semibold">Nama Lengkap</label>
-                            <input type="text" name="full_name" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Shift</label>
-                            <select name="shift" class="form-select" required>
-                                <option value="morning">Pagi (Morning)</option>
-                                <option value="afternoon">Siang (Afternoon)</option>
-                                <option value="night">Malam (Night)</option>
-                            </select></div>
-                        <div class="mb-3"><label class="form-label fw-semibold">No. Telepon</label>
-                            <input type="tel" name="phone" class="form-control" placeholder="08xxxxxxxxxx"></div>
-                        <button type="submit" class="btn btn-primary w-100">Tambah Operator</button>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Nama Lengkap Sesuai ID</label>
+                            <input type="text" name="full_name" class="form-control form-control-lg bg-dark text-white border-secondary" required placeholder="Cth: Budiman Sudjatmiko">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Alokasi Waktu Kerja (Shift)</label>
+                            <select name="shift" class="form-select form-control-lg bg-dark text-white border-secondary" required>
+                                <option value="morning">🌅 Shift Pagi (06:00 - 14:00)</option>
+                                <option value="afternoon">🌇 Shift Siang (14:00 - 22:00)</option>
+                                <option value="night">🌃 Shift Malam (22:00 - 06:00)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Kontak Darurat (No. Telp)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-phone"></i></span>
+                                <input type="tel" name="phone" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="08xxxxxxxxxx">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold mt-2" style="border-radius: 12px; letter-spacing: 1px;">
+                            SIMPAN PROFIL OPERATOR
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-dark text-white fw-bold"><i class="fas fa-users me-2"></i>Daftar Operator (<?= count($operators) ?>)</div>
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light"><tr><th>Nama</th><th>Shift</th><th>Telepon</th><th>Trx</th><th>Aksi</th></tr></thead>
+
+        <!-- Daftar Operator -->
+        <div class="col-xl-8">
+            <div class="glass-panel overflow-hidden">
+                <div class="p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="border-color: var(--border-glass) !important;">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-white"><i class="fas fa-users text-info me-2"></i>Database Personalia (<?= count($operators) ?>)</h5>
+                    </div>
+                </div>
+                
+                <div class="table-responsive" style="border: none;">
+                    <table class="table table-glass table-hover mb-0">
+                        <thead style="background: rgba(0,0,0,0.2);">
+                            <tr>
+                                <th class="ps-4">Nama Personalia</th>
+                                <th>Alokasi Shift</th>
+                                <th>Kontak Tersimpan</th>
+                                <th class="text-center">Total Trx</th>
+                                <th class="text-end pe-4">Command</th>
+                            </tr>
+                        </thead>
                         <tbody>
                         <?php foreach ($operators as $op):
-                            $shift_badge = ['morning'=>'bg-info text-dark','afternoon'=>'bg-warning text-dark','night'=>'bg-dark'][$op['shift']];
+                            $shift_config = [
+                                'morning' => ['info', '🌅 Pagi'],
+                                'afternoon' => ['warning', '🌇 Siang'],
+                                'night' => ['secondary', '🌃 Malam']
+                            ][$op['shift']];
                         ?>
                         <tr>
-                            <td class="fw-semibold"><?= htmlspecialchars($op['full_name']) ?></td>
-                            <td><span class="badge <?= $shift_badge ?>"><?= ucfirst($op['shift']) ?></span></td>
-                            <td><?= htmlspecialchars($op['phone'] ?? '-') ?></td>
-                            <td><?= $op['total_trx'] ?></td>
-                            <td>
-                                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#editModal"
+                            <td class="ps-4 align-middle">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border: 1px solid var(--primary);">
+                                        <?= strtoupper(substr($op['full_name'], 0, 1)) ?>
+                                    </div>
+                                    <span class="fw-bold text-white"><?= htmlspecialchars($op['full_name']) ?></span>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-<?= $shift_config[0] ?> bg-opacity-25 text-<?= $shift_config[0] ?> border border-<?= $shift_config[0] ?> px-3 py-1 rounded-pill">
+                                    <?= $shift_config[1] ?>
+                                </span>
+                            </td>
+                            <td class="align-middle font-monospace text-muted">
+                                <?= htmlspecialchars($op['phone'] ?? '-') ?>
+                            </td>
+                            <td class="align-middle text-center">
+                                <span class="badge bg-dark border border-secondary text-white px-2 py-1">
+                                    <?= number_format($op['total_trx']) ?>
+                                </span>
+                            </td>
+                            <td class="text-end pe-4 align-middle">
+                                <button class="btn btn-outline-info btn-sm px-3 rounded" data-bs-toggle="modal"
+                                        data-bs-target="#editModal" title="Edit Profil"
                                         onclick="fillEdit(<?= $op['operator_id'] ?>, '<?= htmlspecialchars($op['full_name'],ENT_QUOTES) ?>', '<?= $op['shift'] ?>', '<?= htmlspecialchars($op['phone']??'',ENT_QUOTES) ?>')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <form method="POST" class="d-inline" onsubmit="return confirm('Hapus operator ini?')">
+                                <form method="POST" class="d-inline" onsubmit="return confirm('Proses terminasi operator ini dari sistem. Lanjutkan?')">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="operator_id" value="<?= $op['operator_id'] ?>">
-                                    <button class="btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm px-3 rounded ms-1" title="Terminasi Operator"><i class="fas fa-trash"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -134,29 +192,42 @@ $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white"><h5 class="modal-title">Edit Operator</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-content glass-card border-0" style="background: #1e1e2d; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <div class="modal-header border-bottom border-secondary border-opacity-50">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-user-edit me-2 text-primary"></i> Update Data Operator</h5>
+                <button type="button" class="btn-close btn-close-white opacity-50" data-bs-dismiss="modal"></button>
+            </div>
             <form method="POST">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="operator_id" id="edit_id">
-                <div class="modal-body">
-                    <div class="mb-3"><label class="form-label">Nama</label><input type="text" name="full_name" id="edit_name" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Shift</label>
-                        <select name="shift" id="edit_shift" class="form-select">
-                            <option value="morning">Morning</option>
-                            <option value="afternoon">Afternoon</option>
-                            <option value="night">Night</option>
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Nama Baru</label>
+                        <input type="text" name="full_name" id="edit_name" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Pemindahan Shift</label>
+                        <select name="shift" id="edit_shift" class="form-select bg-dark text-white border-secondary">
+                            <option value="morning">🌅 Pagi (Morning)</option>
+                            <option value="afternoon">🌇 Siang (Afternoon)</option>
+                            <option value="night">🌃 Malam (Night)</option>
                         </select>
                     </div>
-                    <div class="mb-3"><label class="form-label">Telepon</label><input type="tel" name="phone" id="edit_phone" class="form-control"></div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Update Kontak Darurat</label>
+                        <input type="tel" name="phone" id="edit_phone" class="form-control bg-dark text-white border-secondary font-monospace">
+                    </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+                <div class="modal-footer border-top border-secondary border-opacity-50">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">BATAL</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow">SIMPAN PERUBAHAN</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 function fillEdit(id, name, shift, phone) {
     document.getElementById('edit_id').value = id;
@@ -165,5 +236,5 @@ function fillEdit(id, name, shift, phone) {
     document.getElementById('edit_phone').value = phone;
 }
 </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>
