@@ -27,7 +27,7 @@ if (isset($_GET['auto'])) {
         echo json_encode(['error' => 'Semua slot penuh!']); exit;
     }
 
-    $plate   = generate_guest_plate($pdo);
+    $plate   = null;
     $code    = generate_ticket_code($pdo);
     $slot_id = (int)$slot['slot_id'];
 
@@ -95,7 +95,7 @@ if (isset($_GET['ticket_code'])) {
 
     $plate_raw   = $d['plate_number'];
     $vtype_label = $d['vehicle_type'] === 'car' ? 'CAR' : 'MOTORCYCLE';
-    $barcode_url = 'https://quickchart.io/qr?text=' . urlencode($code) . '&size=250&margin=0&ecLevel=M';
+    $barcode_url = 'https://quickchart.io/qr?text=' . urlencode($code) . '&size=140&margin=0&ecLevel=M';
     $checkin_fmt = date('d M Y - H.i.s', strtotime($d['issued_at']));
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: print_ticket.php?auto=1"); exit;
@@ -118,7 +118,7 @@ if (isset($_GET['ticket_code'])) {
         .logo-text{font-size:16px;font-weight:900;letter-spacing:1px;text-transform:uppercase;z-index:1;text-shadow:1px 1px 2px rgba(0,0,0,.5);line-height:1}
         .welcome{font-size:14px;margin-bottom:5px;font-weight:bold}
         .ticket-id{font-size:16px;font-weight:900;margin:10px 0;letter-spacing:1px;background:#eee;padding:5px;display:inline-block;border:1px solid #ccc}
-        .barcode-container{margin:15px 0}.barcode-container img{width:100%;height:auto}
+        .barcode-container{margin:15px 0}.barcode-container img{max-width:160px;height:auto}
         .branch-name{font-size:13px;font-weight:bold;margin-bottom:5px}
         .info-row{font-size:11px;margin:2px 0}
         .disclaimer{font-size:10px;margin-top:15px;line-height:1.4;font-weight:bold;text-transform:uppercase}

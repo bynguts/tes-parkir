@@ -208,7 +208,7 @@ include 'includes/header.php';
                             <td>
                                 <div class="d-flex align-items-center gap-3">
                                     <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center;">
-                                        <?= $r['vehicle_type'] === 'car' ? '<i class="fas fa-car text-primary fs-5"></i>' : '<i class="fas fa-motorcycle text-success fs-5"></i>' ?>
+                                        <?= $r['vehicle_type'] === 'car' ? '<i class="fas fa-car-side text-primary fs-5"></i>' : '<i class="fas fa-motorcycle text-success fs-5"></i>' ?>
                                     </div>
                                     <div>
                                         <div class="fw-bold"><?= htmlspecialchars($r['plate_number']) ?></div>
@@ -257,6 +257,9 @@ include 'includes/header.php';
     justify-content: space-between;
     padding: 10px;
     border-top: 1px solid var(--border-glass);
+}
+.flatpickr-prev-month, .flatpickr-next-month {
+    display: none !important;
 }
 .flatpickr-custom-buttons button {
     background: transparent;

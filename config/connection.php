@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('Asia/Jakarta');
+
 /**
  * config/connection.php — PDO connection (production-ready)
  * Gunakan config.php untuk credentials, jangan hardcode di sini.

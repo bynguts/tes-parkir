@@ -105,3 +105,25 @@ function require_role(string ...$roles): void {
         exit;
     }
 }
+
+// ── Attendance helpers ────────────────────────────────────────────────────
+function is_on_duty(): bool {
+    if (($_SESSION['role'] ?? '') === 'superadmin') return true;
+    return !empty($_SESSION['staff_id']);
+}
+
+function get_active_attendance(PDO $pdo, ?string $filter_type = null): array {
+    $where = "WHERE sa.is_active = 1";
+    if ($filter_type) {
+        $where .= " AND o.staff_type = " . $pdo->quote($filter_type);
+    }
+    
+    return $pdo->query("
+        SELECT sa.*, o.full_name, o.staff_type, o.shift, au.username
+        FROM shift_attendance sa
+        JOIN operator o ON sa.staff_id = o.operator_id
+        JOIN admin_users au ON sa.user_id = au.user_id
+        $where
+        ORDER BY o.staff_type ASC, sa.check_in_time DESC
+    ")->fetchAll();
+}

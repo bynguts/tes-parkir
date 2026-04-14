@@ -113,7 +113,7 @@ INSERT INTO `parking_slot` (`slot_number`,`slot_type`,`floor_id`) VALUES
 ('M-L106','motorcycle',2),('M-L107','motorcycle',2),('M-L108','motorcycle',2),('M-L109','motorcycle',2),('M-L110','motorcycle',2),
 -- Level 2 (floor_id = 3)
 ('C-L201','car',3),('C-L202','car',3),('C-L203','car',3),('C-L204','car',3),
-('C-L205','car',3),('C-L206','car',3),('C-L207','car',3),('C-L208','car',3),
+('C-L205','car',3),('C-L206','car',3),('C-L207','car',3),('C-L208','car',3),('C-L209','car',3),('C-L210','car',3),
 ('M-L201','motorcycle',3),('M-L202','motorcycle',3),('M-L203','motorcycle',3),('M-L204','motorcycle',3),('M-L205','motorcycle',3),
 ('M-L206','motorcycle',3),('M-L207','motorcycle',3),('M-L208','motorcycle',3),('M-L209','motorcycle',3),('M-L210','motorcycle',3);
 
@@ -122,7 +122,7 @@ INSERT INTO `parking_slot` (`slot_number`,`slot_type`,`floor_id`) VALUES
 -- ============================================================
 CREATE TABLE `vehicle` (
   `vehicle_id` int(11) NOT NULL AUTO_INCREMENT,
-  `plate_number` varchar(15) NOT NULL,
+  `plate_number` varchar(15) DEFAULT NULL,
   `vehicle_type` enum('car','motorcycle') NOT NULL,
   `owner_name` varchar(100) NOT NULL DEFAULT 'Guest',
   `owner_phone` varchar(20) DEFAULT NULL,
@@ -232,7 +232,7 @@ CREATE TABLE `ticket` (
 -- ============================================================
 CREATE TABLE `plate_scan_log` (
   `scan_id` int(11) NOT NULL AUTO_INCREMENT,
-  `plate_number` varchar(15) NOT NULL,
+  `plate_number` varchar(15) DEFAULT NULL,
   `scan_time` datetime NOT NULL DEFAULT current_timestamp(),
   `scan_type` enum('entry','exit') NOT NULL,
   `ticket_code` varchar(20) DEFAULT NULL,

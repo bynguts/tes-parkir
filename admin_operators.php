@@ -13,22 +13,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name  = trim($_POST['full_name'] ?? '');
         $shift = $_POST['shift'] ?? '';
         $phone = trim($_POST['phone'] ?? '');
-        if (!$name || !in_array($shift, ['morning','afternoon','night'])) {
-            $error = 'Nama dan shift wajib diisi.';
-        } else {
-            $pdo->prepare("INSERT INTO operator (full_name, shift, phone) VALUES (?,?,?)")
-                ->execute([$name, $shift, $phone ?: null]);
-            $msg = "Operator {$name} berhasil terdaftar pada sistem HRD parkir.";
-        }
+            $type  = $_POST['staff_type'] ?? 'operator';
+            $valid_shifts = [
+                '06:00 - 12:00', '12:00 - 18:00', '18:00 - 00:00', '00:00 - 06:00',
+                '06:00 - 18:00 (Day)', '18:00 - 06:00 (Night)'
+            ];
+            if (!$name || !in_array($shift, $valid_shifts)) {
+                $error = 'Nama dan shift wajib diisi.';
+            } else {
+                $pdo->prepare("INSERT INTO operator (full_name, shift, staff_type, phone) VALUES (?,?,?,?)")
+                    ->execute([$name, $shift, $type, $phone ?: null]);
+                $msg = "Profil {$name} berhasil terdaftar pada sistem HRD parkir.";
+            }
     }
-    if ($action === 'edit') {
+        if ($action === 'edit') {
         $id    = (int)$_POST['operator_id'];
         $name  = trim($_POST['full_name'] ?? '');
         $shift = $_POST['shift'] ?? '';
         $phone = trim($_POST['phone'] ?? '');
-        $pdo->prepare("UPDATE operator SET full_name=?, shift=?, phone=? WHERE operator_id=?")
-            ->execute([$name, $shift, $phone ?: null, $id]);
-        $msg = 'Basis data profil operator berhasil diperbarui.';
+        $type  = $_POST['staff_type'] ?? 'operator';
+        $pdo->prepare("UPDATE operator SET full_name=?, shift=?, staff_type=?, phone=? WHERE operator_id=?")
+            ->execute([$name, $shift, $type, $phone ?: null, $id]);
+        $msg = 'Basis data profil personalia berhasil diperbarui.';
     }
     if ($action === 'delete') {
         $id = (int)$_POST['operator_id'];
@@ -44,10 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$is_admin_only = ($_SESSION['role'] === 'admin');
+$role_filter = $is_admin_only ? "WHERE o.staff_type = 'operator'" : "";
 $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
     FROM operator o
     LEFT JOIN `transaction` t ON t.operator_id = o.operator_id
-    GROUP BY o.operator_id ORDER BY o.full_name")->fetchAll();
+    $role_filter
+    GROUP BY o.operator_id 
+    ORDER BY o.staff_type ASC, o.full_name ASC")->fetchAll();
 
 $page_title = 'Kelola Operator';
 include 'includes/header.php';
@@ -92,11 +102,30 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Alokasi Waktu Kerja (Shift)</label>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Waktu Kerja (Shift)</label>
                             <select name="shift" class="form-select form-control-lg bg-dark text-white border-secondary" required>
-                                <option value="morning">🌅 Shift Pagi (06:00 - 14:00)</option>
-                                <option value="afternoon">🌇 Shift Siang (14:00 - 22:00)</option>
-                                <option value="night">🌃 Shift Malam (22:00 - 06:00)</option>
+                                <optgroup label="Shift 6 Jam (Operator)">
+                                    <option value="06:00 - 12:00">🌅 Shift 1 (06:00 - 12:00)</option>
+                                    <option value="12:00 - 18:00">🌇 Shift 2 (12:00 - 18:00)</option>
+                                    <option value="18:00 - 00:00">🌃 Shift 3 (18:00 - 00:00)</option>
+                                    <option value="00:00 - 06:00">🌑 Shift 4 (00:00 - 06:00)</option>
+                                </optgroup>
+                                <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                                <optgroup label="Shift 12 Jam (Admin)">
+                                    <option value="06:00 - 18:00 (Day)">☀️ Day Shift (06:00 - 18:00)</option>
+                                    <option value="18:00 - 06:00 (Night)">🌙 Night Shift (18:00 - 06:00)</option>
+                                </optgroup>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Kategori Role Personel</label>
+                            <select name="staff_type" class="form-select form-control-lg bg-dark text-white border-secondary" required>
+                                <option value="operator">🖥️ Staff Operator</option>
+                                <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                                    <option value="admin">⚒️ Staff Admin</option>
+                                <?php endif; ?>
                             </select>
                         </div>
                         
@@ -130,19 +159,37 @@ include 'includes/header.php';
                         <thead style="background: rgba(0,0,0,0.2);">
                             <tr>
                                 <th class="ps-4">Nama Personalia</th>
-                                <th>Alokasi Shift</th>
-                                <th>Kontak Tersimpan</th>
+                                <th>Role</th>
+                                <th>Shift</th>
+                                <th>Kontak</th>
                                 <th class="text-center">Total Trx</th>
                                 <th class="text-end pe-4">Command</th>
                             </tr>
                         </thead>
                         <tbody>
-                        <?php foreach ($operators as $op):
+                        <?php 
+                        $current_type = '';
+                        foreach ($operators as $op):
+                            if ($current_type !== $op['staff_type']): 
+                                $current_type = $op['staff_type'];
+                                $group_label = ($current_type === 'admin') ? '👔 MANAGEMENT' : '👷 FIELD STAFF';
+                                $group_color = ($current_type === 'admin') ? 'warning' : 'info';
+                        ?>
+                            <tr class="bg-<?= $group_color ?> bg-opacity-10">
+                                <td colspan="6" class="ps-4 py-2">
+                                    <span class="small fw-bold text-<?= $group_color ?>"><?= $group_label ?> (<?= strtoupper($current_type) ?>)</span>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php
                             $shift_config = [
-                                'morning' => ['info', '🌅 Pagi'],
-                                'afternoon' => ['warning', '🌇 Siang'],
-                                'night' => ['secondary', '🌃 Malam']
-                            ][$op['shift']];
+                                '06:00 - 12:00' => ['info', '🌅 S1 (06-12)'],
+                                '12:00 - 18:00' => ['warning', '🌇 S2 (12-18)'],
+                                '18:00 - 00:00' => ['secondary', '🌌 S3 (18-00)'],
+                                '00:00 - 06:00' => ['dark', '🌑 S4 (00-06)'],
+                                '06:00 - 18:00 (Day)' => ['primary', '☀️ DAY (12h)'],
+                                '18:00 - 06:00 (Night)' => ['indigo', '🌙 NIGHT (12h)']
+                            ][$op['shift']] ?? ['light', $op['shift']];
                         ?>
                         <tr>
                             <td class="ps-4 align-middle">
@@ -152,6 +199,11 @@ include 'includes/header.php';
                                     </div>
                                     <span class="fw-bold text-white"><?= htmlspecialchars($op['full_name']) ?></span>
                                 </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-<?= $op['staff_type'] === 'admin' ? 'warning' : 'info' ?> bg-opacity-25 text-<?= $op['staff_type'] === 'admin' ? 'warning' : 'info' ?> border border-<?= $op['staff_type'] === 'admin' ? 'warning' : 'info' ?> px-2 py-1 rounded">
+                                    <?= strtoupper($op['staff_type']) ?>
+                                </span>
                             </td>
                             <td class="align-middle">
                                 <span class="badge bg-<?= $shift_config[0] ?> bg-opacity-25 text-<?= $shift_config[0] ?> border border-<?= $shift_config[0] ?> px-3 py-1 rounded-pill">
@@ -169,7 +221,7 @@ include 'includes/header.php';
                             <td class="text-end pe-4 align-middle">
                                 <button class="btn btn-outline-info btn-sm px-3 rounded" data-bs-toggle="modal"
                                         data-bs-target="#editModal" title="Edit Profil"
-                                        onclick="fillEdit(<?= $op['operator_id'] ?>, '<?= htmlspecialchars($op['full_name'],ENT_QUOTES) ?>', '<?= $op['shift'] ?>', '<?= htmlspecialchars($op['phone']??'',ENT_QUOTES) ?>')">
+                                        onclick="fillEdit(<?= $op['operator_id'] ?>, '<?= htmlspecialchars($op['full_name'],ENT_QUOTES) ?>', '<?= $op['shift'] ?>', '<?= $op['staff_type'] ?>', '<?= htmlspecialchars($op['phone']??'',ENT_QUOTES) ?>')">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <form method="POST" class="d-inline" onsubmit="return confirm('Proses terminasi operator ini dari sistem. Lanjutkan?')">
@@ -206,12 +258,28 @@ include 'includes/header.php';
                         <label class="form-label text-muted small fw-bold text-uppercase">Nama Baru</label>
                         <input type="text" name="full_name" id="edit_name" class="form-control bg-dark text-white border-secondary" required>
                     </div>
+                    <div class="mb-4" <?php if ($_SESSION['role'] !== 'superadmin') echo 'style="display:none;"'; ?>>
+                        <label class="form-label text-muted small fw-bold text-uppercase">Role Personel</label>
+                        <select name="staff_type" id="edit_type" class="form-select bg-dark text-white border-secondary">
+                            <option value="operator">🖥️ Operator</option>
+                            <option value="admin">⚒️ Admin Staff</option>
+                        </select>
+                    </div>
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold text-uppercase">Pemindahan Shift</label>
                         <select name="shift" id="edit_shift" class="form-select bg-dark text-white border-secondary">
-                            <option value="morning">🌅 Pagi (Morning)</option>
-                            <option value="afternoon">🌇 Siang (Afternoon)</option>
-                            <option value="night">🌃 Malam (Night)</option>
+                            <optgroup label="Shift 6 Jam (Operator)">
+                                <option value="06:00 - 12:00">🌅 Shift 1 (06:00 - 12:00)</option>
+                                <option value="12:00 - 18:00">🌇 Shift 2 (12:00 - 18:00)</option>
+                                <option value="18:00 - 00:00">🌃 Shift 3 (18:00 - 00:00)</option>
+                                <option value="00:00 - 06:00">🌑 Shift 4 (00:00 - 06:00)</option>
+                            </optgroup>
+                            <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                            <optgroup label="Shift 12 Jam (Admin)">
+                                <option value="06:00 - 18:00 (Day)">☀️ Day Shift (06:00 - 18:00)</option>
+                                <option value="18:00 - 06:00 (Night)">🌙 Night Shift (18:00 - 06:00)</option>
+                            </optgroup>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <div class="mb-2">
@@ -229,10 +297,11 @@ include 'includes/header.php';
 </div>
 
 <script>
-function fillEdit(id, name, shift, phone) {
+function fillEdit(id, name, shift, type, phone) {
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_shift').value = shift;
+    document.getElementById('edit_type').value = type;
     document.getElementById('edit_phone').value = phone;
 }
 </script>

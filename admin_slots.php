@@ -193,7 +193,7 @@ include 'includes/header.php';
                         <tr>
                             <td class="ps-4 fw-bold font-monospace fs-6 align-middle text-white"><?= htmlspecialchars($s['slot_number']) ?></td>
                             <td class="align-middle">
-                                <?= $s['slot_type'] === 'car' ? '<span class="text-info"><i class="fas fa-car me-2"></i>Mobil</span>' : '<span class="text-success"><i class="fas fa-motorcycle me-2"></i>Motor</span>' ?>
+                                <?= $s['slot_type'] === 'car' ? '<span class="text-primary"><i class="fas fa-car-side me-2"></i>Mobil</span>' : '<span class="text-success"><i class="fas fa-motorcycle me-2"></i>Motor</span>' ?>
                             </td>
                             <td class="align-middle">
                                 <span class="badge bg-dark border border-secondary text-light fw-bold" style="letter-spacing: 1px;">[<?= htmlspecialchars($s['floor_code']) ?>]</span>

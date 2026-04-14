@@ -12,6 +12,17 @@ $car_pct  = $car_total  > 0 ? ($car_avail  / $car_total)  * 100 : 100;
 $moto_pct = $moto_total > 0 ? ($moto_avail / $moto_total) * 100 : 100;
 
 $page_title = 'Dashboard';
+
+// Attendance logic
+$on_duty = is_on_duty();
+$staff_list = [];
+if (!$on_duty) {
+    $search_type = ($_SESSION['role'] === 'admin') ? 'admin' : 'operator';
+    $stmt = $pdo->prepare("SELECT operator_id, full_name, shift FROM operator WHERE staff_type = ? ORDER BY full_name");
+    $stmt->execute([$search_type]);
+    $staff_list = $stmt->fetchAll();
+}
+
 include 'includes/header.php';
 ?>
 
@@ -24,7 +35,14 @@ include 'includes/header.php';
         </div>
         <div class="d-flex align-items-center gap-3 glass-card px-4 py-2" style="border-radius: 50px;">
             <span class="badge bg-success bg-opacity-25 text-success border border-success"><?= strtoupper($role) ?></span>
-            <span class="fw-semibold"><i class="fas fa-user-circle me-2 text-muted"></i><?= $username ?></span>
+            <span class="fw-semibold">
+                <i class="fas fa-user-circle me-2 text-muted"></i>
+                <?= $username ?>
+                <?php if (!empty($_SESSION['staff_name'])): ?>
+                    <span class="text-muted ms-1 small">•</span>
+                    <span class="text-primary ms-1 small fw-bold"><?= htmlspecialchars($_SESSION['staff_name']) ?></span>
+                <?php endif; ?>
+            </span>
         </div>
     </div>
 
@@ -46,6 +64,46 @@ include 'includes/header.php';
             <strong class="text-warning d-block">Peringatan Kapasitas Motor!</strong>
             <span class="text-white small">Slot motor hampir penuh — hanya <?= $moto_avail ?> dari <?= $moto_total ?> slot tersedia.</span>
         </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($role === 'superadmin' || $role === 'admin'): 
+        // Admin only sees field staff (operators), Superadmin sees all
+        $filter = ($role === 'admin') ? 'operator' : null;
+        $active_staff = get_active_attendance($pdo, $filter);
+    ?>
+    <div class="glass-card mb-5 p-4 border border-info border-opacity-25">
+        <h6 class="text-white fw-bold mb-3 d-flex align-items-center">
+            <i class="fas fa-users-viewfinder text-info me-2 fs-5"></i>
+            Petugas Aktif Saat Ini (Absensi)
+        </h6>
+        <?php if (empty($active_staff)): ?>
+            <div class="text-muted small py-2"><i class="fas fa-info-circle me-1"></i> Belum ada petugas yang melakukan absensi pada sesi ini.</div>
+        <?php else: ?>
+            <div class="row g-3">
+                <?php foreach ($active_staff as $st): ?>
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                        <div class="p-3 rounded-4" style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.1);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar bg-info bg-opacity-20 text-info rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border: 1px solid var(--info);">
+                                    <?= strtoupper(substr($st['full_name'], 0, 1)) ?>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="text-white fw-bold text-truncate" style="font-size: 0.9rem;"><?= htmlspecialchars($st['full_name']) ?></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-<?= $st['staff_type'] === 'admin' ? 'warning' : 'info' ?> bg-opacity-10 text-<?= $st['staff_type'] === 'admin' ? 'warning' : 'info' ?> p-0 small" style="font-size: 0.7rem;">
+                                            <?= strtoupper($st['staff_type']) ?>
+                                        </span>
+                                        <span class="text-muted small" style="font-size: 0.7rem;">Shift: <?= ucfirst($st['shift']) ?></span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.65rem;"><i class="fas fa-clock me-1"></i>In: <?= date('H:i', strtotime($st['check_in_time'])) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
     <?php endif; ?>
 
@@ -162,4 +220,92 @@ include 'includes/header.php';
     </div>
 </div>
 
+<?php if (!$on_duty): ?>
+<!-- Attendance Modal -->
+<div class="modal fade" id="attendanceModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-0" style="background: rgba(30, 30, 45, 0.95); backdrop-filter: blur(20px); box-shadow: 0 0 50px rgba(0,0,0,0.8);">
+            <div class="modal-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="icon-circle bg-primary bg-opacity-25 text-primary mx-auto mb-3" style="width: 80px; height: 80px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-2">Konfirmasi Kehadiran</h3>
+                    <p class="text-muted">Halo <span class="text-primary fw-bold"><?= strtoupper($role) ?></span>, harap pilih identitas petugas yang bertanggung jawab pada sesi ini.</p>
+                </div>
+
+                <form id="attendanceForm">
+                    <?= csrf_field() ?>
+                    <div class="mb-4 text-start">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Pilih Nama Petugas</label>
+                        <select name="staff_id" class="form-select form-control-lg bg-dark text-white border-secondary" required style="height: 60px;">
+                            <option value="">-- Pilih Nama Anda --</option>
+                            <?php foreach ($staff_list as $s): ?>
+                                <option value="<?= $s['operator_id'] ?>"><?= htmlspecialchars($s['full_name']) ?> (<?= $s['shift'] ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold fs-5 shadow-lg" style="border-radius: 15px; letter-spacing: 1px;">
+                        MULAI BERTUGAS <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var myModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    myModal.show();
+
+    document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const btn = this.querySelector('button');
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+        fetch('api/submit_attendance.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Selamat Bertugas!',
+                    text: data.message,
+                    background: '#1e1e2d',
+                    color: '#fff',
+                    confirmButtonColor: '#3b82f6'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: data.message,
+                    background: '#1e1e2d',
+                    color: '#fff'
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+});
+</script>
+<?php endif; ?>
+
 <?php include 'includes/footer.php'; ?>
+

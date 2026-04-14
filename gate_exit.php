@@ -93,7 +93,7 @@ try {
 }
 
 // ── 5. Display receipt ────────────────────────────────────────────────────
-$vtype_label    = $trx['vehicle_type'] === 'car' ? '🚗 Mobil' : '🏍️ Motor';
+$vtype_label    = $trx['vehicle_type'] === 'car' ? '<i class="fas fa-car-side text-primary"></i> Mobil' : '<i class="fas fa-motorcycle text-success"></i> Motor';
 $fee_fmt        = fmt_idr($total_fee);
 $duration_label = $hours_total . ' jam (' . (int)$trx['minutes_parked'] . ' menit)';
 $slot_label     = htmlspecialchars($trx['slot_number'] . ' / Lantai ' . $trx['floor']);
@@ -106,6 +106,7 @@ $now_fmt        = date('d M Y H:i:s');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kendaraan Keluar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body{background:#1a1a2e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
         .receipt{background:#fff;border-radius:12px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
@@ -142,7 +143,7 @@ $now_fmt        = date('d M Y H:i:s');
             <div class="fee-amount"><?= $fee_fmt ?></div>
         </div>
         <div class="dashed"></div>
-        <a href="gate_simulator.php" class="btn-back">← Kembali ke Gate Simulator</a>
+        <a href="gate_simulator.php" class="btn-back"><i class="fas fa-arrow-left me-2"></i> Kembali ke Gate Simulator</a>
     </div>
     <script>setTimeout(() => { window.location.href = 'gate_simulator.php'; }, 8000);</script>
 </body>

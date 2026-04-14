@@ -7,7 +7,6 @@ $logs = $pdo->query("
         e.ticket_code,
         e.scan_time        AS waktu_masuk,
         x.scan_time        AS waktu_keluar,
-        e.plate_number,
         TIMESTAMPDIFF(MINUTE, e.scan_time, IFNULL(x.scan_time, NOW())) AS durasi_menit,
         CASE WHEN x.scan_id IS NOT NULL THEN 'keluar' ELSE 'parkir' END AS status_parkir
     FROM plate_scan_log e
@@ -43,10 +42,9 @@ include 'includes/header.php';
                 <thead style="position: sticky; top:0; background: var(--sidebar-bg); z-index: 10;">
                     <tr>
                         <th class="ps-4 text-center" width="5%">No</th>
-                        <th width="15%">Kode Tiket</th>
-                        <th width="15%">Plat Nomor</th>
-                        <th width="20%">Timestamp Masuk</th>
-                        <th width="20%">Timestamp Keluar</th>
+                        <th width="20%">Kode Tiket</th>
+                        <th width="25%">Timestamp Masuk</th>
+                        <th width="25%">Timestamp Keluar</th>
                         <th width="10%">Durasi</th>
                         <th class="pe-4 text-center" width="15%">Status Flow</th>
                     </tr>
@@ -73,7 +71,6 @@ include 'includes/header.php';
                     <tr>
                         <td class="text-muted text-center ps-4"><?= $no++ ?></td>
                         <td><code class="text-info fs-6 bg-dark bg-opacity-50 px-2 py-1 rounded"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
-                        <td class="fw-bold" style="letter-spacing: 1px;"><?= htmlspecialchars($row['plate_number'] ?? '-') ?></td>
                         <td><i class="fas fa-sign-in-alt text-primary opacity-50 me-2"></i><?= date('H:i:s, d M Y', strtotime($row['waktu_masuk'])) ?></td>
                         <td><?= $keluar_str ?></td>
                         <td><?= $dur_html ?></td>

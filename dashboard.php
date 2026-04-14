@@ -57,7 +57,7 @@ include 'includes/header.php';
                     <td><code class="text-primary-glow font-monospace fs-6"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
                     <td>
                         <?php if ($row['vehicle_type'] === 'car'): ?>
-                            <i class="fas fa-car text-primary"></i> <span class="ms-1 small">Mobil</span>
+                            <i class="fas fa-car-side text-primary"></i> <span class="ms-1 small">Mobil</span>
                         <?php else: ?>
                             <i class="fas fa-motorcycle text-success"></i> <span class="ms-1 small">Motor</span>
                         <?php endif; ?>
