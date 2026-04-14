@@ -144,14 +144,33 @@ include 'includes/header.php';
                         <h5 class="mb-0 fw-bold text-white"><i class="fas fa-server text-info me-2"></i>Database Slot</h5>
                         <p class="small text-muted mb-0 mt-1">Menampilkan <?= count($slots) ?> endpoint slot terdaftar.</p>
                     </div>
-                    <div class="position-relative">
-                        <i class="fas fa-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-                        <input type="text" id="searchSlot" class="form-control bg-dark border-secondary text-white ps-5"
-                               placeholder="Filter ID atau status..." oninput="filterSlots(this.value)" style="width: 250px; border-radius: 50px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <select id="pageSize" class="form-select bg-dark border-secondary text-white" style="width: auto; border-radius: 8px;" onchange="updatePagination()">
+                            <option value="30">30 Baris</option>
+                            <option value="50">50 Baris</option>
+                            <option value="all" selected>All (Semua)</option>
+                        </select>
+                        <div class="position-relative">
+                            <i class="fas fa-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
+                            <input type="text" id="searchSlot" class="form-control bg-dark border-secondary text-white ps-5"
+                                   placeholder="Filter ID atau status..." oninput="this.value=this.value.toUpperCase(); filterSlots(this.value)" style="width: 250px; border-radius: 50px;" list="slotSuggestions" autocomplete="off">
+                            <datalist id="slotSuggestions">
+                                <?php
+                                $suggestions = [];
+                                foreach ($slots as $s) {
+                                    $suggestions[$s['slot_number']] = 1;
+                                    $suggestions[strtoupper($s['status'])] = 1;
+                                    $suggestions[$s['floor_code']] = 1;
+                                }
+                                foreach (array_keys($suggestions) as $sg): ?>
+                                    <option value="<?= htmlspecialchars($sg) ?>"></option>
+                                <?php endforeach; ?>
+                            </datalist>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="table-responsive" style="border: none; max-height: 700px;">
+                <div class="table-responsive" style="border: none; max-height: 700px; overflow-y: auto;">
                     <table class="table table-glass table-hover mb-0" id="slotTable">
                         <thead style="position: sticky; top:0; background: var(--card-bg); z-index: 10;">
                             <tr>
@@ -222,11 +241,31 @@ include 'includes/header.php';
 </div>
 
 <script>
-function filterSlots(q) {
-    q = q.toLowerCase();
-    document.querySelectorAll('#slotTable tbody tr').forEach(tr => {
-        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
+let currentPage = 1;
+function updatePagination() {
+    let size = document.getElementById('pageSize').value;
+    let rows = document.querySelectorAll('#slotTable tbody tr');
+    let q = document.getElementById('searchSlot').value.toLowerCase();
+    
+    let visibleRows = Array.from(rows).filter(tr => tr.textContent.toLowerCase().includes(q));
+    
+    rows.forEach(tr => tr.style.display = 'none');
+    
+    if (size === 'all') {
+        visibleRows.forEach(tr => tr.style.display = '');
+    } else {
+        size = parseInt(size);
+        let start = (currentPage - 1) * size;
+        let end = start + size;
+        visibleRows.slice(start, end).forEach(tr => tr.style.display = '');
+    }
 }
+
+function filterSlots(q) {
+    currentPage = 1;
+    updatePagination();
+}
+
+document.addEventListener('DOMContentLoaded', updatePagination);
 </script>
 <?php include 'includes/footer.php'; ?>

@@ -123,7 +123,7 @@ include 'includes/header.php';
                         <th class="text-center">Total Kunjungan</th>
                         <th class="text-end">Rev. Mobil</th>
                         <th class="text-end">Rev. Motor</th>
-                        <th class="text-end pe-4">Total Revenue</th>
+                        <th class="text-end pe-4">Revenue Harian</th>
                     </tr>
                 </thead>
                 <tbody>

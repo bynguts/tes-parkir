@@ -8,6 +8,8 @@ $role = $_SESSION['role'] ?? 'operator';
         <small>Enterprise Management</small>
     </div>
 
+    <div style="flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;" class="sidebar-scrollable-area">
+
     <div class="section-label">Operations</div>
     <nav>
         <div class="nav-item">
@@ -79,7 +81,9 @@ $role = $_SESSION['role'] ?? 'operator';
     </nav>
     <?php endif; ?>
 
-    <div style="margin-top: auto; padding: 24px;">
+    </div>
+
+    <div style="margin-top: auto; padding: 24px; border-top: 1px solid var(--border-glass);">
         <a href="logout.php" class="btn btn-outline-danger w-100" style="border-radius: 8px;">
             <i class="fas fa-sign-out-alt me-1"></i> Logout
         </a>

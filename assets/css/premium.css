@@ -90,7 +90,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Sidebar */
 .sidebar {
     width: 260px;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     background: var(--sidebar-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -263,3 +264,23 @@ h1, h2, h3, h4, h5, h6 {
 /* Utilities */
 .text-success-glow { color: var(--success); text-shadow: 0 0 10px var(--success-glow); }
 .text-primary-glow { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+
+/* Custom Modern Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #3a3b3c;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #3a3b3c;
+}
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3b3c transparent;
+}

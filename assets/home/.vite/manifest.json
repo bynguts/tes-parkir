@@ -1,0 +1,45 @@
+{
+  "_client-hquPZ2xM.js": {
+    "file": "assets/client-hquPZ2xM.js",
+    "name": "client"
+  },
+  "_revenue-graph-Dk_bNpwb.js": {
+    "file": "assets/revenue-graph-Dk_bNpwb.js",
+    "name": "revenue-graph",
+    "imports": [
+      "_client-hquPZ2xM.js"
+    ]
+  },
+  "src/main.tsx": {
+    "file": "assets/main-D1uLU-ej.js",
+    "name": "main",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "imports": [
+      "_client-hquPZ2xM.js"
+    ],
+    "css": [
+      "assets/main-C6JI0pFt.css"
+    ]
+  },
+  "src/revenue-widget.tsx": {
+    "file": "assets/revenueWidget-Cd2JVS2y.js",
+    "name": "revenueWidget",
+    "src": "src/revenue-widget.tsx",
+    "isEntry": true,
+    "imports": [
+      "_client-hquPZ2xM.js",
+      "_revenue-graph-Dk_bNpwb.js"
+    ]
+  },
+  "src/today-revenue-widget.tsx": {
+    "file": "assets/todayRevenueWidget-B49QCxjz.js",
+    "name": "todayRevenueWidget",
+    "src": "src/today-revenue-widget.tsx",
+    "isEntry": true,
+    "imports": [
+      "_client-hquPZ2xM.js",
+      "_revenue-graph-Dk_bNpwb.js"
+    ]
+  }
+}

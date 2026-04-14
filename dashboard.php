@@ -38,7 +38,6 @@ include 'includes/header.php';
                     <tr>
                         <th class="ps-4">Trx ID</th>
                         <th>Tiket</th>
-                        <th>Plat Nomor</th>
                         <th>Tipe</th>
                         <th>Slot / Lantai</th>
                         <th>Waktu Check-In</th>
@@ -47,7 +46,7 @@ include 'includes/header.php';
                 </thead>
                 <tbody>
                 <?php if (empty($active)): ?>
-                <tr><td colspan="7" class="text-center text-muted py-5"><i class="fas fa-car-slash fs-3 mb-3 d-block"></i>Tidak ada kendaraan yang sedang parkir saat ini.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-5"><i class="fas fa-car-slash fs-3 mb-3 d-block"></i>Tidak ada kendaraan yang sedang parkir saat ini.</td></tr>
                 <?php else: foreach ($active as $row):
                     $mins = (int)$row['minutes_parked'];
                     $dur  = floor($mins/60).'j '.($mins%60).'m';
@@ -56,7 +55,6 @@ include 'includes/header.php';
                 <tr style="<?= $is_overdue ? 'background-color: rgba(245, 158, 11, 0.05);' : '' ?>">
                     <td class="text-muted small ps-4">#<?= $row['transaction_id'] ?></td>
                     <td><code class="text-primary-glow font-monospace fs-6"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code></td>
-                    <td class="fw-bold" style="letter-spacing: 1px;"><?= htmlspecialchars($row['plate_number']) ?></td>
                     <td>
                         <?php if ($row['vehicle_type'] === 'car'): ?>
                             <i class="fas fa-car text-primary"></i> <span class="ms-1 small">Mobil</span>

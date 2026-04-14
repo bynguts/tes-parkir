@@ -134,7 +134,6 @@ $now_fmt        = date('d M Y H:i:s');
         <div class="info-row"><span class="label">Kendaraan</span><span class="val"><?= $vtype_label ?></span></div>
         <div class="info-row"><span class="label">Slot</span><span class="val"><?= $slot_label ?></span></div>
         <div class="info-row"><span class="label">Kode Tiket</span><span class="val" style="font-family:monospace;font-size:12px"><?= htmlspecialchars($code) ?></span></div>
-        <div class="info-row"><span class="label">Plat</span><span class="val"><?= htmlspecialchars($plate) ?></span></div>
         <div class="info-row"><span class="label">Check-in</span><span class="val"><?= htmlspecialchars($trx['check_in_time']) ?></span></div>
         <div class="info-row"><span class="label">Check-out</span><span class="val"><?= $now_fmt ?></span></div>
         <div class="info-row"><span class="label">Durasi</span><span class="val"><?= $duration_label ?></span></div>

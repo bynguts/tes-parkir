@@ -156,14 +156,13 @@ include 'includes/header.php';
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-bold text-uppercase">Waktu Mulai <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="reserved_from" class="form-control"
-                                       min="<?= $min_datetime ?>" id="from_dt" required
-                                       onchange="setMinUntil(this.value)">
+                                <input type="text" name="reserved_from" class="form-control bg-dark border-secondary"
+                                       id="from_dt" required placeholder="Pilih Tanggal & Jam Mulai...">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-bold text-uppercase">Waktu Selesai <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="reserved_until" class="form-control"
-                                       min="<?= $min_datetime ?>" id="until_dt" required>
+                                <input type="text" name="reserved_until" class="form-control bg-dark border-secondary"
+                                       id="until_dt" required placeholder="Pilih Tanggal & Jam Selesai...">
                             </div>
                         </div>
 
@@ -247,6 +246,35 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Flatpickr Library -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+.flatpickr-custom-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-top: 1px solid var(--border-glass);
+}
+.flatpickr-custom-buttons button {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.flatpickr-custom-buttons button:hover {
+    color: #fff;
+}
+.flatpickr-custom-buttons button.btn-ok {
+    color: var(--success);
+}
+.flatpickr-calendar { font-family: 'Poppins', sans-serif !important; }
+</style>
+
 <script>
 function setType(t) {
     document.getElementById('vtype_hidden').value = t;
@@ -269,14 +297,64 @@ function setType(t) {
         btnCar.style.color = 'var(--text-main)';
     }
 }
-function setMinUntil(val) {
-    if (!val) return;
-    const d = new Date(val);
-    d.setHours(d.getHours() + 1);
-    document.getElementById('until_dt').min = d.toISOString().slice(0,16);
-    if (!document.getElementById('until_dt').value) {
-        document.getElementById('until_dt').value = d.toISOString().slice(0,16);
+document.addEventListener('DOMContentLoaded', function() {
+    let minDate = new Date("<?= date('Y-m-d\TH:i', strtotime('+5 minutes')) ?>");
+
+    let untilPicker = flatpickr("#until_dt", {
+        enableTime: true,
+        dateFormat: "Y-m-d\\TH:i",
+        minDate: minDate,
+        time_24hr: true,
+        onReady: setupCustomButtons
+    });
+
+    let fromPicker = flatpickr("#from_dt", {
+        enableTime: true,
+        dateFormat: "Y-m-d\\TH:i",
+        minDate: minDate,
+        time_24hr: true,
+        onReady: setupCustomButtons,
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates[0]) {
+                let untilMin = new Date(selectedDates[0]);
+                untilMin.setHours(untilMin.getHours() + 1);
+                untilPicker.set('minDate', untilMin);
+                if (!untilPicker.selectedDates.length || untilPicker.selectedDates[0] < untilMin) {
+                    untilPicker.setDate(untilMin);
+                }
+            }
+        }
+    });
+
+    function setupCustomButtons(selectedDates, dateStr, instance) {
+        const btnContainer = document.createElement("div");
+        btnContainer.className = "flatpickr-custom-buttons";
+        
+        const btnClear = document.createElement("button");
+        btnClear.type = "button";
+        btnClear.innerText = "Clear";
+        btnClear.onclick = function() { instance.clear(); };
+        
+        const btnToday = document.createElement("button");
+        btnToday.type = "button";
+        btnToday.innerText = "Today";
+        btnToday.onclick = function() { 
+            const now = new Date();
+            instance.setDate(now); 
+        };
+        
+        const btnOk = document.createElement("button");
+        btnOk.type = "button";
+        btnOk.innerText = "OK";
+        btnOk.className = "btn-ok";
+        btnOk.onclick = function() { instance.close(); };
+        
+        btnContainer.appendChild(btnClear);
+        btnContainer.appendChild(btnToday);
+        btnContainer.appendChild(btnOk);
+        
+        instance.calendarContainer.appendChild(btnContainer);
     }
-}
+});
 </script>
 <?php include 'includes/footer.php'; ?>
