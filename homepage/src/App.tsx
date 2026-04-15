@@ -42,7 +42,7 @@ export function App() {
 
             <div className="d-flex flex-wrap gap-2 mt-4">
               {isLoggedIn ? (
-                <a className="btn btn-success home-btn" href="dashboard_overview.php">
+                <a className="btn btn-success home-btn" href="index.php">
                   <i className="fas fa-tachometer-alt me-2" />
                   Go to Dashboard
                 </a>
@@ -84,7 +84,7 @@ export function App() {
           <div className="home-section-title">Core Modules</div>
           <div className="row g-3 mt-1">
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="gate_simulator.php">
+              <a className="glass-card home-feature" href="modules/operations/gate_simulator.php">
                 <div className="home-feature-icon text-success">
                   <i className="fas fa-door-open" />
                 </div>
@@ -93,7 +93,7 @@ export function App() {
               </a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="slot_map.php">
+              <a className="glass-card home-feature" href="modules/reports/slot_map.php">
                 <div className="home-feature-icon text-warning">
                   <i className="fas fa-map" />
                 </div>
@@ -102,7 +102,7 @@ export function App() {
               </a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="dashboard_revenue.php">
+              <a className="glass-card home-feature" href="modules/reports/revenue.php">
                 <div className="home-feature-icon text-info">
                   <i className="fas fa-chart-line" />
                 </div>
@@ -111,7 +111,7 @@ export function App() {
               </a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="reservation.php">
+              <a className="glass-card home-feature" href="modules/operations/reservation.php">
                 <div className="home-feature-icon text-primary">
                   <i className="fas fa-calendar-check" />
                 </div>

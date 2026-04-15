@@ -3,8 +3,27 @@ date_default_timezone_set('Asia/Jakarta');
 
 /**
  * config/connection.php — PDO connection (production-ready)
- * Gunakan config.php untuk credentials, jangan hardcode di sini.
  */
+
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
+}
+
+// Simple BASE_URL detection
+if (!defined('BASE_URL')) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+    
+    // Normalize path to root
+    $root_dir = $script_dir;
+    if (strpos($root_dir, '/modules') !== false) {
+        $root_dir = preg_replace('/\/modules\/.*/', '', $root_dir);
+    }
+    
+    $url = $protocol . '://' . $host . rtrim($root_dir, '/\\') . '/';
+    define('BASE_URL', $url);
+}
 
 $db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
 $db_name = defined('DB_NAME') ? DB_NAME : 'parking_db_v2';
@@ -24,7 +43,6 @@ try {
     );
 } catch (PDOException $e) {
     http_response_code(500);
-    // Jangan expose detail error ke user di production
     error_log("DB Connection failed: " . $e->getMessage());
     die(json_encode(['error' => 'Database connection failed.']));
 }

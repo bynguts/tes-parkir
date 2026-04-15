@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $logs = $pdo->query("
     SELECT
@@ -18,7 +18,7 @@ $logs = $pdo->query("
 ")->fetchAll();
 
 $page_title = 'Scan Log Engine';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -233,4 +233,4 @@ function filterLog(q) {
 }
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

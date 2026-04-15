@@ -1,6 +1,6 @@
 <?php
-require_once 'config/connection.php';
-require_once 'includes/functions.php';
+require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
 
 // ── MODE 1: ?auto=1 — AJAX JSON response ──────────────────────────────────
 if (isset($_GET['auto'])) {

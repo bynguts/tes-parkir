@@ -17,7 +17,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/functions.php';
 
 if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php');
+    header('Location: ' . BASE_URL . 'login.php');
     exit;
 }
 

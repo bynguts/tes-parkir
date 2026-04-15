@@ -20,7 +20,7 @@ $page_title = $page_title ?? 'Parking System';
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Premium Glassmorphism Theme -->
-    <link rel="stylesheet" href="assets/css/premium.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/premium.css?v=<?= time() ?>">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>

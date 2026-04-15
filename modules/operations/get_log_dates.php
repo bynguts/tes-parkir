@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 header('Content-Type: application/json');
 

@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $summary   = get_slot_summary($pdo);
 $car_avail = $summary['car']['avail'] ?? 0;
@@ -12,7 +12,7 @@ $car_pct  = $car_total  > 0 ? ($car_avail  / $car_total)  * 100 : 100;
 $moto_pct = $moto_total > 0 ? ($moto_avail / $moto_total) * 100 : 100;
 
 $page_title = 'Dashboard';
-include 'includes/header.php';
+include '../../includes/header.php';
 
 function vite_widget_tags(string $entry): string {
     $manifest_path = __DIR__ . '/assets/home/.vite/manifest.json';
@@ -180,5 +180,5 @@ function vite_widget_tags(string $entry): string {
 
 <?= vite_widget_tags('src/today-revenue-widget.tsx') ?>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>
 

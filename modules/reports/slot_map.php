@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $stmt = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status,
@@ -37,7 +37,7 @@ $fs = [];
 foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
 
 $page_title = 'Peta Slot Parkir';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <style>
@@ -205,4 +205,4 @@ setInterval(() => {
 }, 1000);
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

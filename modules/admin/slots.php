@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 require_role('superadmin', 'admin');
 
 $msg = $error = '';
@@ -67,7 +67,7 @@ $slots = $pdo->query("
 $floors_list = $pdo->query("SELECT floor_id, floor_code, floor_name FROM floor ORDER BY floor_code")->fetchAll();
 
 $page_title = 'Kelola Slot Parkir';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -268,4 +268,4 @@ function filterSlots(q) {
 
 document.addEventListener('DOMContentLoaded', updatePagination);
 </script>
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

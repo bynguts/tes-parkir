@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 require_role('superadmin', 'admin');
 
 $msg = $error = '';
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $rates = $pdo->query("SELECT * FROM parking_rate ORDER BY vehicle_type")->fetchAll();
 
 $page_title = 'Kelola Tarif Parkir';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -142,4 +142,4 @@ updatePreview(<?= $r['rate_id'] ?>);
 <?php endforeach; ?>
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

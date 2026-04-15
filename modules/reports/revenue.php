@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $daily = $pdo->query("
     SELECT CAST(t.check_out_time AS DATE) AS date,
@@ -30,7 +30,7 @@ $totals = $pdo->query("
 ")->fetch();
 
 $page_title = 'Laporan Revenue';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -157,4 +157,4 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

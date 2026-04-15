@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $msg   = '';
 $error = '';
@@ -87,7 +87,7 @@ $reservations = $pdo->query("
 $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 
 $page_title = 'Reservasi Slot';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -360,4 +360,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

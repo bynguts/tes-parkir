@@ -187,32 +187,32 @@ include 'includes/header.php';
     <!-- Quick Menu -->
     <h6 class="text-muted fw-semibold mb-3 text-uppercase" style="font-size:12px; letter-spacing:.1em;"><i class="fas fa-layer-group me-2"></i>Akses Cepat</h6>
     <div class="menu-grid">
-        <a href="gate_simulator.php" class="glass-card menu-card">
+        <a href="modules/operations/gate_simulator.php" class="glass-card menu-card">
             <div class="icon text-primary"><i class="fas fa-door-open"></i></div>
             <h6>Smart Gate</h6>
             <p>Entry & exit simulator dengan engine pembaca barcodde & QR scan</p>
         </a>
-        <a href="reservation.php" class="glass-card menu-card">
+        <a href="modules/operations/reservation.php" class="glass-card menu-card">
             <div class="icon text-success"><i class="fas fa-calendar-check"></i></div>
             <h6>Reservasi</h6>
             <p>Kelola pre-booking dan alokasi slot parkir premium di muka.</p>
         </a>
-        <a href="slot_map.php" class="glass-card menu-card">
+        <a href="modules/reports/slot_map.php" class="glass-card menu-card">
             <div class="icon text-warning"><i class="fas fa-map-marked-alt"></i></div>
             <h6>Peta Slot</h6>
             <p>Visualisasi pemetaan slot kendaraan per lantai secara real-time.</p>
         </a>
-        <a href="dashboard.php" class="glass-card menu-card">
+        <a href="modules/operations/active_vehicles.php" class="glass-card menu-card">
             <div class="icon text-info"><i class="fas fa-car"></i></div>
             <h6>Kendaraan Aktif</h6>
             <p>Monitor seluruh kendaraan yang terparkir dan durasi kunjungannya.</p>
         </a>
-        <a href="dashboard_revenue.php" class="glass-card menu-card">
+        <a href="modules/reports/revenue.php" class="glass-card menu-card">
             <div class="icon text-danger"><i class="fas fa-chart-line"></i></div>
             <h6>Laporan Revenue</h6>
             <p>Analisis tren pendapatan harian dan agregat finansial.</p>
         </a>
-        <a href="scan_log.php" class="glass-card menu-card">
+        <a href="modules/operations/scan_log.php" class="glass-card menu-card">
             <div class="icon" style="color:#A855F7;"><i class="fas fa-history"></i></div>
             <h6>Scan Log</h6>
             <p>Log forensik aktivitas sensor gate masuk dan keluar secara mendetail.</p>

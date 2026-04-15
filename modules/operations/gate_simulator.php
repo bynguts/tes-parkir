@@ -1,11 +1,11 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $summary = get_slot_summary($pdo);
 
 $page_title = 'Smart Gate Simulator';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -240,4 +240,4 @@ html5QrcodeScanner.render(
 );
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

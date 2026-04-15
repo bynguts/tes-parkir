@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 
 $active = $pdo->query("
     SELECT t.transaction_id, t.ticket_code, s.slot_number, f.floor_code AS floor,
@@ -15,7 +15,7 @@ $active = $pdo->query("
 ")->fetchAll();
 
 $page_title = 'Kendaraan Aktif';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -86,4 +86,4 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
-require_once 'config/connection.php';
-require_once 'includes/functions.php';
+require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
 
 if (empty($_GET['kode_tiket'])) {
     header("Location: gate_simulator.php"); exit;

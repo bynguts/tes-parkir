@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth_guard.php';
-require_once 'config/connection.php';
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
 require_role('superadmin', 'admin');
 
 $msg = $error = '';
@@ -60,7 +60,7 @@ $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
     ORDER BY o.staff_type ASC, o.full_name ASC")->fetchAll();
 
 $page_title = 'Kelola Operator';
-include 'includes/header.php';
+include '../../includes/header.php';
 ?>
 
 <div class="main-content">
@@ -306,4 +306,4 @@ function fillEdit(id, name, shift, type, phone) {
 }
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>
