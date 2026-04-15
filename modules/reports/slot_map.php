@@ -41,156 +41,153 @@ include '../../includes/header.php';
 ?>
 
 <style>
-    .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-    .slot-box { 
-        border-radius: 12px; 
-        padding: 16px 8px; 
-        text-align: center; 
-        cursor: pointer; 
-        transition: all .2s; 
-        position: relative; 
-        border: 1px solid rgba(255,255,255,0.1); 
-        background: rgba(30,30,40,0.4);
-    }
-    .slot-box:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-    
-    .slot-box.available   { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.4); box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.05); }
-    .slot-box.occupied    { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.05); }
-    .slot-box.reserved    { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.4); box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.05); }
-    .slot-box.maintenance { background: rgba(100, 116, 139, 0.2); border-color: rgba(100, 116, 139, 0.4); filter: grayscale(1); }
-    
-    .slot-box .slot-num  { font-weight: 700; font-size: 16px; margin-top: 8px; letter-spacing: 1px; color: var(--text-main); }
-    .slot-box .slot-icon { font-size: 26px; display: block; opacity: 0.9; }
-    
-    .slot-box .slot-plate    { font-size: 11px; color: var(--text-main); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px; }
-    .slot-box .slot-duration { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-    
-    .legend-dot { width: 14px; height: 14px; border-radius: 4px; display: inline-block; vertical-align: middle; }
-    
-    .tooltip-slot { 
-        position: absolute; 
-        bottom: calc(100% + 10px); 
-        left: 50%; transform: translateX(-50%); 
-        background: rgba(15, 23, 42, 0.95); 
-        color: #fff; padding: 10px 14px; 
-        border-radius: 8px; font-size: 12px; 
-        white-space: nowrap; z-index: 10; 
-        pointer-events: none; display: none; 
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .slot-box:hover .tooltip-slot { display: block; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.slot-box {
+    border-radius: 16px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    position: relative;
+    background: #f8fafc;
+}
+.slot-box:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.slot-box.available   { background: #f0fdf4; }
+.slot-box.occupied    { background: #fef2f2; }
+.slot-box.reserved    { background: #fffbeb; }
+.slot-box.maintenance { background: #f1f5f9; filter: grayscale(1); opacity: 0.7; }
+.slot-num  { font-weight: 700; font-size: 15px; margin-top: 6px; letter-spacing: 1px; color: #0f172a; font-family: 'Manrope', sans-serif; }
+.slot-icon { font-size: 24px; display: block; }
+.slot-plate    { font-size: 10px; color: #334155; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; background: rgba(0,0,0,0.06); border-radius: 4px; padding: 2px 4px; font-family: monospace; font-weight: 700; }
+.slot-duration { font-size: 10px; color: #64748b; margin-top: 3px; font-family: 'Inter', sans-serif; }
+.tooltip-slot {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%; transform: translateX(-50%);
+    background: #0f172a;
+    color: #fff; padding: 8px 12px;
+    border-radius: 10px; font-size: 11px;
+    white-space: nowrap; z-index: 30;
+    pointer-events: none; display: none;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
+.slot-box:hover .tooltip-slot { display: block; }
 </style>
 
-<div class="main-content">
-    <div class="topbar">
+<main class="pl-64 min-h-screen bg-[#f2f4f7]">
+
+    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
-            <h4 class="mb-0 fw-bold">Live Slot Map</h4>
-            <small class="text-muted">Visualisasi pemetaan slot kendaraan per lantai secara real-time.</small>
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Live Slot Map</h1>
+            <p class="text-slate-400 text-xs font-inter mt-0.5">Visualisasi pemetaan slot kendaraan per lantai secara real-time.</p>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-2 rounded-pill d-flex align-items-center">
-                <div class="spinner-grow spinner-grow-sm text-primary me-2" role="status" style="width: 10px; height: 10px;"></div>
-                <span id="lastRefresh">Live Sync</span>
-            </span>
+        <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="lastRefresh">Live Sync</span>
         </div>
-    </div>
+    </header>
 
-    <!-- Legend -->
-    <div class="glass-panel p-3 mb-4 d-flex justify-content-center gap-4 flex-wrap" style="background: rgba(15, 23, 42, 0.6);">
-        <span class="text-white small fw-bold"><i class="fas fa-layer-group text-muted me-2"></i>LEGENDA:</span>
-        <span class="text-muted small"><span class="legend-dot bg-success border border-success me-2"></span> Slot Tersedia</span>
-        <span class="text-muted small"><span class="legend-dot bg-danger border border-danger me-2"></span> Kendaraan Terparkir</span>
-        <span class="text-muted small"><span class="legend-dot bg-warning border border-warning me-2"></span> Telah Direservasi</span>
-        <span class="text-muted small"><span class="legend-dot bg-secondary border border-secondary me-2" style="background:#475569"></span> Dalam Perawatan</span>
-    </div>
+    <div class="p-8 max-w-[1440px] mx-auto">
 
-    <?php foreach ($floors as $floor_code => $types): ?>
-    <div class="glass-panel mb-5 p-0 overflow-hidden">
-        <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--border-glass) !important; background: rgba(0,0,0,0.2);">
-            <div>
-                <h5 class="mb-1 fw-bold text-white d-flex align-items-center">
-                    <i class="fas fa-building text-primary me-2 opacity-75"></i> 
-                    <?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?>
-                </h5>
-                <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code]; ?>
-                <div class="text-muted small d-flex gap-3 mt-2">
-                    <span><i class="fas fa-car-side me-1"></i> Mobil: <strong><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
-                    <span><i class="fas fa-motorcycle me-1"></i> Motor: <strong><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
-                </div>
-                <?php endif; ?>
+        <!-- Legend -->
+        <div class="bg-white rounded-2xl px-6 py-4 mb-6 flex flex-wrap items-center gap-6">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Legenda:</span>
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
+                <span class="w-4 h-4 rounded bg-emerald-100 border border-emerald-300 inline-block"></span> Tersedia
             </div>
-            <div>
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
+                <span class="w-4 h-4 rounded bg-red-100 border border-red-300 inline-block"></span> Terisi
+            </div>
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
+                <span class="w-4 h-4 rounded bg-amber-100 border border-amber-300 inline-block"></span> Direservasi
+            </div>
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
+                <span class="w-4 h-4 rounded bg-slate-200 border border-slate-300 inline-block"></span> Perawatan
+            </div>
+        </div>
+
+        <?php foreach ($floors as $floor_code => $types): ?>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+            <!-- Floor header -->
+            <div class="px-6 py-5 flex justify-between items-center border-b border-slate-100">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-slate-400 text-xl">apartment</span>
+                        <h2 class="font-manrope font-bold text-lg text-slate-900"><?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?></h2>
+                    </div>
+                    <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code]; ?>
+                    <div class="text-slate-400 text-xs font-inter flex gap-4 mt-1 ml-7">
+                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-blue-400">directions_car</span> Mobil: <strong class="text-slate-700"><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
+                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-emerald-400">two_wheeler</span> Motor: <strong class="text-slate-700"><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
                 <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code];
-                $total_avail = $f['car_avail'] + $f['moto_avail'];
-                $total_all   = $f['car_total'] + $f['moto_total'];
-                $pct = $total_all > 0 ? round($total_avail / $total_all * 100) : 0;
-                $p_cls = $pct > 50 ? 'success' : ($pct > 20 ? 'warning' : 'danger');
+                    $total_avail = $f['car_avail'] + $f['moto_avail'];
+                    $total_all   = $f['car_total'] + $f['moto_total'];
+                    $pct = $total_all > 0 ? round($total_avail / $total_all * 100) : 0;
+                    $pct_cls = $pct > 50 ? 'bg-emerald-50 text-emerald-700' : ($pct > 20 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700');
                 ?>
-                <div class="text-end">
-                    <div class="text-uppercase small fw-bold text-muted mb-1" style="letter-spacing:1px;">Kapasitas</div>
-                    <span class="badge bg-<?= $p_cls ?> bg-opacity-25 border border-<?= $p_cls ?> text-<?= $p_cls ?> fs-5 px-3 py-2 rounded">
-                        <?= $pct ?>% Free
-                    </span>
+                <div class="text-right">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Kapasitas</div>
+                    <span class="font-manrope font-extrabold text-2xl <?= explode(' ', $pct_cls)[1] ?>"><?= $pct ?>%</span>
+                    <div class="text-slate-400 text-xs font-inter">tersedia</div>
                 </div>
                 <?php endif; ?>
             </div>
-        </div>
 
-        <div class="p-4">
-            <?php foreach ($types as $type => $slots): ?>
-            <h6 class="text-muted text-uppercase fw-bold mb-3 d-flex align-items-center" style="letter-spacing: 1px; font-size: 12px;">
-                <span style="width: 30px; height: 1px; background: var(--border-glass); margin-right: 15px;"></span>
-                <?= $type === 'car' ? '<i class="fas fa-car text-primary me-2"></i> Zona Mobil' : '<i class="fas fa-motorcycle text-success me-2"></i> Zona Motor' ?>
-                <span style="flex-grow: 1; height: 1px; background: var(--border-glass); margin-left: 15px;"></span>
-            </h6>
-            
-            <div class="slot-grid mb-5">
-                <?php foreach ($slots as $s):
-                    $icon = $s['slot_type'] === 'car' ? '🚗' : '🏍️';
-                    $mins = (int)$s['minutes_parked'];
-                    $dur  = $mins > 0 ? ($mins >= 60 ? floor($mins/60).'j '.($mins%60).'m' : $mins.'m') : '';
-                    $tooltip = '';
-                    if ($s['status'] === 'occupied') {
-                        $tooltip = "<div class='fw-bold text-info mb-1'>" . ($s['plate_number'] ?? 'Unknown') . "</div>" . 
-                                   "<div class='text-muted small'><i class='far fa-clock me-1'></i> " . $dur . "</div>";
-                    } else if ($s['status'] === 'reserved') {
-                        $tooltip = "Slot telah direservasi.";
-                    } else if ($s['status'] === 'maintenance') {
-                        $tooltip = "Slot sedang dalam perbaikan.";
-                    }
-                ?>
-                <div class="slot-box <?= $s['status'] ?>">
-                    <?php if ($tooltip): ?>
-                    <div class="tooltip-slot"><?= $tooltip ?></div>
-                    <?php endif; ?>
-                    
-                    <span class="slot-icon" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
-                        <?php if ($s['status'] === 'available'): ?>
-                            <?= $s['slot_type'] === 'car' ? '<i class="fas fa-car-side text-success"></i>' : '<i class="fas fa-motorcycle text-success"></i>' ?>
-                        <?php elseif ($s['status'] === 'occupied'): ?>
-                            <?= $s['slot_type'] === 'car' ? '<i class="fas fa-car-side text-danger"></i>' : '<i class="fas fa-motorcycle text-danger"></i>' ?>
-                        <?php elseif ($s['status'] === 'reserved'): ?>
-                            <i class="fas fa-lock text-warning"></i>
-                        <?php else: ?>
-                            <i class="fas fa-tools text-secondary"></i>
-                        <?php endif; ?>
-                    </span>
-                    
-                    <div class="slot-num"><?= htmlspecialchars($s['slot_number']) ?></div>
-                    
-                    <?php if ($s['status'] === 'occupied' && $s['plate_number']): ?>
-                    <div class="slot-plate fw-bold font-monospace"><?= htmlspecialchars($s['plate_number']) ?></div>
-                    <div class="slot-duration"><i class="far fa-clock me-1"></i><?= $dur ?></div>
-                    <?php endif; ?>
+            <div class="p-6">
+                <?php foreach ($types as $type => $slots): ?>
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-outlined text-slate-400 text-base"><?= $type === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter"><?= $type === 'car' ? 'Zona Mobil' : 'Zona Motor' ?></span>
+                        <div class="flex-1 h-px bg-slate-100"></div>
+                    </div>
+                    <div class="slot-grid">
+                        <?php foreach ($slots as $s):
+                            $mins = (int)$s['minutes_parked'];
+                            $dur  = $mins > 0 ? ($mins >= 60 ? floor($mins/60).'j '.($mins%60).'m' : $mins.'m') : '';
+                            $tooltip = '';
+                            if ($s['status'] === 'occupied') {
+                                $tooltip = "<strong>" . ($s['plate_number'] ?? 'Unknown') . "</strong><br>" . ($dur ? "⏱ $dur" : '');
+                            } elseif ($s['status'] === 'reserved') {
+                                $tooltip = "Slot telah direservasi.";
+                            } elseif ($s['status'] === 'maintenance') {
+                                $tooltip = "Slot sedang dalam perbaikan.";
+                            }
+                        ?>
+                        <div class="slot-box <?= $s['status'] ?>">
+                            <?php if ($tooltip): ?>
+                            <div class="tooltip-slot"><?= $tooltip ?></div>
+                            <?php endif; ?>
+                            <span class="slot-icon">
+                                <?php if ($s['status'] === 'available'): ?>
+                                    <?= $s['slot_type'] === 'car' ? '🟢' : '🟢' ?>
+                                <?php elseif ($s['status'] === 'occupied'): ?>
+                                    <?= $s['slot_type'] === 'car' ? '🚗' : '🏍️' ?>
+                                <?php elseif ($s['status'] === 'reserved'): ?>
+                                    🔒
+                                <?php else: ?>
+                                    🔧
+                                <?php endif; ?>
+                            </span>
+                            <div class="slot-num"><?= htmlspecialchars($s['slot_number']) ?></div>
+                            <?php if ($s['status'] === 'occupied' && $s['plate_number']): ?>
+                            <div class="slot-plate"><?= htmlspecialchars($s['plate_number']) ?></div>
+                            <div class="slot-duration"><?= $dur ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
         </div>
+        <?php endforeach; ?>
     </div>
-    <?php endforeach; ?>
-</div>
+</main>
 
 <script>
 let countdown = 30;
@@ -200,7 +197,7 @@ setInterval(() => {
     if (countdown <= 0) {
         location.reload();
     } else {
-        badge.innerHTML = `Syncing in ${countdown}s`;
+        badge.textContent = `Syncing in ${countdown}s`;
     }
 }, 1000);
 </script>

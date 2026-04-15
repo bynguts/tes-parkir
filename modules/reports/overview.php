@@ -3,15 +3,18 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 
 $summary   = get_slot_summary($pdo);
-$car_avail = $summary['car']['avail'] ?? 0;
-$car_total = $summary['car']['total'] ?? 0;
+$car_avail  = $summary['car']['avail'] ?? 0;
+$car_total  = $summary['car']['total'] ?? 0;
 $moto_avail = $summary['motorcycle']['avail'] ?? 0;
 $moto_total = $summary['motorcycle']['total'] ?? 0;
 
-$car_pct  = $car_total  > 0 ? ($car_avail  / $car_total)  * 100 : 100;
-$moto_pct = $moto_total > 0 ? ($moto_avail / $moto_total) * 100 : 100;
+$car_pct  = $car_total  > 0 ? round(($car_avail  / $car_total)  * 100) : 100;
+$moto_pct = $moto_total > 0 ? round(($moto_avail / $moto_total) * 100) : 100;
 
-$page_title = 'Dashboard';
+$active    = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE payment_status='unpaid'")->fetchColumn();
+$today_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
+
+$page_title = 'Dashboard Overview';
 include '../../includes/header.php';
 
 function vite_widget_tags(string $entry): string {
@@ -27,158 +30,125 @@ function vite_widget_tags(string $entry): string {
 }
 ?>
 
-<!-- Main -->
-<div class="main-content">
-    <div class="topbar">
-        <div>
-            <h4 class="mb-0 fw-bold">Dashboard Overview</h4>
-            <small class="text-muted"><?= date('l, d F Y H:i') ?></small>
-        </div>
-        <div class="d-flex align-items-center gap-3 glass-card px-4 py-2" style="border-radius: 50px;">
-            <span class="badge bg-success bg-opacity-25 text-success border border-success"><?= strtoupper($role) ?></span>
-            <span class="fw-semibold"><i class="fas fa-user-circle me-2 text-muted"></i><?= $username ?></span>
-        </div>
-    </div>
+<main class="pl-64 min-h-screen bg-[#f2f4f7]">
 
-    <!-- Alerts -->
-    <?php if ($car_pct <= 20 && $car_total > 0): ?>
-    <div class="alert alert-danger glass-panel mb-4 p-3 d-flex align-items-center" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
-        <i class="fas fa-exclamation-triangle fs-4 text-danger me-3"></i>
+    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
-            <strong class="text-danger d-block">Peringatan Kapasitas Mobil!</strong>
-            <span class="text-white small">Slot mobil hampir penuh — hanya <?= $car_avail ?> dari <?= $car_total ?> slot tersedia.</span>
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Dashboard Overview</h1>
+            <p class="text-slate-400 text-xs font-inter mt-0.5"><?= date('l, d F Y H:i') ?></p>
         </div>
-    </div>
-    <?php endif; ?>
-    
-    <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
-    <div class="alert alert-warning glass-panel mb-4 p-3 d-flex align-items-center" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3);">
-        <i class="fas fa-exclamation-triangle fs-4 text-warning me-3"></i>
-        <div>
-            <strong class="text-warning d-block">Peringatan Kapasitas Motor!</strong>
-            <span class="text-white small">Slot motor hampir penuh — hanya <?= $moto_avail ?> dari <?= $moto_total ?> slot tersedia.</span>
+        <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
+            <span class="text-slate-300">|</span>
+            <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
         </div>
-    </div>
-    <?php endif; ?>
+    </header>
 
-    <!-- Stats Row -->
-    <div class="row g-4 mb-5">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Slot Mobil</div>
-                        <div class="fs-2 fw-bold text-primary-glow mb-1">
-                            <?= $car_avail ?><span class="fs-5 text-muted fw-normal ms-1">/<?= $car_total ?></span>
+    <div class="p-8 max-w-[1440px] mx-auto">
+
+        <!-- Alerts -->
+        <?php if ($car_pct <= 20 && $car_total > 0): ?>
+        <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-4">
+            <span class="material-symbols-outlined text-red-500">warning</span>
+            <div>
+                <p class="font-inter font-semibold text-red-700 text-sm">Kapasitas Mobil Hampir Penuh!</p>
+                <p class="font-inter text-red-500 text-xs">Hanya <?= $car_avail ?> dari <?= $car_total ?> slot tersedia.</p>
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
+        <div class="flex items-center gap-3 bg-amber-50 rounded-xl px-5 py-4 mb-4">
+            <span class="material-symbols-outlined text-amber-500">warning</span>
+            <div>
+                <p class="font-inter font-semibold text-amber-700 text-sm">Kapasitas Motor Hampir Penuh!</p>
+                <p class="font-inter text-amber-500 text-xs">Hanya <?= $moto_avail ?> dari <?= $moto_total ?> slot tersedia.</p>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Bento Grid -->
+        <div class="grid grid-cols-12 gap-4 mb-8">
+            <!-- Revenue hero -->
+            <div class="col-span-12 lg:col-span-5 bg-slate-900 rounded-2xl p-8 flex flex-col justify-between min-h-[180px]">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Pendapatan Hari Ini</p>
+                    <span class="material-symbols-outlined text-slate-600">account_balance_wallet</span>
+                </div>
+                <div id="today-revenue-text">
+                    <div class="font-manrope font-extrabold text-4xl text-white leading-none"><?= fmt_idr((float)$today_rev) ?></div>
+                    <p class="text-slate-500 text-xs font-inter mt-2"><?= date('d M Y') ?></p>
+                </div>
+            </div>
+
+            <!-- Active vehicles -->
+            <div class="col-span-6 lg:col-span-3 bg-white rounded-2xl p-6 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Kendaraan Aktif</p>
+                    <span class="material-symbols-outlined text-slate-300">timer</span>
+                </div>
+                <div class="font-manrope font-extrabold text-5xl text-slate-900"><?= $active ?></div>
+                <p class="text-slate-400 text-xs font-inter mt-2">Sedang parkir saat ini</p>
+            </div>
+
+            <!-- Slot Mobil -->
+            <div class="col-span-6 lg:col-span-4 bg-white rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Mobil</p>
+                    <span class="material-symbols-outlined text-slate-300 text-xl">directions_car</span>
+                </div>
+                <div class="flex items-baseline gap-2 mb-3">
+                    <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $car_avail ?></span>
+                    <span class="text-slate-400 text-sm font-inter">/ <?= $car_total ?></span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="h-2 rounded-full transition-all <?= $car_pct > 50 ? 'bg-emerald-500' : ($car_pct > 20 ? 'bg-amber-400' : 'bg-red-500') ?>" style="width:<?= $car_pct ?>%"></div>
+                </div>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= $car_pct ?>% tersedia</p>
+            </div>
+
+            <!-- Slot Motor -->
+            <div class="col-span-12 lg:col-span-4 bg-white rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Motor</p>
+                    <span class="material-symbols-outlined text-slate-300 text-xl">two_wheeler</span>
+                </div>
+                <div class="flex items-baseline gap-2 mb-3">
+                    <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $moto_avail ?></span>
+                    <span class="text-slate-400 text-sm font-inter">/ <?= $moto_total ?></span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="h-2 rounded-full transition-all <?= $moto_pct > 50 ? 'bg-emerald-500' : ($moto_pct > 20 ? 'bg-amber-400' : 'bg-red-500') ?>" style="width:<?= $moto_pct ?>%"></div>
+                </div>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= $moto_pct ?>% tersedia</p>
+            </div>
+
+            <!-- Quick Access -->
+            <div class="col-span-12 lg:col-span-8 bg-white rounded-2xl p-6">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-5">Akses Cepat</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <?php $quick = [
+                        ['../operations/gate_simulator.php', 'door_sensor',      'Smart Gate',     'Entry & exit gate'],
+                        ['../operations/reservation.php',    'event_available',   'Reservasi',      'Pre-booking slot'],
+                        ['slot_map.php',                     'grid_view',         'Peta Slot',      'Real-time slot map'],
+                        ['../operations/active_vehicles.php','directions_car',    'Kendaraan Aktif','Monitor kendaraan'],
+                        ['revenue.php',                      'bar_chart_4_bars',  'Revenue',        'Laporan finansial'],
+                        ['../operations/scan_log.php',       'receipt_long',      'Scan Log',       'Log sensor gate'],
+                    ];
+                    foreach ($quick as $q): ?>
+                    <a href="<?= $q[0] ?>" class="flex flex-col gap-2 bg-slate-50 hover:bg-slate-100 rounded-xl p-4 transition-all group">
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-700 text-2xl transition-colors"><?= $q[1] ?></span>
+                        <div>
+                            <div class="font-inter font-semibold text-sm text-slate-800"><?= $q[2] ?></div>
+                            <div class="font-inter text-xs text-slate-400 mt-0.5"><?= $q[3] ?></div>
                         </div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">
-                        <i class="fas fa-car-side"></i>
-                    </div>
+                    </a>
+                    <?php endforeach; ?>
                 </div>
-                <div class="slot-bar">
-                    <div class="slot-bar-fill bg-primary" style="width:<?= $car_total > 0 ? ($car_avail/$car_total*100) : 0 ?>%; box-shadow: 0 0 10px var(--primary);"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Slot Motor</div>
-                        <div class="fs-2 fw-bold text-success-glow mb-1">
-                            <?= $moto_avail ?><span class="fs-5 text-muted fw-normal ms-1">/<?= $moto_total ?></span>
-                        </div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-                        <i class="fas fa-motorcycle"></i>
-                    </div>
-                </div>
-                <div class="slot-bar">
-                    <div class="slot-bar-fill bg-success" style="width:<?= $moto_total > 0 ? ($moto_avail/$moto_total*100) : 0 ?>%; box-shadow: 0 0 10px var(--success);"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <?php
-            $active = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE payment_status='unpaid'")->fetchColumn();
-            ?>
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Kendaraan Aktif</div>
-                        <div class="fs-2 fw-bold text-warning mb-1" style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"><?= $active ?></div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                </div>
-                <div class="text-muted small mt-3"><i class="fas fa-circle text-warning me-1" style="font-size:8px;"></i>Sedang parkir saat ini</div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <?php
-            $today_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
-            ?>
-            <div class="glass-card stat-card position-relative overflow-hidden">
-                <div id="today-revenue-widget-root"
-                     class="position-absolute top-0 start-0 w-100 h-100"
-                     style="z-index: 0; pointer-events: none;"
-                     data-kpi="<?= (int)$today_rev ?>"></div>
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Pendapatan Hari Ini</div>
-                        <div id="today-revenue-text" class="fs-4 fw-bold text-info mb-1 position-relative" style="z-index: 1; text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);"><?= fmt_idr((float)$today_rev) ?></div>
-                    </div>
-                    <div class="icon-box position-relative" style="z-index: 1; background: rgba(6, 182, 212, 0.1); color: #06B6D4;">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                </div>
-                <div class="text-muted small mt-3"><i class="fas fa-calendar-day me-1"></i><?= date('d M Y') ?></div>
             </div>
         </div>
     </div>
-
-    <!-- Quick Menu -->
-    <h6 class="text-muted fw-semibold mb-3 text-uppercase" style="font-size:12px; letter-spacing:.1em;"><i class="fas fa-layer-group me-2"></i>Akses Cepat</h6>
-    <div class="menu-grid">
-        <a href="gate_simulator.php" class="glass-card menu-card">
-            <div class="icon text-primary"><i class="fas fa-door-open"></i></div>
-            <h6>Smart Gate</h6>
-            <p>Entry & exit simulator dengan engine pembaca barcodde & QR scan</p>
-        </a>
-        <a href="reservation.php" class="glass-card menu-card">
-            <div class="icon text-success"><i class="fas fa-calendar-check"></i></div>
-            <h6>Reservasi</h6>
-            <p>Kelola pre-booking dan alokasi slot parkir premium di muka.</p>
-        </a>
-        <a href="slot_map.php" class="glass-card menu-card">
-            <div class="icon text-warning"><i class="fas fa-map-marked-alt"></i></div>
-            <h6>Peta Slot</h6>
-            <p>Visualisasi pemetaan slot kendaraan per lantai secara real-time.</p>
-        </a>
-        <a href="dashboard.php" class="glass-card menu-card">
-            <div class="icon text-info"><i class="fas fa-car"></i></div>
-            <h6>Kendaraan Aktif</h6>
-            <p>Monitor seluruh kendaraan yang terparkir dan durasi kunjungannya.</p>
-        </a>
-        <a href="dashboard_revenue.php" class="glass-card menu-card">
-            <div class="icon text-danger"><i class="fas fa-chart-line"></i></div>
-            <h6>Laporan Revenue</h6>
-            <p>Analisis tren pendapatan harian dan agregat finansial.</p>
-        </a>
-        <a href="scan_log.php" class="glass-card menu-card">
-            <div class="icon" style="color:#A855F7;"><i class="fas fa-history"></i></div>
-            <h6>Scan Log</h6>
-            <p>Log forensik aktivitas sensor gate masuk dan keluar secara mendetail.</p>
-        </a>
-    </div>
-</div>
+</main>
 
 <?= vite_widget_tags('src/today-revenue-widget.tsx') ?>
-
 <?php include '../../includes/footer.php'; ?>
-

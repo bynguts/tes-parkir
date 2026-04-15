@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor_id) VALUES (?,?,?)")
                         ->execute([$num, $type, $floor_id]);
-                    $msg = "Slot <strong class='text-white'>{$num}</strong> berhasil diinisialisasi dalam database.";
+                    $msg = "Slot <strong>{$num}</strong> berhasil diinisialisasi dalam database.";
                 } catch (PDOException $e) {
-                    $error = 'Nomor slot sudah terdaftar pada floor record.';
+                    $error = 'Nomor slot sudah terdaftar pada floor record ini.';
                 }
             }
         }
@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id     = (int)$_POST['slot_id'];
         $status = $_POST['status'] ?? '';
         if (!in_array($status, ['available','occupied','reserved','maintenance'])) {
-            $error = 'Nilai instance state tidak valid.';
+            $error = 'Nilai state tidak valid.';
         } else {
             $pdo->prepare("UPDATE parking_slot SET status=? WHERE slot_id=?")->execute([$status, $id]);
-            $msg = 'State mesin slot berhasil disinkronisasi.';
+            $msg = 'State slot berhasil disinkronisasi.';
         }
     }
 
@@ -66,206 +66,170 @@ $slots = $pdo->query("
 
 $floors_list = $pdo->query("SELECT floor_id, floor_code, floor_name FROM floor ORDER BY floor_code")->fetchAll();
 
-$page_title = 'Kelola Slot Parkir';
+$page_title = 'Kelola Inventori Slot';
 include '../../includes/header.php';
 ?>
 
-<div class="main-content">
-    <div class="topbar">
+<main class="pl-64 min-h-screen bg-[#f2f4f7]">
+
+    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
-            <h4 class="mb-0 fw-bold">Manajemen Inventori Slot</h4>
-            <small class="text-muted">Konfigurasi kapasitas, letak, dan penguncian state pada area parkir.</small>
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Inventori Slot Parkir</h1>
+            <p class="text-slate-400 text-xs font-inter mt-0.5">Konfigurasi kapasitas, letak, dan state slot pada area parkir.</p>
         </div>
-    </div>
+        <button onclick="document.getElementById('addModal').classList.remove('hidden')"
+                class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
+            <span class="material-symbols-outlined text-base">add_circle</span>
+            Tambah Slot
+        </button>
+    </header>
 
-    <?php if ($msg): ?>
-    <div class="alert alert-success glass-panel mb-4 p-3 border border-success border-opacity-50 d-flex align-items-center">
-        <i class="fas fa-check-circle fs-4 text-success me-3"></i>
-        <div class="text-white"><?= $msg ?></div>
-    </div>
-    <?php endif; ?>
-    <?php if ($error): ?>
-    <div class="alert alert-danger glass-panel mb-4 p-3 border border-danger border-opacity-50 d-flex align-items-center">
-        <i class="fas fa-exclamation-triangle fs-4 text-danger me-3"></i>
-        <div class="text-white"><?= htmlspecialchars($error) ?></div>
-    </div>
-    <?php endif; ?>
+    <div class="p-8 max-w-[1440px] mx-auto">
 
-    <div class="row g-4">
-        <!-- Add slot form -->
-        <div class="col-xl-4">
-            <div class="glass-panel sticky-top" style="top: 100px;">
-                <div class="p-4 border-bottom" style="border-color: var(--border-glass) !important;">
-                    <h5 class="mb-0 fw-bold text-white"><i class="fas fa-plus-square text-primary me-2"></i>Inisialisasi Slot Baru</h5>
-                </div>
-                <div class="p-4">
-                    <form method="POST">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="add">
-                        
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Nomor Node (Slot)</label>
-                            <input type="text" name="slot_number" class="form-control form-control-lg bg-dark text-white font-monospace border-secondary"
-                                   placeholder="C-G11" required oninput="this.value=this.value.toUpperCase()">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Tipe Kendaraan</label>
-                            <select name="slot_type" class="form-select bg-dark text-white border-secondary" required>
-                                <option value="car">🚗 Kelas Mobil</option>
-                                <option value="motorcycle">🏍️ Kelas Motor</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Mapping Lantai</label>
-                            <select name="floor_id" class="form-select bg-dark text-white border-secondary" required>
-                                <?php foreach ($floors_list as $fl): ?>
-                                <option value="<?= $fl['floor_id'] ?>">
-                                    [<?= htmlspecialchars($fl['floor_code']) ?>] <?= htmlspecialchars($fl['floor_name']) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold mt-2" style="border-radius: 12px; letter-spacing: 1px;">
-                            DEPLOY REGISTRASI SLOT
-                        </button>
-                    </form>
-                </div>
-            </div>
+        <?php if ($msg): ?>
+        <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
+            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
         </div>
+        <?php endif; ?>
+        <?php if ($error): ?>
+        <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
+            <span class="material-symbols-outlined text-red-600">error</span>
+            <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
+        </div>
+        <?php endif; ?>
 
-        <!-- Slot list -->
-        <div class="col-xl-8">
-            <div class="glass-panel overflow-hidden">
-                <div class="p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="border-color: var(--border-glass) !important;">
-                    <div>
-                        <h5 class="mb-0 fw-bold text-white"><i class="fas fa-server text-info me-2"></i>Database Slot</h5>
-                        <p class="small text-muted mb-0 mt-1">Menampilkan <?= count($slots) ?> endpoint slot terdaftar.</p>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <select id="pageSize" class="form-select bg-dark border-secondary text-white" style="width: auto; border-radius: 8px;" onchange="updatePagination()">
-                            <option value="30">30 Baris</option>
-                            <option value="50">50 Baris</option>
-                            <option value="all" selected>All (Semua)</option>
-                        </select>
-                        <div class="position-relative">
-                            <i class="fas fa-search position-absolute top-50 translate-middle-y text-muted ms-3"></i>
-                            <input type="text" id="searchSlot" class="form-control bg-dark border-secondary text-white ps-5"
-                                   placeholder="Filter ID atau status..." oninput="this.value=this.value.toUpperCase(); filterSlots(this.value)" style="width: 250px; border-radius: 50px;" list="slotSuggestions" autocomplete="off">
-                            <datalist id="slotSuggestions">
-                                <?php
-                                $suggestions = [];
-                                foreach ($slots as $s) {
-                                    $suggestions[$s['slot_number']] = 1;
-                                    $suggestions[strtoupper($s['status'])] = 1;
-                                    $suggestions[$s['floor_code']] = 1;
-                                }
-                                foreach (array_keys($suggestions) as $sg): ?>
-                                    <option value="<?= htmlspecialchars($sg) ?>"></option>
-                                <?php endforeach; ?>
-                            </datalist>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="table-responsive" style="border: none; max-height: 700px; overflow-y: auto;">
-                    <table class="table table-glass table-hover mb-0" id="slotTable">
-                        <thead style="position: sticky; top:0; background: var(--card-bg); z-index: 10;">
-                            <tr>
-                                <th class="ps-4">No. Node</th>
-                                <th>Klasifikasi</th>
-                                <th>Lokasi (Zona)</th>
-                                <th>State Realtime</th>
-                                <th class="text-end pe-4">Command</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($slots as $s): 
-                            $status_color = [
-                                'available' => 'success',
-                                'occupied' => 'danger',
-                                'reserved' => 'warning',
-                                'maintenance' => 'secondary'
-                            ][$s['status']];
-                        ?>
-                        <tr>
-                            <td class="ps-4 fw-bold font-monospace fs-6 align-middle text-white"><?= htmlspecialchars($s['slot_number']) ?></td>
-                            <td class="align-middle">
-                                <?= $s['slot_type'] === 'car' ? '<span class="text-primary"><i class="fas fa-car-side me-2"></i>Mobil</span>' : '<span class="text-success"><i class="fas fa-motorcycle me-2"></i>Motor</span>' ?>
-                            </td>
-                            <td class="align-middle">
-                                <span class="badge bg-dark border border-secondary text-light fw-bold" style="letter-spacing: 1px;">[<?= htmlspecialchars($s['floor_code']) ?>]</span>
-                                <small class="text-muted ms-2"><?= htmlspecialchars($s['floor_name']) ?></small>
-                            </td>
-                            <td class="align-middle">
-                                <span class="badge bg-<?= $status_color ?> bg-opacity-25 text-<?= $status_color ?> border border-<?= $status_color ?> px-3 py-1 rounded-pill">
-                                    <i class="fas fa-circle me-1" style="font-size: 8px; vertical-align: middle;"></i> <?= strtoupper($s['status']) ?>
-                                </span>
-                            </td>
-                            <td class="text-end pe-4 align-middle">
-                                <div class="d-flex gap-2 justify-content-end">
-                                    <!-- Change status -->
-                                    <form method="POST" class="d-inline">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="action" value="status">
-                                        <input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>">
-                                        <select name="status" class="form-select form-select-sm bg-dark border-secondary text-white"
-                                                onchange="this.form.submit()" style="width: 140px; cursor: pointer;">
-                                            <option value="available"   <?= $s['status'] === 'available' ? 'selected' : '' ?>>⟳ Available</option>
-                                            <option value="occupied"    <?= $s['status'] === 'occupied' ? 'selected' : '' ?>>⟳ Occupied</option>
-                                            <option value="reserved"    <?= $s['status'] === 'reserved' ? 'selected' : '' ?>>⟳ Reserved</option>
-                                            <option value="maintenance" <?= $s['status'] === 'maintenance' ? 'selected' : '' ?>>⟳ Maint.</option>
-                                        </select>
-                                    </form>
-                                    <!-- Delete -->
-                                    <form method="POST" onsubmit="return confirm('Peringatan: Mengapus registry slot ini bersifat permanen. Lanjutkan?')" class="d-inline">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>">
-                                        <button class="btn btn-outline-danger btn-sm px-3 rounded" title="Hapus Node Registry">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-100">
+                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Lantai</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tipe</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Status</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Aksi</th>
                         </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                    <?php if (empty($slots)): ?>
+                    <tr><td colspan="4" class="text-center py-16">
+                        <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">local_parking</span>
+                        <p class="text-slate-400 text-sm font-inter">Belum ada slot yang dikonfigurasi.</p>
+                    </td></tr>
+                    <?php else: foreach ($slots as $s):
+                        $stMap = [
+                            'available'   => ['bg-emerald-50 text-emerald-700',  'Tersedia'],
+                            'occupied'    => ['bg-red-50 text-red-700',          'Terisi'],
+                            'reserved'    => ['bg-amber-50 text-amber-700',      'Direservasi'],
+                            'maintenance' => ['bg-slate-100 text-slate-500',     'Perawatan'],
+                        ];
+                        [$stCls, $stLabel] = $stMap[$s['status']] ?? ['bg-slate-100 text-slate-500', $s['status']];
+                    ?>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($s['slot_number']) ?></div>
+                            <div class="text-slate-400 text-xs font-inter mt-0.5"><?= htmlspecialchars($s['floor_code']) ?> — <?= htmlspecialchars($s['floor_name']) ?></div>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="flex items-center gap-2 text-slate-600 text-sm font-inter">
+                                <span class="material-symbols-outlined text-slate-400 text-base"><?= $s['slot_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                                <?= $s['slot_type'] === 'car' ? 'Mobil' : 'Motor' ?>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full font-inter <?= $stCls ?>"><?= $stLabel ?></span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                <!-- Status change -->
+                                <form method="POST" class="flex items-center gap-2">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="status">
+                                    <input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>">
+                                    <select name="status" onchange="this.form.submit()"
+                                            class="bg-slate-100 border-none rounded-full px-3 py-1.5 text-xs font-bold font-inter text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none cursor-pointer">
+                                        <?php foreach (['available','occupied','reserved','maintenance'] as $st): ?>
+                                        <option value="<?= $st ?>" <?= $s['status'] === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </form>
+
+                                <!-- Delete -->
+                                <?php if ($s['status'] !== 'occupied'): ?>
+                                <form method="POST" onsubmit="return confirm('Hapus slot <?= htmlspecialchars($s['slot_number'], ENT_QUOTES) ?> secara permanen?')">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>">
+                                    <button class="flex items-center gap-1 text-red-600 bg-red-50 hover:bg-red-100 text-xs font-bold font-inter px-3 py-2 rounded-xl transition-all">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+</main>
+
+<!-- Add Slot Modal -->
+<div id="addModal" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-slate-600">add_box</span>
+                <h2 class="font-manrope font-bold text-lg text-slate-900">Inisialisasi Slot Baru</h2>
+            </div>
+            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form method="POST" class="p-6 space-y-4">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="add">
+
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Nomor Slot</label>
+                <input type="text" name="slot_number" required placeholder="Contoh: A-01"
+                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all"
+                       oninput="this.value=this.value.toUpperCase()">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Tipe Kendaraan</label>
+                <select name="slot_type" class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none">
+                    <option value="car">🚗 Mobil</option>
+                    <option value="motorcycle">🏍 Motor</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Lantai</label>
+                <select name="floor_id" class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none" required>
+                    <?php foreach ($floors_list as $f): ?>
+                    <option value="<?= $f['floor_id'] ?>"><?= htmlspecialchars($f['floor_code']) ?> — <?= htmlspecialchars($f['floor_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')"
+                        class="flex-1 bg-slate-100 text-slate-700 font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Batal</button>
+                <button type="submit"
+                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Simpan</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-let currentPage = 1;
-function updatePagination() {
-    let size = document.getElementById('pageSize').value;
-    let rows = document.querySelectorAll('#slotTable tbody tr');
-    let q = document.getElementById('searchSlot').value.toLowerCase();
-    
-    let visibleRows = Array.from(rows).filter(tr => tr.textContent.toLowerCase().includes(q));
-    
-    rows.forEach(tr => tr.style.display = 'none');
-    
-    if (size === 'all') {
-        visibleRows.forEach(tr => tr.style.display = '');
-    } else {
-        size = parseInt(size);
-        let start = (currentPage - 1) * size;
-        let end = start + size;
-        visibleRows.slice(start, end).forEach(tr => tr.style.display = '');
-    }
-}
-
-function filterSlots(q) {
-    currentPage = 1;
-    updatePagination();
-}
-
-document.addEventListener('DOMContentLoaded', updatePagination);
+document.getElementById('addModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+});
 </script>
+
 <?php include '../../includes/footer.php'; ?>

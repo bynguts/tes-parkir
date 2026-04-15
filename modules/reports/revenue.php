@@ -33,128 +33,112 @@ $page_title = 'Laporan Revenue';
 include '../../includes/header.php';
 ?>
 
-<div class="main-content">
-    <div class="topbar">
+<main class="pl-64 min-h-screen bg-[#f2f4f7]">
+
+    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
-            <h4 class="mb-0 fw-bold">Analytics & Revenue</h4>
-            <small class="text-muted">Ringkasan agregat finansial dan kinerja harian.</small>
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Analytics & Revenue</h1>
+            <p class="text-slate-400 text-xs font-inter mt-0.5">Ringkasan agregat finansial dan kinerja harian.</p>
         </div>
-    </div>
+    </header>
 
-    <!-- Summary Cards -->
-    <div class="row g-4 mb-5">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Total Trx</div>
-                        <div class="fs-2 fw-bold text-main mb-1">
-                            <?= number_format($totals['grand_total'] ?? 0) ?>
-                        </div>
-                    </div>
-                    <div class="icon-box">
-                        <i class="fas fa-receipt text-muted"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Mobil Keluar</div>
-                        <div class="fs-2 fw-bold text-primary-glow mb-1">
-                            <?= number_format($totals['total_cars'] ?? 0) ?>
-                        </div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">
-                        <i class="fas fa-car-side"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Motor Keluar</div>
-                        <div class="fs-2 fw-bold text-success-glow mb-1">
-                            <?= number_format($totals['total_motorcycles'] ?? 0) ?>
-                        </div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-                        <i class="fas fa-motorcycle"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="glass-card stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-muted small mb-2 text-uppercase fw-semibold" style="letter-spacing: 1px;">Total Net Revenue</div>
-                        <div class="fs-4 fw-bold text-warning mb-1" style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);">
-                            <?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?>
-                        </div>
-                    </div>
-                    <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="p-8 max-w-[1440px] mx-auto">
 
-    <!-- Daily Breakdown -->
-    <div class="glass-panel p-0 mb-5">
-        <div class="p-4 border-bottom" style="border-color: var(--border-glass) !important;">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-alt me-2 text-primary"></i>Breakdown Harian</h5>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-900 rounded-2xl p-6">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Total Trx</p>
+                <div class="font-manrope font-extrabold text-4xl text-white"><?= number_format($totals['grand_total'] ?? 0) ?></div>
+                <p class="text-slate-500 text-xs font-inter mt-2">transaksi lunas</p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Mobil Keluar</p>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-blue-500 text-xl">directions_car</span>
+                    <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_cars'] ?? 0) ?></div>
+                </div>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Motor Keluar</p>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-emerald-500 text-xl">two_wheeler</span>
+                    <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_motorcycles'] ?? 0) ?></div>
+                </div>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= fmt_idr((float)($totals['rev_motorcycle'] ?? 0)) ?></p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-amber-400">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Total Net Revenue</p>
+                <div class="font-manrope font-extrabold text-2xl text-amber-600"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></div>
+                <p class="text-slate-400 text-xs font-inter mt-2">pendapatan kumulatif</p>
+            </div>
         </div>
-        <div class="table-responsive" style="border: none;">
-            <table class="table table-glass table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-4">Tanggal Operasional</th>
-                        <th class="text-center">Volume Mobil</th>
-                        <th class="text-center">Volume Motor</th>
-                        <th class="text-center">Total Kunjungan</th>
-                        <th class="text-end">Rev. Mobil</th>
-                        <th class="text-end">Rev. Motor</th>
-                        <th class="text-end pe-4">Revenue Harian</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($daily)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="fas fa-folder-open fs-3 mb-3 d-block"></i>Belum ada data transaksi yang tercatat.</td></tr>
-                    <?php else: foreach ($daily as $row): ?>
-                    <tr>
-                        <td class="ps-4 fw-bold"><i class="far fa-calendar-check text-muted me-2"></i><?= date('D, d M Y', strtotime($row['date'])) ?></td>
-                        <td class="text-center"><span class="badge bg-primary bg-opacity-25 text-primary px-3"><?= $row['cars'] ?></span></td>
-                        <td class="text-center"><span class="badge bg-success bg-opacity-25 text-success px-3"><?= $row['motorcycles'] ?></span></td>
-                        <td class="text-center fw-bold fs-6"><?= $row['total_vehicles'] ?></td>
-                        <td class="text-end text-muted"><?= fmt_idr((float)$row['revenue_car']) ?></td>
-                        <td class="text-end text-muted"><?= fmt_idr((float)$row['revenue_motorcycle']) ?></td>
-                        <td class="text-end pe-4 fw-bold text-success-glow"><?= fmt_idr((float)$row['total_revenue']) ?></td>
-                    </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-                <tfoot style="background: rgba(0,0,0,0.2);">
-                    <tr>
-                        <td class="ps-4 text-uppercase fw-bold text-muted" style="letter-spacing:1px;">Kumulatif Total</td>
-                        <td class="text-center fw-bold"><?= number_format($totals['total_cars'] ?? 0) ?></td>
-                        <td class="text-center fw-bold"><?= number_format($totals['total_motorcycles'] ?? 0) ?></td>
-                        <td class="text-center fw-bold text-primary-glow fs-5"><?= number_format($totals['grand_total'] ?? 0) ?></td>
-                        <td class="text-end fw-bold"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></td>
-                        <td class="text-end fw-bold"><?= fmt_idr((float)($totals['rev_motorcycle'] ?? 0)) ?></td>
-                        <td class="text-end pe-4 fw-bold fs-5 text-warning" style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></td>
-                    </tr>
-                </tfoot>
-            </table>
+
+        <!-- Daily Breakdown Table -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-2">
+                <span class="material-symbols-outlined text-slate-400 text-xl">calendar_month</span>
+                <h2 class="font-manrope font-bold text-lg text-slate-900">Breakdown Harian</h2>
+            </div>
+            <div class="overflow-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-100">
+                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tanggal Operasional</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Vol. Mobil</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Vol. Motor</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Total Kunjungan</th>
+                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Rev. Mobil</th>
+                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Rev. Motor</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Revenue Harian</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <?php if (empty($daily)): ?>
+                        <tr>
+                            <td colspan="7" class="text-center py-16">
+                                <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">folder_open</span>
+                                <p class="text-slate-400 text-sm font-inter">Belum ada data transaksi yang tercatat.</p>
+                            </td>
+                        </tr>
+                        <?php else: foreach ($daily as $row): ?>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-inter font-semibold text-sm text-slate-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-slate-300 text-base">event</span>
+                                    <?= date('D, d M Y', strtotime($row['date'])) ?>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <span class="bg-blue-50 text-blue-700 text-xs font-bold font-inter px-3 py-1 rounded-full"><?= $row['cars'] ?></span>
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <span class="bg-emerald-50 text-emerald-700 text-xs font-bold font-inter px-3 py-1 rounded-full"><?= $row['motorcycles'] ?></span>
+                            </td>
+                            <td class="px-4 py-4 text-center font-manrope font-bold text-slate-900"><?= $row['total_vehicles'] ?></td>
+                            <td class="px-4 py-4 text-right text-slate-500 text-sm font-inter"><?= fmt_idr((float)$row['revenue_car']) ?></td>
+                            <td class="px-4 py-4 text-right text-slate-500 text-sm font-inter"><?= fmt_idr((float)$row['revenue_motorcycle']) ?></td>
+                            <td class="px-6 py-4 text-right font-manrope font-bold text-emerald-700"><?= fmt_idr((float)$row['total_revenue']) ?></td>
+                        </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                    <?php if (!empty($daily)): ?>
+                    <tfoot class="bg-slate-50">
+                        <tr class="border-t-2 border-slate-200">
+                            <td class="px-6 py-4 font-inter font-bold text-xs uppercase tracking-widest text-slate-400">Kumulatif Total</td>
+                            <td class="px-4 py-4 text-center font-manrope font-bold text-slate-900"><?= number_format($totals['total_cars'] ?? 0) ?></td>
+                            <td class="px-4 py-4 text-center font-manrope font-bold text-slate-900"><?= number_format($totals['total_motorcycles'] ?? 0) ?></td>
+                            <td class="px-4 py-4 text-center font-manrope font-extrabold text-2xl text-slate-900"><?= number_format($totals['grand_total'] ?? 0) ?></td>
+                            <td class="px-4 py-4 text-right font-inter font-bold text-slate-700"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></td>
+                            <td class="px-4 py-4 text-right font-inter font-bold text-slate-700"><?= fmt_idr((float)($totals['rev_motorcycle'] ?? 0)) ?></td>
+                            <td class="px-6 py-4 text-right font-manrope font-extrabold text-xl text-amber-600"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></td>
+                        </tr>
+                    </tfoot>
+                    <?php endif; ?>
+                </table>
+            </div>
         </div>
     </div>
-</div>
+</main>
 
 <?php include '../../includes/footer.php'; ?>

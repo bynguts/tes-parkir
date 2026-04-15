@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$slot) {
                 $error = 'Tidak ada slot tersedia untuk periode tersebut.';
             } else {
-                // Upsert vehicle
                 $pdo->prepare("INSERT INTO vehicle (plate_number, vehicle_type, owner_name, owner_phone)
                                 VALUES (?,?,?,?)
                                 ON DUPLICATE KEY UPDATE vehicle_type=VALUES(vehicle_type), owner_name=VALUES(owner_name), owner_phone=VALUES(owner_phone)")
@@ -59,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 VALUES (?,?,?,?,?,'confirmed')")
                     ->execute([$vid, $slot['slot_id'], $code, $date_from, $date_until]);
 
-                $msg = "Reservasi berhasil! Kode: <strong>{$code}</strong>";
+                $msg = "Reservasi berhasil! Kode: <strong class='font-mono'>{$code}</strong>";
             }
         }
     }
@@ -68,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res_id = (int)($_POST['reservation_id'] ?? 0);
         $pdo->prepare("UPDATE reservation SET status='cancelled' WHERE reservation_id=? AND status IN ('pending','confirmed')")
             ->execute([$res_id]);
-        $msg = 'Reservasi dibatalkan.';
+        $msg = 'Reservasi berhasil dibatalkan.';
     }
 }
 
@@ -86,278 +85,244 @@ $reservations = $pdo->query("
 
 $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 
-$page_title = 'Reservasi Slot';
+$page_title = 'Manajemen Reservasi';
 include '../../includes/header.php';
 ?>
 
-<div class="main-content">
-    <div class="topbar">
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+.flatpickr-calendar { font-family: 'Inter', sans-serif !important; background: #0f172a !important; border-radius: 16px !important; border: 1px solid #1e293b !important; box-shadow: 0 20px 60px rgba(0,0,0,.3) !important; }
+.flatpickr-day.selected { background: #0f172a !important; border-color: #0f172a !important; }
+.flatpickr-day:hover { background: #1e293b !important; }
+.flatpickr-months, .flatpickr-weekday, .flatpickr-day { color: #e2e8f0 !important; }
+.flatpickr-day.flatpickr-disabled { color: #475569 !important; }
+.flatpickr-custom-btn { display: flex; justify-content: space-between; padding: 8px 12px; border-top: 1px solid #1e293b; }
+.flatpickr-custom-btn button { background: transparent; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; }
+.flatpickr-custom-btn button.ok { color: #22c55e; }
+.flatpickr-prev-month, .flatpickr-next-month { color: #94a3b8 !important; fill: #94a3b8 !important; }
+</style>
+
+<main class="pl-64 min-h-screen bg-[#f2f4f7]">
+
+    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
-            <h4 class="mb-0 fw-bold">Manajemen Reservasi</h4>
-            <small class="text-muted">Kelola pre-booking dan alokasi prioritas.</small>
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Manajemen Reservasi</h1>
+            <p class="text-slate-400 text-xs font-inter mt-0.5">Kelola pre-booking dan alokasi prioritas slot parkir.</p>
         </div>
-    </div>
+        <span class="bg-slate-100 text-slate-600 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+            <?= count($reservations) ?> Aktif
+        </span>
+    </header>
 
-    <?php if ($msg): ?>
-    <div class="alert alert-success glass-panel mb-4 p-3 border border-success d-flex align-items-center" style="background: rgba(34, 197, 94, 0.1);">
-        <i class="fas fa-check-circle fs-4 text-success me-3"></i>
-        <div class="text-white"><?= $msg ?></div>
-    </div>
-    <?php endif; ?>
-    <?php if ($error): ?>
-    <div class="alert alert-danger glass-panel mb-4 p-3 border border-danger d-flex align-items-center" style="background: rgba(239, 68, 68, 0.1);">
-        <i class="fas fa-exclamation-circle fs-4 text-danger me-3"></i>
-        <div class="text-white"><?= htmlspecialchars($error) ?></div>
-    </div>
-    <?php endif; ?>
+    <div class="p-8 max-w-[1440px] mx-auto">
 
-    <div class="row g-4 mb-4">
-        <!-- Form -->
-        <div class="col-12 col-xl-5">
-            <div class="glass-panel">
-                <div class="p-4 border-bottom" style="border-color: var(--border-glass) !important;">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-plus me-2 text-primary"></i>Buat Reservasi Baru</h5>
+        <?php if ($msg): ?>
+        <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
+            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
+        </div>
+        <?php endif; ?>
+        <?php if ($error): ?>
+        <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
+            <span class="material-symbols-outlined text-red-600">error</span>
+            <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
+        </div>
+        <?php endif; ?>
+
+        <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
+
+            <!-- CREATE FORM -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden self-start">
+                <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-400 text-xl">calendar_add_on</span>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">Buat Reservasi Baru</h2>
                 </div>
-                <div class="p-4">
-                    <form method="POST">
+                <div class="p-6">
+                    <form method="POST" class="space-y-4">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="create">
                         <input type="hidden" name="vehicle_type" id="vtype_hidden" value="car">
 
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Tipe Kendaraan</label>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-secondary flex-fill vtype-btn active" id="btnCar" onclick="setType('car')" style="border-color: var(--border-glass); background:rgba(59,130,246,0.1); color: var(--primary);">
-                                    <i class="fas fa-car-side fs-4 mb-1 d-block mt-2"></i> Mobil
+                        <!-- Vehicle type selector -->
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Tipe Kendaraan</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" id="btnCar" onclick="setType('car')"
+                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-900 bg-slate-900 text-white transition-all">
+                                    <span class="material-symbols-outlined text-2xl">directions_car</span>
+                                    <span class="text-xs font-bold font-inter">Mobil</span>
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary flex-fill vtype-btn" id="btnMoto" onclick="setType('motorcycle')" style="border-color: var(--border-glass);">
-                                    <i class="fas fa-motorcycle fs-4 mb-1 d-block mt-2"></i> Motor
+                                <button type="button" id="btnMoto" onclick="setType('motorcycle')"
+                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-400 transition-all">
+                                    <span class="material-symbols-outlined text-2xl">two_wheeler</span>
+                                    <span class="text-xs font-bold font-inter">Motor</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Plat Nomor <span class="text-danger">*</span></label>
-                            <input type="text" name="plate_number" class="form-control form-control-lg text-uppercase fw-bold text-center"
-                                   placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()" style="letter-spacing: 2px;">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Plat Nomor <span class="text-red-500">*</span></label>
+                            <input type="text" name="plate_number"
+                                   class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 text-center uppercase tracking-widest transition-all"
+                                   placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
                         </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold text-uppercase">Nama Pemilik</label>
-                                <input type="text" name="owner_name" class="form-control" placeholder="Opsional">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Nama Pemilik</label>
+                                <input type="text" name="owner_name" placeholder="Opsional"
+                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold text-uppercase">No. Telepon</label>
-                                <input type="tel" name="owner_phone" class="form-control" placeholder="08xxxxxxxxxx">
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold text-uppercase">Waktu Mulai <span class="text-danger">*</span></label>
-                                <input type="text" name="reserved_from" class="form-control bg-dark border-secondary"
-                                       id="from_dt" required placeholder="Pilih Tanggal & Jam Mulai...">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold text-uppercase">Waktu Selesai <span class="text-danger">*</span></label>
-                                <input type="text" name="reserved_until" class="form-control bg-dark border-secondary"
-                                       id="until_dt" required placeholder="Pilih Tanggal & Jam Selesai...">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">No. Telepon</label>
+                                <input type="tel" name="owner_phone" placeholder="08xxxx"
+                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold fs-6" style="border-radius: 12px;">
-                            PROSES RESERVASI <i class="fas fa-arrow-right ms-2"></i>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Waktu Mulai <span class="text-red-500">*</span></label>
+                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Pilih waktu..."
+                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Waktu Selesai <span class="text-red-500">*</span></label>
+                                <input type="text" name="reserved_until" id="until_dt" required placeholder="Pilih waktu..."
+                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3.5 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-base">event_available</span>
+                            Proses Reservasi
                         </button>
                     </form>
                 </div>
             </div>
-        </div>
 
-        <!-- Active reservations -->
-        <div class="col-12 col-xl-7">
-            <div class="glass-panel">
-                <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--border-glass) !important;">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2 text-info"></i>Reservasi Aktif</h5>
-                    <span class="badge bg-info bg-opacity-25 text-info px-3 py-2 border border-info rounded-pill"><?= count($reservations) ?> Antrean</span>
+            <!-- ACTIVE RESERVATIONS -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-400 text-xl">calendar_month</span>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">Antrean Reservasi Aktif</h2>
                 </div>
-                <div class="p-0">
-                    <?php if (empty($reservations)): ?>
-                    <div class="text-center text-muted py-5 my-5">
-                        <i class="far fa-calendar-times fs-1 mb-3 d-block" style="opacity: 0.2;"></i>
-                        <p>Belum ada reservasi aktif terjadwal.</p>
-                    </div>
-                    <?php else: ?>
-                    <div class="table-responsive" style="border: none; max-height: 600px;">
-                    <table class="table table-glass table-hover mb-0">
-                        <thead style="position: sticky; top:0; background: var(--card-bg); z-index: 10;">
-                            <tr>
-                                <th class="ps-4">Kode Validasi</th>
-                                <th>Klien / Kendaraan</th>
-                                <th>Alokasi Slot</th>
-                                <th>Periode Reservasi</th>
-                                <th class="pe-4 text-end">Aksi</th>
+                <?php if (empty($reservations)): ?>
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <span class="material-symbols-outlined text-6xl text-slate-200 block mb-4">event_busy</span>
+                    <p class="text-slate-400 text-sm font-inter">Belum ada reservasi aktif terjadwal.</p>
+                </div>
+                <?php else: ?>
+                <div class="overflow-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-100">
+                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Kode Validasi</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Klien / Kendaraan</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Alokasi Slot</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Periode</th>
+                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
-                        <?php foreach ($reservations as $r): ?>
-                        <tr>
-                            <td class="ps-4">
-                                <code class="fs-5 fw-bold text-success-glow" style="letter-spacing: 1px; font-family: 'Courier New', Courier, monospace; background:rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;"><?= htmlspecialchars($r['reservation_code']) ?></code>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center;">
-                                        <?= $r['vehicle_type'] === 'car' ? '<i class="fas fa-car-side text-primary fs-5"></i>' : '<i class="fas fa-motorcycle text-success fs-5"></i>' ?>
+                        <tbody class="divide-y divide-slate-50">
+                            <?php foreach ($reservations as $r): ?>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <code class="font-mono text-sm text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg font-bold"><?= htmlspecialchars($r['reservation_code']) ?></code>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"><?= $r['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                                        </div>
+                                        <div>
+                                            <div class="font-inter font-bold text-sm text-slate-800"><?= htmlspecialchars($r['plate_number']) ?></div>
+                                            <div class="text-slate-400 text-xs font-inter"><?= htmlspecialchars($r['owner_name']) ?></div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div class="fw-bold"><?= htmlspecialchars($r['plate_number']) ?></div>
-                                        <div class="small text-muted"><?= htmlspecialchars($r['owner_name']) ?></div>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <span class="text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-inter mr-1">Str. <?= htmlspecialchars($r['floor']) ?></span>
+                                    <span class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($r['slot_number']) ?></span>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-1.5 text-slate-700 text-xs font-inter">
+                                        <span class="material-symbols-outlined text-blue-400 text-sm">schedule</span>
+                                        <?= date('d M H:i', strtotime($r['reserved_from'])) ?>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-dark border border-secondary text-light">Str. <?= htmlspecialchars($r['floor']) ?></span>
-                                <span class="ms-1 fw-bold fs-5"><?= htmlspecialchars($r['slot_number']) ?></span>
-                            </td>
-                            <td>
-                                <div class="small text-white"><i class="far fa-clock text-muted me-1"></i><?= date('d M H:i', strtotime($r['reserved_from'])) ?></div>
-                                <div class="small text-muted ms-3">s/d <?= date('H:i', strtotime($r['reserved_until'])) ?></div>
-                            </td>
-                            <td class="pe-4 text-end">
-                                <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin secara permanen membatalkan reservasi ini?')">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="cancel">
-                                    <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
-                                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1">
-                                        <i class="fas fa-times me-1"></i> Cancel
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                                    <div class="flex items-center gap-1.5 text-slate-400 text-xs font-inter mt-0.5">
+                                        <span class="material-symbols-outlined text-slate-300 text-sm">arrow_forward</span>
+                                        s/d <?= date('H:i', strtotime($r['reserved_until'])) ?>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan reservasi ini?')">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="cancel">
+                                        <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
+                                        <button class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold font-inter px-4 py-2 rounded-xl transition-all ml-auto">
+                                            <span class="material-symbols-outlined text-sm">close</span>
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
-                    </div>
-                    <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
+
         </div>
     </div>
-</div>
+</main>
 
-<!-- Flatpickr Library -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-<style>
-.flatpickr-custom-buttons {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    border-top: 1px solid var(--border-glass);
-}
-.flatpickr-prev-month, .flatpickr-next-month {
-    display: none !important;
-}
-.flatpickr-custom-buttons button {
-    background: transparent;
-    border: none;
-    color: var(--primary);
-    cursor: pointer;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-.flatpickr-custom-buttons button:hover {
-    color: #fff;
-}
-.flatpickr-custom-buttons button.btn-ok {
-    color: var(--success);
-}
-.flatpickr-calendar { font-family: 'Poppins', sans-serif !important; }
-</style>
-
 <script>
 function setType(t) {
     document.getElementById('vtype_hidden').value = t;
-    const btnCar = document.getElementById('btnCar');
-    const btnMoto = document.getElementById('btnMoto');
-    
-    if (t === 'car') {
-        btnCar.classList.add('active');
-        btnCar.style.background = 'rgba(59,130,246,0.1)';
-        btnCar.style.color = 'var(--primary)';
-        btnMoto.classList.remove('active');
-        btnMoto.style.background = 'transparent';
-        btnMoto.style.color = 'var(--text-main)';
-    } else {
-        btnMoto.classList.add('active');
-        btnMoto.style.background = 'rgba(34,197,94,0.1)';
-        btnMoto.style.color = 'var(--success)';
-        btnCar.classList.remove('active');
-        btnCar.style.background = 'transparent';
-        btnCar.style.color = 'var(--text-main)';
-    }
+    const car  = document.getElementById('btnCar');
+    const moto = document.getElementById('btnMoto');
+    car.className  = `vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 transition-all ${t==='car'  ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-400'}`;
+    moto.className = `vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 transition-all ${t==='motorcycle' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-400'}`;
 }
+
 document.addEventListener('DOMContentLoaded', function() {
     let minDate = new Date("<?= date('Y-m-d\TH:i', strtotime('+5 minutes')) ?>");
 
     let untilPicker = flatpickr("#until_dt", {
-        enableTime: true,
-        dateFormat: "Y-m-d\\TH:i",
-        minDate: minDate,
-        time_24hr: true,
-        onReady: setupCustomButtons
+        enableTime: true, dateFormat: "Y-m-d\\TH:i", minDate: minDate, time_24hr: true,
+        onReady: addButtons
     });
-
     let fromPicker = flatpickr("#from_dt", {
-        enableTime: true,
-        dateFormat: "Y-m-d\\TH:i",
-        minDate: minDate,
-        time_24hr: true,
-        onReady: setupCustomButtons,
-        onChange: function(selectedDates, dateStr, instance) {
+        enableTime: true, dateFormat: "Y-m-d\\TH:i", minDate: minDate, time_24hr: true,
+        onReady: addButtons,
+        onChange: function(selectedDates) {
             if (selectedDates[0]) {
-                let untilMin = new Date(selectedDates[0]);
-                untilMin.setHours(untilMin.getHours() + 1);
-                untilPicker.set('minDate', untilMin);
-                if (!untilPicker.selectedDates.length || untilPicker.selectedDates[0] < untilMin) {
-                    untilPicker.setDate(untilMin);
-                }
+                let m = new Date(selectedDates[0]);
+                m.setHours(m.getHours() + 1);
+                untilPicker.set('minDate', m);
+                if (!untilPicker.selectedDates.length || untilPicker.selectedDates[0] < m) untilPicker.setDate(m);
             }
         }
     });
 
-    function setupCustomButtons(selectedDates, dateStr, instance) {
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "flatpickr-custom-buttons";
-        
-        const btnClear = document.createElement("button");
-        btnClear.type = "button";
-        btnClear.innerText = "Clear";
-        btnClear.onclick = function() { instance.clear(); };
-        
-        const btnToday = document.createElement("button");
-        btnToday.type = "button";
-        btnToday.innerText = "Today";
-        btnToday.onclick = function() { 
-            const now = new Date();
-            instance.setDate(now); 
-        };
-        
-        const btnOk = document.createElement("button");
-        btnOk.type = "button";
-        btnOk.innerText = "OK";
-        btnOk.className = "btn-ok";
-        btnOk.onclick = function() { instance.close(); };
-        
-        btnContainer.appendChild(btnClear);
-        btnContainer.appendChild(btnToday);
-        btnContainer.appendChild(btnOk);
-        
-        instance.calendarContainer.appendChild(btnContainer);
+    function addButtons(_, __, instance) {
+        const d = document.createElement('div');
+        d.className = 'flatpickr-custom-btn';
+        ['Clear','Today','OK'].forEach(lbl => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.innerText = lbl;
+            if (lbl === 'OK') b.className = 'ok';
+            b.onclick = () => { if (lbl==='Clear') instance.clear(); else if (lbl==='Today') instance.setDate(new Date()); else instance.close(); };
+            d.appendChild(b);
+        });
+        instance.calendarContainer.appendChild(d);
     }
 });
 </script>
+
 <?php include '../../includes/footer.php'; ?>

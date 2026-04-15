@@ -9,7 +9,6 @@ if (empty($_GET['kode_tiket'])) {
 $code = trim($_GET['kode_tiket']);
 
 // ── 1. Validate ticket ────────────────────────────────────────────────────
-// [3NF FIX] plate_number dihapus dari tabel ticket → ambil via JOIN ke vehicle
 $stmt = $pdo->prepare("
     SELECT tk.ticket_id, tk.transaction_id,
            v.plate_number
@@ -31,8 +30,6 @@ $trx_id = (int)$tkt['transaction_id'];
 $plate  = $tkt['plate_number'];
 
 // ── 2. Get transaction ────────────────────────────────────────────────────
-// [3NF FIX] parking_slot tidak lagi punya kolom floor (varchar),
-//           sekarang pakai floor_id FK → JOIN tabel floor untuk dapat floor_code
 $stmt = $pdo->prepare("
     SELECT t.*, v.vehicle_type, v.owner_name,
            s.slot_number, f.floor_code AS floor,
@@ -93,58 +90,89 @@ try {
 }
 
 // ── 5. Display receipt ────────────────────────────────────────────────────
-$vtype_label    = $trx['vehicle_type'] === 'car' ? '<i class="fas fa-car-side text-primary"></i> Mobil' : '<i class="fas fa-motorcycle text-success"></i> Motor';
-$fee_fmt        = fmt_idr($total_fee);
+$vtype_icon  = $trx['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler';
+$fee_fmt     = fmt_idr($total_fee);
 $duration_label = $hours_total . ' jam (' . (int)$trx['minutes_parked'] . ' menit)';
-$slot_label     = htmlspecialchars($trx['slot_number'] . ' / Lantai ' . $trx['floor']);
-$now_fmt        = date('d M Y H:i:s');
+$slot_label  = htmlspecialchars($trx['slot_number'] . ' / Lantai ' . $trx['floor']);
+$now_fmt     = date('d M Y H:i:s');
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kendaraan Keluar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Kendaraan Keluar — SmartParking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body{background:#1a1a2e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-        .receipt{background:#fff;border-radius:12px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-        .success-icon{font-size:64px;margin-bottom:8px}
-        h2{font-size:22px;font-weight:700;color:#1b1b1b;margin-bottom:4px}
-        .sub{color:#888;font-size:13px;margin-bottom:20px}
-        .dashed{border-top:2px dashed #ddd;margin:16px 0}
-        .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:14px}
-        .info-row .label{color:#666}
-        .info-row .val{font-weight:600;color:#111;text-align:right;max-width:60%}
-        .fee-box{background:#28a745;color:#fff;border-radius:10px;padding:16px;margin:16px 0}
-        .fee-box .fee-label{font-size:12px;opacity:.85;margin-bottom:4px}
-        .fee-box .fee-amount{font-size:32px;font-weight:800;letter-spacing:1px}
-        .badge-open{display:inline-block;background:#28a745;color:white;padding:4px 16px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:16px}
-        .btn-back{background:#333;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:15px;cursor:pointer;width:100%;margin-top:8px;text-decoration:none;display:block}
-        .btn-back:hover{background:#555;color:#fff}
+        * { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp 0.5s cubic-bezier(.16,1,.3,1) forwards; }
     </style>
 </head>
-<body>
-    <div class="receipt">
-        <div class="success-icon">✅</div>
-        <h2>Kendaraan Keluar</h2>
-        <p class="sub">Tiket tervalidasi — Gerbang Terbuka</p>
-        <span class="badge-open">🟢 GATE OPEN</span>
-        <div class="dashed"></div>
-        <div class="info-row"><span class="label">Kendaraan</span><span class="val"><?= $vtype_label ?></span></div>
-        <div class="info-row"><span class="label">Slot</span><span class="val"><?= $slot_label ?></span></div>
-        <div class="info-row"><span class="label">Kode Tiket</span><span class="val" style="font-family:monospace;font-size:12px"><?= htmlspecialchars($code) ?></span></div>
-        <div class="info-row"><span class="label">Check-in</span><span class="val"><?= htmlspecialchars($trx['check_in_time']) ?></span></div>
-        <div class="info-row"><span class="label">Check-out</span><span class="val"><?= $now_fmt ?></span></div>
-        <div class="info-row"><span class="label">Durasi</span><span class="val"><?= $duration_label ?></span></div>
-        <div class="fee-box">
-            <div class="fee-label">TOTAL BIAYA PARKIR</div>
-            <div class="fee-amount"><?= $fee_fmt ?></div>
+<body class="min-h-screen bg-[#f2f4f7] flex items-center justify-center px-4">
+
+<div class="w-full max-w-sm fade-up">
+
+    <!-- Success badge -->
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200">
+            <span class="material-symbols-outlined text-white text-3xl">check_circle</span>
         </div>
-        <div class="dashed"></div>
-        <a href="gate_simulator.php" class="btn-back"><i class="fas fa-arrow-left me-2"></i> Kembali ke Gate Simulator</a>
+        <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Kendaraan Keluar</h1>
+        <p class="text-slate-400 text-sm mt-1">Tiket tervalidasi — Gerbang Terbuka</p>
+        <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-1.5 rounded-full mt-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            GATE OPEN
+        </span>
     </div>
-    <script>setTimeout(() => { window.location.href = 'gate_simulator.php'; }, 8000);</script>
+
+    <!-- Receipt card -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
+
+        <div class="space-y-3 mb-5">
+            <?php
+            $rows = [
+                ['Kendaraan',  '<span class="material-symbols-outlined text-base align-middle">' . $vtype_icon . '</span> ' . ($trx['vehicle_type'] === 'car' ? 'Mobil' : 'Motor')],
+                ['Slot',       $slot_label],
+                ['Kode Tiket', '<code class="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">' . htmlspecialchars($code) . '</code>'],
+                ['Check-in',   htmlspecialchars($trx['check_in_time'])],
+                ['Check-out',  $now_fmt],
+                ['Durasi',     $duration_label],
+            ];
+            foreach ($rows as [$label, $value]):
+            ?>
+            <div class="flex justify-between items-start py-2 border-b border-slate-50">
+                <span class="text-slate-400 text-sm font-inter"><?= $label ?></span>
+                <span class="text-slate-800 text-sm font-semibold font-inter text-right max-w-[55%]"><?= $value ?></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Fee highlight -->
+        <div class="bg-slate-900 rounded-xl px-5 py-4 text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Total Biaya Parkir</p>
+            <p class="font-manrope font-extrabold text-3xl text-white"><?= $fee_fmt ?></p>
+        </div>
+    </div>
+
+    <a href="gate_simulator.php"
+       class="flex items-center justify-center gap-2 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3.5 transition-all">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Kembali ke Gate Simulator
+    </a>
+
+    <p class="text-center text-slate-400 text-xs font-inter mt-4">Auto-redirect in <span id="cnt">8</span>s</p>
+</div>
+
+<script>
+let s = 8;
+const c = document.getElementById('cnt');
+setInterval(() => { s--; c.textContent = s; if (s <= 0) window.location.href = 'gate_simulator.php'; }, 1000);
+</script>
 </body>
 </html>
