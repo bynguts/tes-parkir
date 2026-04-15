@@ -126,4 +126,4 @@ function get_active_attendance(PDO $pdo, ?string $filter_type = null): array {
         $where
         ORDER BY o.staff_type ASC, sa.check_in_time DESC
     ")->fetchAll();
-}
+}
