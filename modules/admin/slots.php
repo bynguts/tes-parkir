@@ -132,7 +132,7 @@ include '../../includes/header.php';
                         </td>
                         <td class="px-4 py-4">
                             <div class="flex items-center gap-2 text-slate-600 text-sm font-inter">
-                                <span class="material-symbols-outlined text-slate-400 text-base"><?= $s['slot_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                                <span class="material-symbols-outlined <?= $s['slot_type'] === 'car' ? 'text-blue-500' : 'text-emerald-500' ?> text-base"><?= $s['slot_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
                                 <?= $s['slot_type'] === 'car' ? 'Mobil' : 'Motor' ?>
                             </div>
                         </td>
@@ -155,7 +155,6 @@ include '../../includes/header.php';
                                 </form>
 
                                 <!-- Delete -->
-                                <?php if ($s['status'] !== 'occupied'): ?>
                                 <form method="POST" onsubmit="return confirm('Hapus slot <?= htmlspecialchars($s['slot_number'], ENT_QUOTES) ?> secara permanen?')">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="action" value="delete">
@@ -164,7 +163,6 @@ include '../../includes/header.php';
                                         <span class="material-symbols-outlined text-sm">delete</span>
                                     </button>
                                 </form>
-                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>

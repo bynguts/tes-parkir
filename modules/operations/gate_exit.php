@@ -104,11 +104,12 @@ $now_fmt     = date('d M Y H:i:s');
     <title>Kendaraan Keluar — SmartParking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { font-family: 'Inter', sans-serif; }
+        .font-code { font-family: 'Courier Prime', monospace !important; letter-spacing: 0.05em; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
         @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s cubic-bezier(.16,1,.3,1) forwards; }
@@ -139,7 +140,7 @@ $now_fmt     = date('d M Y H:i:s');
             $rows = [
                 ['Kendaraan',  '<span class="material-symbols-outlined text-base align-middle">' . $vtype_icon . '</span> ' . ($trx['vehicle_type'] === 'car' ? 'Mobil' : 'Motor')],
                 ['Slot',       $slot_label],
-                ['Kode Tiket', '<code class="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">' . htmlspecialchars($code) . '</code>'],
+                ['Kode Tiket', '<code class="font-code text-xs bg-slate-100 px-2 py-0.5 rounded">' . htmlspecialchars($code) . '</code>'],
                 ['Check-in',   htmlspecialchars($trx['check_in_time'])],
                 ['Check-out',  $now_fmt],
                 ['Durasi',     $duration_label],

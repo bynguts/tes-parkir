@@ -16,10 +16,10 @@ $page_title = $page_title ?? 'Parking System';
     <!-- Google Fonts: Manrope + Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 
-    <!-- Google Material Symbols Outlined -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0">
+    <!-- Google Material Symbols Outlined (Variable Weights) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,100..700,0,0">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,18 +45,61 @@ $page_title = $page_title ?? 'Parking System';
 
     <style>
         * { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .font-manrope { font-family: 'Manrope', sans-serif; }
+        .font-code { font-family: 'Courier Prime', monospace !important; letter-spacing: 0.05em; }
+        h1, h2, h3, .font-manrope { font-family: 'Manrope', sans-serif; font-weight: 800; }
+        h1, h2, h3 { font-weight: 800 !important; }
+
+        /* Dashboard & Content Bold Hierarchy */
+        main p, main span, main div, main td, main th, main label, main a { font-weight: 700; }
+
+        /* Sidebar: Force Normal Weight (No Bold) */
+        aside, aside * { font-weight: 400 !important; }
+        aside .material-symbols-outlined { font-variation-settings: 'wght' 400 !important; font-weight: 400 !important; }
 
         .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-variation-settings: 'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+            font-weight: 700;
             vertical-align: middle;
             line-height: 1;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        /* Global Scrollbar Reset & Standard Look */
+        ::-webkit-scrollbar-button {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* Standard custom look for ALL scrollable elements */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 20px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Hide main page scrollbar (intentional choice) */
+        html, body {
+            -ms-overflow-style: none; /* IE/Edge */
+            scrollbar-width: none;    /* Firefox */
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+        }
+
+        /* Class-based control for specific containers (like sidebar) */
+        .custom-scrollbar {
+            overscroll-behavior: contain;
+        }
 
         /* Sidebar active link */
         .nav-active {

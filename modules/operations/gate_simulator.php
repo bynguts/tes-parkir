@@ -13,13 +13,14 @@ include '../../includes/header.php';
 <style>
 /* Barcode scanner viewport — asymmetric horizontal guide lines */
 #reader {
-    width: 360px; height: 220px;
+    width: 300px; height: 300px;
     max-width: 100%;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
-    background: #0f172a;
+    background: #0b1120;
     margin: 20px auto;
     position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 #reader video {
     border-radius: 14px;
@@ -34,31 +35,22 @@ include '../../includes/header.php';
     pointer-events: none; z-index: 10;
 }
 .barcode-frame {
-    width: 85%; height: 60%;
-    border-left: 3px solid #ffffff;
-    border-right: 3px solid #ffffff;
+    width: 220px; height: 220px;
+    border: 3px solid rgba(255,255,255,0.8);
+    border-radius: 24px;
     position: relative;
 }
-.barcode-frame::before {
-    content: '';
-    position: absolute; top: 0; left: -3px; right: -3px;
-    height: 2px; background: rgba(255,255,255,0.3);
-}
-.barcode-frame::after {
-    content: '';
-    position: absolute;
-    top: 30%; bottom: 30%; left: 0; right: 0;
-    border: 2px solid rgba(255,255,255,0.5);
-    border-radius: 2px;
-}
 .scan-line {
-    position: absolute; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-    animation: scanline 2s linear infinite;
-    box-shadow: 0 0 8px #3b82f6;
+    position: absolute; left: 10%; right: 10%; height: 3px;
+    background: #3b82f6;
+    animation: scanline 2.5s ease-in-out infinite;
+    box-shadow: 0 0 15px #3b82f6;
+    border-radius: 2px;
+    z-index: 20;
 }
 @keyframes scanline {
-    0% { top: 15%; } 100% { top: 85%; }
+    0%, 100% { top: 10%; opacity: 0.3; }
+    50% { top: 90%; opacity: 1; }
 }
 #reader select { display: none !important; }
 #reader span { display: none !important; }
@@ -73,14 +65,14 @@ include '../../includes/header.php';
 
 <main class="pl-64 min-h-screen bg-[#f2f4f7]">
 
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
             <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Smart Gate Interface</h1>
             <p class="text-slate-400 text-xs font-inter mt-0.5">Simulasi sensor entry/exit fisik. Digunakan oleh operator gate atau hardware kiosk.</p>
         </div>
     </header>
 
-    <div class="p-8 max-w-[1440px] mx-auto">
+    <div class="p-10 max-w-[1440px] mx-auto">
 
         <!-- Slot Availability -->
         <div class="grid grid-cols-2 gap-4 mb-6">
@@ -101,7 +93,9 @@ include '../../includes/header.php';
             <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot <?= $lbl ?></p>
-                    <span class="material-symbols-outlined text-slate-300 text-xl"><?= $icon ?></span>
+                    <div class="w-10 h-10 rounded-xl <?= $t === 'car' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600' ?> flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl"><?= $icon ?></span>
+                    </div>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-4xl <?= $pct_cls ?>"><?= $avail ?></span>
@@ -210,7 +204,7 @@ function processTicket(code) {
     scanned = true;
 
     document.getElementById('scanned-result').innerHTML =
-        `<div class="flex items-center justify-center gap-2 bg-emerald-50 rounded-xl px-4 py-3 text-emerald-700 font-mono font-bold text-sm">
+        `<div class="flex items-center justify-center gap-2 bg-emerald-50 rounded-xl px-4 py-3 text-emerald-700 font-code font-bold text-sm">
             <span class="material-symbols-outlined text-base">barcode_reader</span>${code}
          </div>
          <p class="text-slate-400 text-xs font-inter mt-2 animate-pulse">Otentikasi & Kalkulasi billing...</p>`;
@@ -233,7 +227,7 @@ document.getElementById('manualCode').addEventListener('keydown', e => {
 
 const html5QrcodeScanner = new Html5QrcodeScanner(
     "reader",
-    { fps: 20, qrbox: { width: 280, height: 120 }, aspectRatio: 1.7, rememberLastUsedCamera: true },
+    { fps: 20, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, rememberLastUsedCamera: true },
     false
 );
 html5QrcodeScanner.render(

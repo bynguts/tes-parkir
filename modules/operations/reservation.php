@@ -234,7 +234,7 @@ include '../../includes/header.php';
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                                        <div class="w-10 h-10 rounded-xl <?= $r['vehicle_type'] === 'car' ? 'bg-blue-50' : 'bg-emerald-50' ?> flex items-center justify-center">
                                             <span class="material-symbols-outlined text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"><?= $r['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
                                         </div>
                                         <div>
@@ -244,7 +244,6 @@ include '../../includes/header.php';
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    <span class="text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-inter mr-1">Str. <?= htmlspecialchars($r['floor']) ?></span>
                                     <span class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($r['slot_number']) ?></span>
                                 </td>
                                 <td class="px-4 py-4">

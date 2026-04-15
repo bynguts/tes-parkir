@@ -21,7 +21,7 @@ include '../../includes/header.php';
 <main class="pl-64 min-h-screen bg-[#f2f4f7]">
 
     <!-- Top Bar -->
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
             <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Kendaraan Aktif</h1>
             <p class="text-slate-400 text-sm font-inter">Total: <?= count($active) ?> kendaraan terparkir</p>
@@ -33,7 +33,7 @@ include '../../includes/header.php';
         </button>
     </header>
 
-    <div class="p-8">
+    <div class="p-10">
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full">
                 <thead>
@@ -62,21 +62,26 @@ include '../../includes/header.php';
                     <tr class="hover:bg-slate-50 transition-colors <?= $is_overdue ? 'bg-amber-50/50' : '' ?>">
                         <td class="px-6 py-4 text-slate-400 text-sm font-inter">#<?= $row['transaction_id'] ?></td>
                         <td class="px-4 py-4">
-                            <code class="font-mono text-sm text-slate-800 bg-slate-100 px-3 py-1 rounded-lg font-bold"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
+                            <code class="font-code text-sm text-slate-800 bg-slate-100 px-3 py-1 rounded-lg font-bold transition-all hover:bg-slate-200"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
                         </td>
                         <td class="px-4 py-4">
                             <?php if ($row['vehicle_type'] === 'car'): ?>
-                                <div class="flex items-center gap-2 text-slate-700 text-sm font-inter font-semibold">
-                                    <span class="material-symbols-outlined text-base text-blue-600">directions_car</span> Mobil
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-xl text-blue-600">directions_car</span>
+                                    </div>
+                                    <span class="font-inter font-semibold text-sm text-slate-800">Mobil</span>
                                 </div>
                             <?php else: ?>
-                                <div class="flex items-center gap-2 text-slate-700 text-sm font-inter font-semibold">
-                                    <span class="material-symbols-outlined text-base text-emerald-600">two_wheeler</span> Motor
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-xl text-emerald-600">two_wheeler</span>
+                                    </div>
+                                    <span class="font-inter font-semibold text-sm text-slate-800">Motor</span>
                                 </div>
                             <?php endif; ?>
                         </td>
                         <td class="px-4 py-4">
-                            <span class="text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-inter mr-1">Str. <?= htmlspecialchars($row['floor']) ?></span>
                             <span class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($row['slot_number']) ?></span>
                         </td>
                         <td class="px-4 py-4 text-slate-600 text-sm font-inter">

@@ -35,14 +35,14 @@ include '../../includes/header.php';
 
 <main class="pl-64 min-h-screen bg-[#f2f4f7]">
 
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div>
             <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Analytics & Revenue</h1>
             <p class="text-slate-400 text-xs font-inter mt-0.5">Ringkasan agregat finansial dan kinerja harian.</p>
         </div>
     </header>
 
-    <div class="p-8 max-w-[1440px] mx-auto">
+    <div class="p-10 max-w-[1440px] mx-auto">
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -53,19 +53,23 @@ include '../../includes/header.php';
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Mobil Keluar</p>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-blue-500 text-xl">directions_car</span>
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-xl">directions_car</span>
+                    </div>
                     <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_cars'] ?? 0) ?></div>
                 </div>
-                <p class="text-slate-400 text-xs font-inter mt-2"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
+                <p class="text-slate-400 text-xs font-inter mt-3"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Motor Keluar</p>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-emerald-500 text-xl">two_wheeler</span>
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-emerald-600 text-xl">two_wheeler</span>
+                    </div>
                     <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_motorcycles'] ?? 0) ?></div>
                 </div>
-                <p class="text-slate-400 text-xs font-inter mt-2"><?= fmt_idr((float)($totals['rev_motorcycle'] ?? 0)) ?></p>
+                <p class="text-slate-400 text-xs font-inter mt-3"><?= fmt_idr((float)($totals['rev_motorcycle'] ?? 0)) ?></p>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-amber-400">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Total Net Revenue</p>

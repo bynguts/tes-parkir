@@ -32,13 +32,12 @@ include 'includes/header.php';
 <main class="pl-64 min-h-screen bg-[#f2f4f7] text-on-surface">
 
     <!-- Top Bar -->
-    <header class="flex justify-between items-center w-full px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <h1 class="font-manrope font-extrabold text-2xl text-slate-900"><?= $page_title ?></h1>
         <div class="flex items-center gap-4">
             <span class="text-slate-400 text-sm font-inter"><?= date('l, d F Y') ?></span>
             <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
+                                <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
                 <span class="text-slate-300">|</span>
                 <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
             </div>
@@ -74,7 +73,7 @@ include 'includes/header.php';
             <div class="col-span-12 lg:col-span-5 bg-slate-900 rounded-2xl p-8 flex flex-col justify-between min-h-[180px]">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Pendapatan Hari Ini</p>
-                    <span class="material-symbols-outlined text-slate-600">account_balance_wallet</span>
+                    <span class="material-symbols-outlined text-slate-600 text-xl" data-icon="payments">payments</span>
                 </div>
                 <div>
                     <div class="font-manrope font-extrabold text-4xl text-white leading-none"><?= fmt_idr((float)$today_rev) ?></div>
@@ -96,7 +95,9 @@ include 'includes/header.php';
             <div class="col-span-6 lg:col-span-4 bg-white rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Mobil</p>
-                    <span class="material-symbols-outlined text-slate-300 text-xl">directions_car</span>
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-xl">directions_car</span>
+                    </div>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $car_avail ?></span>
@@ -113,7 +114,9 @@ include 'includes/header.php';
             <div class="col-span-6 lg:col-span-4 bg-white rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Motor</p>
-                    <span class="material-symbols-outlined text-slate-300 text-xl">two_wheeler</span>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-emerald-600 text-xl">two_wheeler</span>
+                    </div>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $moto_avail ?></span>
@@ -134,7 +137,7 @@ include 'includes/header.php';
                     $quick = [
                         ['modules/operations/gate_simulator.php', 'door_sensor', 'Smart Gate', 'Simulator entry & exit'],
                         ['modules/operations/reservation.php',    'event_available', 'Reservasi', 'Pre-booking slot'],
-                        ['modules/reports/slot_map.php',          'grid_view', 'Peta Slot', 'Real-time slot map'],
+                        ['modules/reports/slot_map.php',          'map', 'Peta Slot', 'Real-time slot map'],
                         ['modules/operations/active_vehicles.php','directions_car', 'Kendaraan Aktif', 'Monitor kendaraan'],
                         ['modules/reports/revenue.php',           'bar_chart_4_bars', 'Revenue', 'Laporan finansial'],
                         ['modules/operations/scan_log.php',       'receipt_long', 'Scan Log', 'Log sensor gate'],
@@ -172,13 +175,16 @@ include 'includes/header.php';
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     <?php foreach ($active_staff as $st): ?>
                     <div class="flex items-center gap-3 bg-slate-50 rounded-xl p-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0">
-                            <span class="text-white text-xs font-manrope font-bold"><?= strtoupper(substr($st['full_name'], 0, 1)) ?></span>
+                        <div class="relative flex-shrink-0">
+                            <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center">
+                                <span class="text-white text-xs font-manrope font-bold"><?= strtoupper(substr($st['full_name'], 0, 1)) ?></span>
+                            </div>
+                            <!-- Status Indicator -->
+                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
                         </div>
                         <div class="min-w-0">
                             <div class="font-inter font-semibold text-sm text-slate-800 truncate"><?= htmlspecialchars($st['full_name']) ?></div>
                             <div class="text-[10px] font-inter text-slate-400 flex items-center gap-1 mt-0.5">
-                                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                 In: <?= date('H:i', strtotime($st['check_in_time'])) ?>
                             </div>
                         </div>

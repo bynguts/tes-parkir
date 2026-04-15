@@ -110,7 +110,7 @@ if (isset($_GET['ticket_code'])) {
     <title>Tiket Parkir — <?= htmlspecialchars($code) ?></title>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Courier New',monospace;background:#f0f0f0;display:flex;justify-content:center;padding:20px}
+        body{font-family:'Courier Prime', 'Courier New', monospace;background:#f0f0f0;display:flex;justify-content:center;padding:20px}
         .ticket{background:#fff;width:320px;padding:25px 20px;text-align:center;box-shadow:0 0 10px rgba(0,0,0,.1)}
         .logo-wrap{display:flex;justify-content:center;margin-bottom:12px}
         .logo-oval{width:150px;height:75px;background:#555;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:10px;position:relative;overflow:hidden;border:1px solid #333}

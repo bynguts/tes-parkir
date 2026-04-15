@@ -137,7 +137,7 @@ include '../../includes/header.php';
             <!-- USER TABLE -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-slate-400 text-xl">manage_accounts</span>
+                    <span class="material-symbols-outlined text-slate-400 text-xl">group</span>
                     <h2 class="font-manrope font-bold text-lg text-slate-900">Identitas Sistem (<?= count($users) ?>)</h2>
                 </div>
                 <table class="w-full">

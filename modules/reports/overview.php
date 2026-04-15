@@ -38,8 +38,7 @@ function vite_widget_tags(string $entry): string {
             <p class="text-slate-400 text-xs font-inter mt-0.5"><?= date('l, d F Y H:i') ?></p>
         </div>
         <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
-            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
+                        <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
             <span class="text-slate-300">|</span>
             <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
         </div>

@@ -76,7 +76,7 @@ include '../../includes/header.php';
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 text-slate-400 text-sm font-inter"><?= $no++ ?></td>
                             <td class="px-4 py-4">
-                                <code class="font-mono text-sm text-slate-800 bg-slate-100 px-3 py-1 rounded-lg font-bold"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
+                                <code class="font-code text-sm text-slate-800 bg-slate-100 px-3 py-1 rounded-lg font-bold transition-all hover:bg-slate-200"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
                             </td>
                             <td class="px-4 py-4 text-slate-600 text-sm font-inter">
                                 <div class="flex items-center gap-1.5">
