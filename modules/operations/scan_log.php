@@ -46,7 +46,7 @@ include '../../includes/header.php';
 
     <div class="p-8">
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
-            <div class="overflow-auto max-h-[72vh]">
+            <div class="overflow-auto max-h-[72vh] no-scrollbar">
                 <table class="w-full" id="logTable">
                     <thead class="sticky top-0 bg-white z-10">
                         <tr class="border-b border-slate-100">
@@ -152,7 +152,7 @@ include '../../includes/header.php';
             </div>
 
             <div id="tabDate">
-                <div id="daftarTanggal" class="max-h-52 overflow-y-auto rounded-xl bg-slate-50 p-2 mb-4 space-y-1"></div>
+                <div id="daftarTanggal" class="max-h-52 overflow-y-auto no-scrollbar rounded-xl bg-slate-50 p-2 mb-4 space-y-1"></div>
                 <button id="btnHapusTanggal" disabled onclick="hapusLog('by_date')"
                         class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-xl disabled:opacity-40 transition-all">
                     Hapus Tanggal Terpilih

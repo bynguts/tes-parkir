@@ -6,10 +6,15 @@ require_once '../../includes/functions.php';
 if (isset($_GET['auto'])) {
     header('Content-Type: application/json');
 
-    // Pick available slot (car first, then motorcycle)
+    // Pick available slot (based on vtype parameter if provided)
+    $requested_type = $_GET['vtype'] ?? null;
+    $types_to_try   = ($requested_type && in_array($requested_type, ['car', 'motorcycle'])) 
+                    ? [$requested_type] 
+                    : ['car', 'motorcycle'];
+
     $slot  = null;
     $vtype = null;
-    foreach (['car', 'motorcycle'] as $try_type) {
+    foreach ($types_to_try as $try_type) {
         // [3NF FIX] JOIN floor untuk mendapatkan floor_code
         $stmt = $pdo->prepare("
             SELECT ps.slot_id, ps.slot_number, f.floor_code AS floor, ps.slot_type

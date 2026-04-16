@@ -100,9 +100,9 @@ include '../../includes/header.php';
         <?php endif; ?>
 
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div class="overflow-auto">
+            <div class="overflow-auto max-h-[72vh] no-scrollbar">
                 <table class="w-full">
-                    <thead>
+                    <thead class="sticky top-0 bg-white z-10">
                         <tr class="border-b border-slate-100">
                             <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Lantai</th>
                             <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tipe</th>

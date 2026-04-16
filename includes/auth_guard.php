@@ -14,9 +14,22 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once dirname(__DIR__) . '/config/connection.php';
 require_once __DIR__ . '/functions.php';
 
 if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    // If this is an API/AJAX request, return JSON instead of HTML redirect
+    $isApi = (
+        str_contains($_SERVER['REQUEST_URI'] ?? '', '/api/') ||
+        ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest' ||
+        str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')
+    );
+    if ($isApi) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['error' => 'Sesi telah berakhir. Silakan login kembali.']);
+        exit;
+    }
     header('Location: ' . BASE_URL . 'login.php');
     exit;
 }

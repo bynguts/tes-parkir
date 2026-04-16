@@ -35,8 +35,9 @@ include '../../includes/header.php';
 
     <div class="p-10">
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
-            <table class="w-full">
-                <thead>
+            <div class="overflow-auto max-h-[72vh] no-scrollbar">
+                <table class="w-full">
+                    <thead class="sticky top-0 bg-white z-10">
                     <tr class="border-b border-slate-100">
                         <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Trx ID</th>
                         <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tiket</th>
@@ -103,7 +104,8 @@ include '../../includes/header.php';
                     </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
 
         <?php if (!empty($active)): ?>

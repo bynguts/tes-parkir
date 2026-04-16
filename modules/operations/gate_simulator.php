@@ -121,12 +121,20 @@ include '../../includes/header.php';
                     <h2 class="font-manrope font-extrabold text-xl text-slate-900 uppercase tracking-widest mb-2">Entry Gate</h2>
                     <p class="text-slate-400 text-sm font-inter mb-6">Tekan tombol di bawah untuk mencetak tiket otomatis. Palang akan terbuka saat tiket keluar.</p>
 
-                    <div id="ticketStatus" class="min-h-[48px] mb-4 w-full"></div>
-                    <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-inter text-sm uppercase tracking-widest rounded-xl py-4 transition-all flex items-center justify-center gap-2"
-                            onclick="cetakTiketOtomatis(this)">
-                        <span class="material-symbols-outlined text-xl">confirmation_number</span>
-                        Otomatisasi Tiket Masuk
-                    </button>
+                    <div id="ticketStatus" class="min-h-[48px] mb-4 w-full text-center"></div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all flex items-center justify-center gap-2"
+                                onclick="cetakTiketOtomatis('car', this)">
+                            <span class="material-symbols-outlined text-xl">directions_car</span>
+                            Karcis Mobil
+                        </button>
+                        <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all flex items-center justify-center gap-2"
+                                onclick="cetakTiketOtomatis('motorcycle', this)">
+                            <span class="material-symbols-outlined text-xl">two_wheeler</span>
+                            Karcis Motor
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -172,24 +180,29 @@ include '../../includes/header.php';
 </main>
 
 <script>
-async function cetakTiketOtomatis(btn) {
+async function cetakTiketOtomatis(type, btn) {
     const orig = btn.innerHTML;
     const status = document.getElementById('ticketStatus');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span> Mencetak...';
-    status.innerHTML = '<p class="text-slate-500 text-sm font-inter animate-pulse">Sistem sedang mengalokasikan slot...</p>';
+    
+    // Disable all buttons during processing
+    const buttons = btn.parentElement.querySelectorAll('button');
+    buttons.forEach(b => b.disabled = true);
+    
+    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span> ...';
+    status.innerHTML = `<p class="text-slate-500 text-sm font-inter animate-pulse">Menyiapkan slot ${type === 'car' ? 'Mobil' : 'Motor'}...</p>`;
 
     try {
-        const res  = await fetch('print_ticket.php?auto=1');
+        const res  = await fetch(`print_ticket.php?auto=1&vtype=${type}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        status.innerHTML = '<div class="flex items-center justify-center gap-2 text-emerald-600 text-sm font-inter font-bold"><span class="material-symbols-outlined text-base">check_circle</span> Tiket berhasil dicetak!</div>';
+        
+        status.innerHTML = '<div class="flex items-center justify-center gap-2 text-emerald-600 text-sm font-inter font-bold"><span class="material-symbols-outlined text-base">check_circle</span> Tiket tervalidasi!</div>';
         window.open(`print_ticket.php?ticket_code=${encodeURIComponent(data.ticket_code)}`, '_blank', 'width=400,height=600');
     } catch (e) {
         status.innerHTML = `<div class="flex items-center justify-center gap-2 text-red-600 text-sm font-inter"><span class="material-symbols-outlined text-base">error</span> ${e.message}</div>`;
     } finally {
         setTimeout(() => {
-            btn.disabled = false;
+            buttons.forEach(b => b.disabled = false);
             btn.innerHTML = orig;
             status.innerHTML = '';
         }, 4000);

@@ -76,7 +76,7 @@ $page_title = $page_title ?? 'Parking System';
             height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #f8fafc;
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
@@ -86,19 +86,37 @@ $page_title = $page_title ?? 'Parking System';
             background: #94a3b8;
         }
 
-        /* Hide main page scrollbar (intentional choice) */
+        /* Hide main page scrollbar while keeping it scrollable */
         html, body {
+            scrollbar-width: none; /* Firefox */
             -ms-overflow-style: none; /* IE/Edge */
-            scrollbar-width: none;    /* Firefox */
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-behavior: smooth;
         }
-        html::-webkit-scrollbar, body::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
+        html::-webkit-scrollbar, 
+        body::-webkit-scrollbar {
+            width: 0px !important;
+            height: 0px !important;
+            background: transparent !important;
+            display: none;
         }
 
-        /* Class-based control for specific containers (like sidebar) */
+        /* Support for hover-to-scroll on any element */
         .custom-scrollbar {
-            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            -ms-overflow-style: auto;
+        }
+
+        /* Utility to hide scrollbar while keeping scroll alive */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
         }
 
         /* Sidebar active link */
