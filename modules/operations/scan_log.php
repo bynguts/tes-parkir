@@ -18,31 +18,24 @@ $logs = $pdo->query("
 ")->fetchAll();
 
 $page_title = 'Scan Log Engine';
+$page_subtitle = 'Log forensik aktivitas sensor gate masuk dan keluar.';
+$page_actions = '
+<div class="flex items-center gap-3">
+    <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+        <input type="text" id="searchLog" placeholder="Cari tiket..."
+               oninput="filterLog(this.value)"
+               class="bg-slate-100 border-none rounded-full pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
+    </div>
+    <button onclick="document.getElementById(\'modalHapus\').classList.remove(\'hidden\')"
+            class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
+        <span class="material-symbols-outlined text-base">delete_sweep</span>
+        Hapus Log
+    </button>
+</div>';
+
 include '../../includes/header.php';
 ?>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <!-- Top Bar -->
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Gate Activity Log</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Log forensik aktivitas sensor gate masuk dan keluar.</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <div class="relative">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-                <input type="text" id="searchLog" placeholder="Cari tiket..."
-                       oninput="filterLog(this.value)"
-                       class="bg-slate-100 border-none rounded-full pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
-            </div>
-            <button onclick="document.getElementById('modalHapus').classList.remove('hidden')"
-                    class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-                <span class="material-symbols-outlined text-base">delete_sweep</span>
-                Hapus Log
-            </button>
-        </div>
-    </header>
 
     <div class="p-8">
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
@@ -121,7 +114,6 @@ include '../../includes/header.php';
             </div>
         </div>
     </div>
-</main>
 
 <!-- MODAL: Hapus Riwayat (Tailwind) -->
 <div id="modalHapus" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">

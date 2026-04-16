@@ -15,23 +15,16 @@ $active = $pdo->query("
 ")->fetchAll();
 
 $page_title = 'Kendaraan Aktif';
+$page_subtitle = "Total: " . count($active) . " kendaraan terparkir";
+$page_actions = '
+<button onclick="location.reload()"
+        class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
+    <span class="material-symbols-outlined text-base">refresh</span>
+    Refresh
+</button>';
+
 include '../../includes/header.php';
 ?>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <!-- Top Bar -->
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Kendaraan Aktif</h1>
-            <p class="text-slate-400 text-sm font-inter">Total: <?= count($active) ?> kendaraan terparkir</p>
-        </div>
-        <button onclick="location.reload()"
-                class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-            <span class="material-symbols-outlined text-base">refresh</span>
-            Refresh
-        </button>
-    </header>
 
     <div class="p-10">
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
@@ -115,6 +108,5 @@ include '../../includes/header.php';
         </div>
         <?php endif; ?>
     </div>
-</main>
 
 <?php include '../../includes/footer.php'; ?>

@@ -37,6 +37,13 @@ $fs = [];
 foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
 
 $page_title = 'Peta Slot Parkir';
+$page_subtitle = 'Visualisasi pemetaan slot kendaraan per lantai secara real-time.';
+$page_actions = '
+<div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span id="lastRefresh">Live Sync</span>
+</div>';
+
 include '../../includes/header.php';
 ?>
 
@@ -73,19 +80,6 @@ include '../../includes/header.php';
 .slot-plate    { font-size: 9px; color: #334155; margin-top: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-weight: 700; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; }
 .slot-duration { font-size: 9px; color: #64748b; margin-top: 3px; font-family: 'Inter', sans-serif; }
 </style>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Live Slot Map</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Visualisasi pemetaan slot kendaraan per lantai secara real-time.</p>
-        </div>
-        <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="lastRefresh">Live Sync</span>
-        </div>
-    </header>
 
     <div class="p-10 max-w-[1440px] mx-auto">
 
@@ -175,9 +169,8 @@ include '../../includes/header.php';
                 <?php endforeach; ?>
             </div>
         </div>
-        <?php endforeach; ?>?>
+        <?php endforeach; ?>
     </div>
-</main>
 
 <script>
 let countdown = 30;

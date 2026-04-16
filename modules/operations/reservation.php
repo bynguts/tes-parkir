@@ -86,6 +86,12 @@ $reservations = $pdo->query("
 $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 
 $page_title = 'Manajemen Reservasi';
+$page_subtitle = 'Kelola pre-booking dan alokasi prioritas slot parkir.';
+$page_actions = '
+<span class="bg-slate-100 text-slate-600 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+    ' . count($reservations) . ' Aktif
+</span>';
+
 include '../../includes/header.php';
 ?>
 
@@ -184,18 +190,6 @@ include '../../includes/header.php';
 .flatpickr-custom-btn button:hover { color: #fff; }
 .flatpickr-custom-btn button.ok   { color: #22c55e; }
 </style>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Manajemen Reservasi</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Kelola pre-booking dan alokasi prioritas slot parkir.</p>
-        </div>
-        <span class="bg-slate-100 text-slate-600 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
-            <?= count($reservations) ?> Aktif
-        </span>
-    </header>
 
     <div class="p-8 max-w-[1440px] mx-auto">
 
@@ -359,7 +353,6 @@ include '../../includes/header.php';
 
         </div>
     </div>
-</main>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>

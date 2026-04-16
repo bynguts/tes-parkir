@@ -61,22 +61,16 @@ $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
     ORDER BY o.staff_type ASC, o.full_name ASC")->fetchAll();
 
 $page_title = 'Kelola Operator';
+$page_subtitle = 'Kelola data petugas gate yang bertugas pada setiap shift.';
+$page_actions = '
+<button onclick="document.getElementById(\'addModal\').classList.remove(\'hidden\')"
+        class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
+    <span class="material-symbols-outlined text-base">person_add</span>
+    Tambah Operator
+</button>';
+
 include '../../includes/header.php';
 ?>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Database Personalia</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Kelola data petugas gate yang bertugas pada setiap shift.</p>
-        </div>
-        <button onclick="document.getElementById('addModal').classList.remove('hidden')"
-                class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-            <span class="material-symbols-outlined text-base">person_add</span>
-            Tambah Operator
-        </button>
-    </header>
 
     <div class="p-8 max-w-[1440px] mx-auto">
 
@@ -168,7 +162,6 @@ include '../../includes/header.php';
             </table>
         </div>
     </div>
-</main>
 
 <?php
 // Shared shift options HTML

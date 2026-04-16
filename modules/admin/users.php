@@ -57,17 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = $pdo->query("SELECT user_id, username, role, full_name, last_login, is_active, created_at FROM admin_users ORDER BY role, username")->fetchAll();
 
 $page_title = 'User & Role Administrator';
+$page_subtitle = 'Provisioning identitas dan kontrol akses operasional sistem.';
+
 include '../../includes/header.php';
 ?>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <header class="flex justify-between items-center px-8 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">User & Auth Management</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Akses root — superadmin only. Kelola akun dan otorisasi sistem.</p>
-        </div>
-    </header>
 
     <div class="p-8 max-w-[1440px] mx-auto">
 
@@ -218,7 +211,7 @@ include '../../includes/header.php';
             </div>
         </div>
     </div>
-</main>
+    </div>
 
 <!-- Reset Password Modal -->
 <div id="modalReset" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">

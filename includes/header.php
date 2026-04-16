@@ -142,9 +142,38 @@ $page_title = $page_title ?? 'Parking System';
         .progress-bar-fill { transition: width 0.8s ease; }
     </style>
 </head>
-<body class="bg-[#f2f4f7] text-slate-900">
+<body class="bg-[#f2f4f7] text-slate-900 overflow-hidden">
 <?php
 if (!isset($hide_sidebar) || !$hide_sidebar) {
     include 'sidebar.php';
 }
 ?>
+
+<!-- Main Content Wrapper & Scroll Container -->
+<main class="pl-64 min-h-screen bg-[#f2f4f7] text-on-surface">
+
+    <!-- Global Top Bar (Sticky) -->
+    <?php if (!isset($hide_header) || !$hide_header): ?>
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="flex flex-col">
+            <h1 class="font-manrope font-extrabold text-2xl text-slate-900"><?= $page_title ?></h1>
+            <?php if (isset($page_subtitle) && $page_subtitle): ?>
+                <span class="text-slate-400 text-[11px] font-inter font-medium uppercase tracking-wider -mt-1">
+                    <?= $page_subtitle ?>
+                </span>
+            <?php endif; ?>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Page specific actions -->
+            <?php if (isset($page_actions)) echo $page_actions; ?>
+
+            <!-- Universal User Info -->
+            <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
+                <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wide"><?= strtoupper($role) ?></span>
+                <span class="text-slate-300">|</span>
+                <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
+            </div>
+        </div>
+    </header>
+    <?php endif; ?>

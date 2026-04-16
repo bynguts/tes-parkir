@@ -5,6 +5,8 @@ require_once '../../config/connection.php';
 $summary = get_slot_summary($pdo);
 
 $page_title = 'Smart Gate Simulator';
+$page_subtitle = 'Simulasi sensor entry/exit fisik. Digunakan oleh operator gate atau hardware kiosk.';
+
 include '../../includes/header.php';
 ?>
 
@@ -62,15 +64,6 @@ include '../../includes/header.php';
     font-family: 'Inter', sans-serif !important; font-size: 12px !important;
 }
 </style>
-
-<main class="pl-64 min-h-screen bg-[#f2f4f7]">
-
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div>
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Smart Gate Interface</h1>
-            <p class="text-slate-400 text-xs font-inter mt-0.5">Simulasi sensor entry/exit fisik. Digunakan oleh operator gate atau hardware kiosk.</p>
-        </div>
-    </header>
 
     <div class="p-10 max-w-[1440px] mx-auto">
 
@@ -177,7 +170,6 @@ include '../../includes/header.php';
 
         </div>
     </div>
-</main>
 
 <script>
 async function cetakTiketOtomatis(type, btn) {
