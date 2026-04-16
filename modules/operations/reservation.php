@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $date_until = $_POST['reserved_until'] ?? '';
 
         if (!$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from || !$date_until) {
-            $error = 'Semua field wajib diisi.';
+            $error = 'All fields are required.';
         } elseif (strtotime($date_until) <= strtotime($date_from)) {
-            $error = 'Waktu selesai harus setelah waktu mulai.';
+            $error = 'End time must be after start time.';
         } elseif (strtotime($date_from) < time() - 300) {
-            $error = 'Waktu mulai tidak boleh di masa lalu.';
+            $error = 'Start time cannot be in the past.';
         } else {
             $stmt = $pdo->prepare("
                 SELECT ps.slot_id FROM parking_slot ps
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $slot = $stmt->fetch();
 
             if (!$slot) {
-                $error = 'Tidak ada slot tersedia untuk periode tersebut.';
+                $error = 'No slots available for this period.';
             } else {
                 $pdo->prepare("INSERT INTO vehicle (plate_number, vehicle_type, owner_name, owner_phone)
                                 VALUES (?,?,?,?)
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 VALUES (?,?,?,?,?,'confirmed')")
                     ->execute([$vid, $slot['slot_id'], $code, $date_from, $date_until]);
 
-                $msg = "Reservasi berhasil! Kode: <strong class='font-mono'>{$code}</strong>";
+                $msg = "Reservation successful! Code: <strong class='font-mono'>{$code}</strong>";
             }
         }
     }
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res_id = (int)($_POST['reservation_id'] ?? 0);
         $pdo->prepare("UPDATE reservation SET status='cancelled' WHERE reservation_id=? AND status IN ('pending','confirmed')")
             ->execute([$res_id]);
-        $msg = 'Reservasi berhasil dibatalkan.';
+        $msg = 'Reservation successfully cancelled.';
     }
 }
 
@@ -85,11 +85,11 @@ $reservations = $pdo->query("
 
 $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 
-$page_title = 'Manajemen Reservasi';
-$page_subtitle = 'Kelola pre-booking dan alokasi prioritas slot parkir.';
+$page_title = 'Reservation Management';
+$page_subtitle = 'Manage pre-booking and priority parking slot allocation.';
 $page_actions = '
 <span class="bg-slate-100 text-slate-600 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
-    ' . count($reservations) . ' Aktif
+    ' . count($reservations) . ' Active
 </span>';
 
 include '../../includes/header.php';
@@ -195,13 +195,13 @@ include '../../includes/header.php';
 
         <?php if ($msg): ?>
         <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
         <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-red-600">error</span>
+            <i class="fa-solid fa-circle-exclamation text-red-600"></i>
             <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>
@@ -211,8 +211,8 @@ include '../../includes/header.php';
             <!-- CREATE FORM -->
             <div class="bg-white rounded-2xl shadow-sm self-start" style="overflow: visible;">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-slate-400 text-xl">calendar_add_on</span>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Buat Reservasi Baru</h2>
+                    <i class="fa-solid fa-calendar-plus text-slate-400 text-lg"></i>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">Create New Reservation</h2>
                 </div>
                 <div class="p-6">
                     <form method="POST" class="space-y-4">
@@ -222,23 +222,23 @@ include '../../includes/header.php';
 
                         <!-- Vehicle type selector -->
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Tipe Kendaraan</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Vehicle Type</label>
                             <div class="grid grid-cols-2 gap-2">
                                 <button type="button" id="btnCar" onclick="setType('car')"
                                         class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-900 bg-slate-900 text-white transition-all">
-                                    <span class="material-symbols-outlined text-2xl">directions_car</span>
-                                    <span class="text-xs font-bold font-inter">Mobil</span>
+                                    <i class="fa-solid fa-car text-2xl"></i>
+                                    <span class="text-xs font-bold font-inter">Car</span>
                                 </button>
                                 <button type="button" id="btnMoto" onclick="setType('motorcycle')"
                                         class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-400 transition-all">
-                                    <span class="material-symbols-outlined text-2xl">two_wheeler</span>
-                                    <span class="text-xs font-bold font-inter">Motor</span>
+                                    <i class="fa-solid fa-motorcycle text-2xl"></i>
+                                    <span class="text-xs font-bold font-inter">Motorcycle</span>
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Plat Nomor <span class="text-red-500">*</span></label>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Plate Number <span class="text-red-500">*</span></label>
                             <input type="text" name="plate_number"
                                    class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 text-center uppercase tracking-widest transition-all"
                                    placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
@@ -246,12 +246,12 @@ include '../../includes/header.php';
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Nama Pemilik</label>
-                                <input type="text" name="owner_name" placeholder="Opsional"
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Owner Name</label>
+                                <input type="text" name="owner_name" placeholder="Optional"
                                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">No. Telepon</label>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Phone Number</label>
                                 <input type="tel" name="owner_phone" placeholder="08xxxx"
                                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
@@ -259,21 +259,21 @@ include '../../includes/header.php';
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Waktu Mulai <span class="text-red-500">*</span></label>
-                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Pilih waktu..."
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Start Time <span class="text-red-500">*</span></label>
+                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Choose time..."
                                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Waktu Selesai <span class="text-red-500">*</span></label>
-                                <input type="text" name="reserved_until" id="until_dt" required placeholder="Pilih waktu..."
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">End Time <span class="text-red-500">*</span></label>
+                                <input type="text" name="reserved_until" id="until_dt" required placeholder="Choose time..."
                                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
                             </div>
                         </div>
 
                         <button type="submit"
                                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3.5 transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-base">event_available</span>
-                            Proses Reservasi
+                            <i class="fa-solid fa-calendar-check text-base"></i>
+                            Process Reservation
                         </button>
                     </form>
                 </div>
@@ -282,24 +282,24 @@ include '../../includes/header.php';
             <!-- ACTIVE RESERVATIONS -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-slate-400 text-xl">calendar_month</span>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Antrean Reservasi Aktif</h2>
+                    <i class="fa-solid fa-calendar-days text-slate-400 text-lg"></i>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">Active Reservation Queue</h2>
                 </div>
                 <?php if (empty($reservations)): ?>
                 <div class="flex flex-col items-center justify-center py-24 text-center">
-                    <span class="material-symbols-outlined text-6xl text-slate-200 block mb-4">event_busy</span>
-                    <p class="text-slate-400 text-sm font-inter">Belum ada reservasi aktif terjadwal.</p>
+                    <i class="fa-solid fa-calendar-times text-6xl text-slate-200 block mb-4"></i>
+                    <p class="text-slate-400 text-sm font-inter">No active reservations scheduled.</p>
                 </div>
                 <?php else: ?>
                 <div class="overflow-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="border-b border-slate-100">
-                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Kode Validasi</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Klien / Kendaraan</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Alokasi Slot</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Periode</th>
-                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Aksi</th>
+                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Validation Code</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Client / Vehicle</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Allocation</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Period</th>
+                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
@@ -311,7 +311,7 @@ include '../../includes/header.php';
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 rounded-xl <?= $r['vehicle_type'] === 'car' ? 'bg-blue-50' : 'bg-emerald-50' ?> flex items-center justify-center">
-                                            <span class="material-symbols-outlined text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"><?= $r['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                                            <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"></i>
                                         </div>
                                         <div>
                                             <div class="font-inter font-bold text-sm text-slate-800"><?= htmlspecialchars($r['plate_number']) ?></div>
@@ -324,21 +324,21 @@ include '../../includes/header.php';
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-1.5 text-slate-700 text-xs font-inter">
-                                        <span class="material-symbols-outlined text-blue-400 text-sm">schedule</span>
+                                        <i class="fa-solid fa-clock text-blue-400 text-[10px]"></i>
                                         <?= date('d M H:i', strtotime($r['reserved_from'])) ?>
                                     </div>
                                     <div class="flex items-center gap-1.5 text-slate-400 text-xs font-inter mt-0.5">
-                                        <span class="material-symbols-outlined text-slate-300 text-sm">arrow_forward</span>
-                                        s/d <?= date('H:i', strtotime($r['reserved_until'])) ?>
+                                        <i class="fa-solid fa-arrow-right text-slate-300 text-[10px]"></i>
+                                        until <?= date('H:i', strtotime($r['reserved_until'])) ?>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan reservasi ini?')">
+                                    <form method="POST" onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="cancel">
                                         <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
                                         <button class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold font-inter px-4 py-2 rounded-xl transition-all ml-auto">
-                                            <span class="material-symbols-outlined text-sm">close</span>
+                                            <i class="fa-solid fa-xmark text-sm"></i>
                                             Cancel
                                         </button>
                                     </form>

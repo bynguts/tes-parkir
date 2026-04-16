@@ -29,7 +29,7 @@ if (isset($_GET['auto'])) {
     }
 
     if (!$slot) {
-        echo json_encode(['error' => 'Semua slot penuh!']); exit;
+        echo json_encode(['error' => 'All slots are full!']); exit;
     }
 
     $plate   = null;
@@ -96,7 +96,7 @@ if (isset($_GET['ticket_code'])) {
     $stmt->execute([$code]);
     $d = $stmt->fetch();
 
-    if (!$d) { echo "<script>alert('Tiket tidak ditemukan.');window.close();</script>"; exit; }
+    if (!$d) { echo "<script>alert('Ticket not found.');window.close();</script>"; exit; }
 
     $plate_raw   = $d['plate_number'];
     $vtype_label = $d['vehicle_type'] === 'car' ? 'CAR' : 'MOTORCYCLE';
@@ -109,10 +109,10 @@ if (isset($_GET['ticket_code'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tiket Parkir — <?= htmlspecialchars($code) ?></title>
+    <title>Parking Ticket — <?= htmlspecialchars($code) ?></title>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Courier Prime', 'Courier New', monospace;background:#f0f0f0;display:flex;justify-content:center;padding:20px}
@@ -143,8 +143,8 @@ if (isset($_GET['ticket_code'])) {
         <div class="barcode-container"><img src="<?= $barcode_url ?>" alt="QR Code"></div>
         <div class="branch-name">Berserk Store Parking</div>
         <div class="info-row">Entry Time : <?= $checkin_fmt ?></div>
-        <div class="info-row">Slot : <?= htmlspecialchars($d['slot_number']) ?> / <?= htmlspecialchars($d['floor']) ?></div>
-        <p class="disclaimer">Pastikan kendaraan dikunci dengan baik<br>dan simpan tiket agar tidak hilang</p>
+        <div class="info-row">Slot : <?= htmlspecialchars($d['slot_number']) ?> / Floor <?= htmlspecialchars($d['floor']) ?></div>
+        <p class="disclaimer">Ensure your vehicle is securely locked.<br>Keep this ticket for checkout.</p>
     </div>
 </body>
 </html>

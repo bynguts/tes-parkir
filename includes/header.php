@@ -7,7 +7,7 @@ $role      = $_SESSION['role'] ?? 'operator';
 $page_title = $page_title ?? 'Parking System';
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,8 +18,8 @@ $page_title = $page_title ?? 'Parking System';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 
-    <!-- Google Material Symbols Outlined (Variable Weights) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,100..700,0,0">
+    <!-- Font Awesome 6.5.1 (Free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,19 +49,16 @@ $page_title = $page_title ?? 'Parking System';
         h1, h2, h3, .font-manrope { font-family: 'Manrope', sans-serif; font-weight: 800; }
         h1, h2, h3 { font-weight: 800 !important; }
 
-        /* Dashboard & Content Bold Hierarchy */
-        main p, main span, main div, main td, main th, main label, main a { font-weight: 700; }
+        /* Dashboard & Content Hierarchy */
+        main p, main span, main div, main td, main th, main label, main a { font-weight: 500; }
 
-        /* Sidebar: Force Normal Weight (No Bold) */
-        aside, aside * { font-weight: 400 !important; }
-        aside .material-symbols-outlined { font-variation-settings: 'wght' 400 !important; font-weight: 400 !important; }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24;
-            font-weight: 700;
+        /* Icon Defaults: FontAwesome Solid Override */
+        .fas, .fa-solid {
+            font-weight: 900 !important;
             vertical-align: middle;
-            line-height: 1;
         }
+
+        i { display: inline-block; }
 
         /* Global Scrollbar Reset & Standard Look */
         ::-webkit-scrollbar-button {
@@ -132,7 +129,7 @@ $page_title = $page_title ?? 'Parking System';
             background-color: #0f172a !important;
             color: #ffffff !important;
         }
-        .nav-active .material-symbols-outlined { color: #ffffff !important; }
+        .nav-active i { color: #ffffff !important; }
 
         /* Status badge dot */
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
@@ -178,11 +175,9 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
                 $exportUrl = $prefix . 'modules/reports/export_excel.php';
                 ?>
                 <a href="<?= htmlspecialchars($exportUrl) ?>" target="_blank"
-                   class="bg-white border border-slate-200 text-slate-900 px-5 py-2.5 rounded-lg font-bold text-sm font-manrope transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
-                   title="Ekspor seluruh data SmartParking ke Excel">
-                    <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0, 'wght' 300;">
-                        ios_share
-                    </span>
+                   class="bg-white border border-slate-200 text-slate-900 px-5 py-2.5 rounded-2xl font-semibold text-sm font-manrope transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+                   title="Export all SmartParking data to Excel">
+                    <i class="fa-solid fa-share-from-square text-lg opacity-75"></i>
                     Export
                 </a>
             <?php endif; ?>
@@ -190,12 +185,10 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             <!-- Page specific actions -->
             <?php if (isset($page_actions)) echo $page_actions; ?>
 
-            <!-- Universal User Info -->
-            <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
-                <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wide"><?= strtoupper($role) ?></span>
-                <span class="text-slate-300">|</span>
-                <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
-            </div>
+            <!-- Settings / Notifications Placeholder -->
+            <button class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-bell"></i>
+            </button>
         </div>
     </header>
     <?php endif; ?>

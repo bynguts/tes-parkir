@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($_SESSION[$key]['count'] >= 5) {
             $remaining = 300 - (time() - $_SESSION[$key]['since']);
-            $error = "Terlalu banyak percobaan. Sistem terkunci selama {$remaining}s.";
+            $error = "Too many attempts. System locked for {$remaining}s.";
         } else {
             $stmt = $pdo->prepare("SELECT user_id, password_hash, role, full_name FROM admin_users WHERE username = ? AND is_active = 1");
             $stmt->execute([$username]);
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: index.php'); exit;
             } else {
                 $_SESSION[$key]['count']++;
-                $error = 'Otentikasi gagal: Identitas atau key tidak valid.';
+                $error = 'Authentication failed: Invalid identity or key.';
                 usleep(300000);
             }
         }
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -89,10 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
     <style>
         * { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -112,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Brand mark -->
     <div class="text-center mb-10">
         <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span class="material-symbols-outlined text-white text-xl">local_parking</span>
+            <i class="fa-solid fa-square-p text-white text-xl"></i>
         </div>
         <h1 class="font-manrope font-extrabold text-2xl text-slate-900">SmartParking</h1>
         <p class="text-slate-400 text-sm mt-1 font-inter">Enterprise Management System</p>
@@ -126,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if ($error): ?>
         <div class="flex items-start gap-3 bg-red-50 rounded-xl p-4 mb-5">
-            <span class="material-symbols-outlined text-red-500 text-lg mt-0.5">error</span>
+            <i class="fa-solid fa-circle-exclamation text-red-500 text-sm mt-1"></i>
             <p class="text-red-700 text-sm font-inter leading-snug"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>

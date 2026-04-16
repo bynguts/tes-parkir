@@ -5,7 +5,7 @@ require_once '../../config/connection.php';
 $summary = get_slot_summary($pdo);
 
 $page_title = 'Smart Gate Simulator';
-$page_subtitle = 'Simulasi sensor entry/exit fisik. Digunakan oleh operator gate atau hardware kiosk.';
+$page_subtitle = 'Physical entry/exit sensor simulation. Used by gate operators or hardware kiosks.';
 
 include '../../includes/header.php';
 ?>
@@ -71,8 +71,8 @@ include '../../includes/header.php';
         <div class="grid grid-cols-2 gap-4 mb-6">
             <?php
             $types = [
-                'car'        => ['directions_car', 'MOBIL'],
-                'motorcycle' => ['two_wheeler',    'MOTOR'],
+                'car'        => ['car',       'CAR'],
+                'motorcycle' => ['motorcycle', 'MOTORCYCLE'],
             ];
             foreach ($types as $t => $cfg):
                 $icon  = $cfg[0];
@@ -87,12 +87,12 @@ include '../../includes/header.php';
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot <?= $lbl ?></p>
                     <div class="w-10 h-10 rounded-xl <?= $t === 'car' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600' ?> flex items-center justify-center">
-                        <span class="material-symbols-outlined text-xl"><?= $icon ?></span>
+                        <i class="fa-solid fa-<?= $icon ?> text-xl"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-4xl <?= $pct_cls ?>"><?= $avail ?></span>
-                    <span class="text-slate-400 text-sm font-inter">/ <?= $total ?> tersedia</span>
+                    <span class="text-slate-400 text-sm font-inter">/ <?= $total ?> available</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2">
                     <div class="h-2 rounded-full transition-all <?= $bar_cls ?>" style="width:<?= round($pct) ?>%"></div>
@@ -109,23 +109,23 @@ include '../../includes/header.php';
                 <div class="h-1.5 bg-emerald-500"></div>
                 <div class="p-8 flex flex-col items-center text-center">
                     <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-5">
-                        <span class="material-symbols-outlined text-emerald-600 text-3xl">south</span>
+                        <i class="fa-solid fa-arrow-down text-emerald-600 text-3xl"></i>
                     </div>
                     <h2 class="font-manrope font-extrabold text-xl text-slate-900 uppercase tracking-widest mb-2">Entry Gate</h2>
-                    <p class="text-slate-400 text-sm font-inter mb-6">Tekan tombol di bawah untuk mencetak tiket otomatis. Palang akan terbuka saat tiket keluar.</p>
+                    <p class="text-slate-400 text-sm font-inter mb-6">Press buttons below for automatic ticket issuance. The barrier opens when the ticket is issued.</p>
 
                     <div id="ticketStatus" class="min-h-[48px] mb-4 w-full text-center"></div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                         <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all flex items-center justify-center gap-2"
                                 onclick="cetakTiketOtomatis('car', this)">
-                            <span class="material-symbols-outlined text-xl">directions_car</span>
-                            Karcis Mobil
+                            <i class="fa-solid fa-car text-xl"></i>
+                            Car Ticket
                         </button>
                         <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all flex items-center justify-center gap-2"
                                 onclick="cetakTiketOtomatis('motorcycle', this)">
-                            <span class="material-symbols-outlined text-xl">two_wheeler</span>
-                            Karcis Motor
+                            <i class="fa-solid fa-motorcycle text-xl"></i>
+                            Motorcycle Ticket
                         </button>
                     </div>
                 </div>
@@ -136,10 +136,10 @@ include '../../includes/header.php';
                 <div class="h-1.5 bg-red-500"></div>
                 <div class="p-8 flex flex-col items-center text-center">
                     <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-5">
-                        <span class="material-symbols-outlined text-red-600 text-3xl">north</span>
+                        <i class="fa-solid fa-arrow-up text-red-600 text-3xl"></i>
                     </div>
                     <h2 class="font-manrope font-extrabold text-xl text-slate-900 uppercase tracking-widest mb-2">Exit Gate</h2>
-                    <p class="text-slate-400 text-sm font-inter mb-4">Arahkan barcode tiket ke scanner atau masukkan token karcis secara manual.</p>
+                    <p class="text-slate-400 text-sm font-inter mb-4">Point the ticket barcode at the scanner or enter the ticket token manually.</p>
 
                     <!-- Barcode Scanner -->
                     <div class="relative w-full mb-4">
@@ -157,11 +157,11 @@ include '../../includes/header.php';
                     <div class="flex w-full gap-2">
                         <input type="text" id="manualCode"
                                class="flex-1 bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all uppercase tracking-widest text-center"
-                               placeholder="Enter Token Karcis Parkir"
+                               placeholder="Enter Parking Ticket Token"
                                autocomplete="off">
                         <button onclick="processTicket(document.getElementById('manualCode').value)"
                                 class="bg-red-600 hover:bg-red-700 text-white font-bold font-inter text-xs uppercase tracking-widest px-5 rounded-full transition-all flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-base">logout</span>
+                            <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
                             Exec
                         </button>
                     </div>
@@ -180,18 +180,18 @@ async function cetakTiketOtomatis(type, btn) {
     const buttons = btn.parentElement.querySelectorAll('button');
     buttons.forEach(b => b.disabled = true);
     
-    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span> ...';
-    status.innerHTML = `<p class="text-slate-500 text-sm font-inter animate-pulse">Menyiapkan slot ${type === 'car' ? 'Mobil' : 'Motor'}...</p>`;
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate text-xl animate-spin"></i> ...';
+    status.innerHTML = `<p class="text-slate-500 text-sm font-inter animate-pulse">Preparing ${type === 'car' ? 'Car' : 'Motorcycle'} slot...</p>`;
 
     try {
         const res  = await fetch(`print_ticket.php?auto=1&vtype=${type}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         
-        status.innerHTML = '<div class="flex items-center justify-center gap-2 text-emerald-600 text-sm font-inter font-bold"><span class="material-symbols-outlined text-base">check_circle</span> Tiket tervalidasi!</div>';
+        status.innerHTML = '<div class="flex items-center justify-center gap-2 text-emerald-600 text-sm font-inter font-bold"><i class="fa-solid fa-circle-check text-xs"></i> Ticket validated!</div>';
         window.open(`print_ticket.php?ticket_code=${encodeURIComponent(data.ticket_code)}`, '_blank', 'width=400,height=600');
     } catch (e) {
-        status.innerHTML = `<div class="flex items-center justify-center gap-2 text-red-600 text-sm font-inter"><span class="material-symbols-outlined text-base">error</span> ${e.message}</div>`;
+        status.innerHTML = `<div class="flex items-center justify-center gap-2 text-red-600 text-sm font-inter"><i class="fa-solid fa-circle-exclamation text-xs"></i> ${e.message}</div>`;
     } finally {
         setTimeout(() => {
             buttons.forEach(b => b.disabled = false);
@@ -205,14 +205,14 @@ let scanned = false;
 function processTicket(code) {
     if (scanned) return;
     code = (code || '').trim().toUpperCase();
-    if (code.length < 4) { alert('Kode tiket tidak valid.'); return; }
+    if (code.length < 4) { alert('Invalid ticket code.'); return; }
     scanned = true;
 
     document.getElementById('scanned-result').innerHTML =
         `<div class="flex items-center justify-center gap-2 bg-emerald-50 rounded-xl px-4 py-3 text-emerald-700 font-code font-bold text-sm">
-            <span class="material-symbols-outlined text-base">barcode_reader</span>${code}
+            <i class="fa-solid fa-barcode text-xs"></i>${code}
          </div>
-         <p class="text-slate-400 text-xs font-inter mt-2 animate-pulse">Otentikasi & Kalkulasi billing...</p>`;
+         <p class="text-slate-400 text-xs font-inter mt-2 animate-pulse">Authentication & Billing calculation...</p>`;
 
     setTimeout(() => {
         try {

@@ -16,17 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fullname = trim($_POST['full_name'] ?? '');
 
         if (!$uname || !$pass || !in_array($urole, ['superadmin','admin','operator'])) {
-            $error = 'Integritas entitas gagal: Semua field esensial wajib diisi.';
+            $error = 'Entity Integrity Failed: All essential fields are required.';
         } elseif (strlen($pass) < 8) {
-            $error = 'Standar keamanan gagal: Password terlalu pendek (min 8 karakter).';
+            $error = 'Security Standard Failed: Password is too short (min 8 characters).';
         } else {
             try {
                 $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
                 $pdo->prepare("INSERT INTO admin_users (username, password_hash, role, full_name) VALUES (?,?,?,?)")
                     ->execute([$uname, $hash, $urole, $fullname ?: $uname]);
-                $msg = "Identitas '{$uname}' berhasil di-provision dengan autorisasi role {$urole}.";
+                $msg = "Identity '{$uname}' successfully provisioned with role authorization: {$urole}.";
             } catch (PDOException $e) {
-                $error = 'Username telah direservasi oleh sistem (Duplicate Key).';
+                $error = 'Username is already reserved by the system (Duplicate Key).';
             }
         }
     }
@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'toggle') {
         $uid = (int)$_POST['user_id'];
         if ($uid === (int)$_SESSION['user_id']) {
-            $error = 'Operasi ilegal: Tidak dapat memodifikasi session ID aktif milik sendiri.';
+            $error = 'Illegal Operation: Cannot modify your own active session ID.';
         } else {
             $pdo->prepare("UPDATE admin_users SET is_active = NOT is_active WHERE user_id=?")->execute([$uid]);
-            $msg = 'Access Control List user telah diperbarui.';
+            $msg = 'User Access Control List has been updated.';
         }
     }
 
@@ -45,19 +45,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $uid  = (int)$_POST['user_id'];
         $pass = $_POST['new_password'] ?? '';
         if (strlen($pass) < 8) {
-            $error = 'Password baru terlalu pendek (min 8 karakter).';
+            $error = 'New password is too short (min 8 characters).';
         } else {
             $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
             $pdo->prepare("UPDATE admin_users SET password_hash=? WHERE user_id=?")->execute([$hash, $uid]);
-            $msg = 'Cryptographic hash password berhasil diperbarui.';
+            $msg = 'Cryptographic password hash successfully updated.';
         }
     }
 }
 
 $users = $pdo->query("SELECT user_id, username, role, full_name, last_login, is_active, created_at FROM admin_users ORDER BY role, username")->fetchAll();
 
-$page_title = 'User & Role Administrator';
-$page_subtitle = 'Provisioning identitas dan kontrol akses operasional sistem.';
+$page_title = 'Admin Users & Roles';
+$page_subtitle = 'Identity provisioning and system operational access control.';
 
 include '../../includes/header.php';
 ?>
@@ -66,13 +66,13 @@ include '../../includes/header.php';
 
         <?php if ($msg): ?>
         <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-emerald-600">verified_user</span>
+            <i class="fa-solid fa-user-shield text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
         <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-red-600">gpp_bad</span>
+            <i class="fa-solid fa-shield-xmark text-red-600"></i>
             <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>
@@ -83,8 +83,8 @@ include '../../includes/header.php';
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden self-start sticky top-24">
                 <div class="h-1 bg-red-500"></div>
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-red-500 text-xl">admin_panel_settings</span>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Provision Akun Baru</h2>
+                    <i class="fa-solid fa-user-gear text-red-500 text-xl"></i>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">Provision New Account</h2>
                 </div>
                 <div class="p-6">
                     <form method="POST" class="space-y-4" autocomplete="off">
@@ -98,13 +98,13 @@ include '../../includes/header.php';
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Nama Lengkap</label>
-                            <input type="text" name="full_name" placeholder="Opsional"
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Full Name</label>
+                            <input type="text" name="full_name" placeholder="Optional"
                                    class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Role Autorisasi</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Authorization Role</label>
                             <select name="role" class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none">
                                 <option value="operator">🖥 Operator</option>
                                 <option value="admin">⚒ Admin</option>
@@ -120,8 +120,8 @@ include '../../includes/header.php';
 
                         <button type="submit"
                                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all flex items-center justify-center gap-2 mt-2">
-                            <span class="material-symbols-outlined text-base">person_add</span>
-                            Provision Akun
+                            <i class="fa-solid fa-user-plus text-sm"></i>
+                            Provision Account
                         </button>
                     </form>
                 </div>
@@ -130,17 +130,17 @@ include '../../includes/header.php';
             <!-- USER TABLE -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-slate-400 text-xl">group</span>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Identitas Sistem (<?= count($users) ?>)</h2>
+                    <i class="fa-solid fa-users text-slate-400 text-lg"></i>
+                    <h2 class="font-manrope font-bold text-lg text-slate-900">System Identities (<?= count($users) ?>)</h2>
                 </div>
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-slate-100">
-                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Identitas</th>
+                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Identity</th>
                             <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Role</th>
                             <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Last Login</th>
                             <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Status</th>
-                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Aksi</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -158,7 +158,7 @@ include '../../includes/header.php';
                                     <div>
                                         <div class="font-inter font-bold text-sm text-slate-800">
                                             <?= htmlspecialchars($u['username']) ?>
-                                            <?php if ($isSelf): ?><span class="text-emerald-600 text-xs ml-1">(anda)</span><?php endif; ?>
+                                            <?php if ($isSelf): ?><span class="text-emerald-600 text-xs ml-1">(you)</span><?php endif; ?>
                                         </div>
                                         <div class="text-slate-400 text-xs font-inter"><?= htmlspecialchars($u['full_name'] ?? '') ?></div>
                                     </div>
@@ -173,11 +173,11 @@ include '../../includes/header.php';
                             <td class="px-4 py-4 text-center">
                                 <?php if ($u['is_active']): ?>
                                     <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full font-inter">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
                                     </span>
                                 <?php else: ?>
                                     <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-xs font-bold px-3 py-1 rounded-full font-inter">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Dinonaktifkan
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Disabled
                                     </span>
                                 <?php endif; ?>
                             </td>
@@ -185,13 +185,13 @@ include '../../includes/header.php';
                                 <div class="flex items-center justify-end gap-2">
                                     <!-- Toggle active -->
                                     <?php if (!$isSelf): ?>
-                                    <form method="POST" onsubmit="return confirm('Toggle status akun <?= htmlspecialchars($u['username'], ENT_QUOTES) ?>?')">
+                                    <form method="POST" onsubmit="return confirm('Toggle account status for <?= htmlspecialchars($u['username'], ENT_QUOTES) ?>?')">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="toggle">
                                         <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
                                         <button class="flex items-center gap-1 <?= $u['is_active'] ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' ?> text-xs font-bold font-inter px-3 py-2 rounded-xl transition-all">
-                                            <span class="material-symbols-outlined text-sm"><?= $u['is_active'] ? 'lock' : 'lock_open' ?></span>
-                                            <?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>
+                                            <i class="fa-solid <?= $u['is_active'] ? 'fa-lock' : 'fa-lock-open' ?> text-[10px]"></i>
+                                            <?= $u['is_active'] ? 'Disable' : 'Enable' ?>
                                         </button>
                                     </form>
                                     <?php endif; ?>
@@ -199,7 +199,7 @@ include '../../includes/header.php';
                                     <!-- Reset password -->
                                     <button onclick="openReset(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>')"
                                             class="flex items-center gap-1 text-slate-600 bg-slate-100 hover:bg-slate-200 text-xs font-bold font-inter px-3 py-2 rounded-xl transition-all">
-                                        <span class="material-symbols-outlined text-sm">key</span>
+                                        <i class="fa-solid fa-key text-[10px]"></i>
                                         Reset PW
                                     </button>
                                 </div>
@@ -218,28 +218,28 @@ include '../../includes/header.php';
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-slate-600">key</span>
+                <i class="fa-solid fa-key text-slate-600"></i>
                 <h2 class="font-manrope font-bold text-lg text-slate-900">Force Reset Password</h2>
             </div>
             <button onclick="document.getElementById('modalReset').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
-                <span class="material-symbols-outlined">close</span>
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
         <form method="POST" class="p-6 space-y-4">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="reset_password">
             <input type="hidden" name="user_id" id="resetUserId">
-            <p class="text-slate-400 text-sm font-inter">Reset password untuk akun: <strong id="resetUsername" class="text-slate-800"></strong></p>
+            <p class="text-slate-400 text-sm font-inter">Reset password for account: <strong id="resetUsername" class="text-slate-800"></strong></p>
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Password Baru (min 8 char)</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">New Password (min 8 char)</label>
                 <input type="password" name="new_password" id="resetPass" required minlength="8" autocomplete="new-password"
                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
             </div>
             <div class="flex gap-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalReset').classList.add('hidden')"
-                        class="flex-1 bg-slate-100 text-slate-700 font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Batal</button>
+                        class="flex-1 bg-slate-100 text-slate-700 font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Cancel</button>
                 <button type="submit"
-                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Konfirmasi</button>
+                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Confirm</button>
             </div>
         </form>
     </div>

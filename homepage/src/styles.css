@@ -1,5 +1,20 @@
 :root {
   color-scheme: dark;
+  --success: #22c55e;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(12px);
+}
+
+/* FontAwesome Standard (Thick/Solid by default) */
+i.fas, i.fa-solid {
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
 }
 
 .home-app {
@@ -200,5 +215,21 @@
   margin-top: 6px;
   font-weight: 800;
   color: rgba(226, 232, 240, 0.9);
+}
+
+/* Glassmorphism & Micro-interactions */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.transition-premium {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-nudge:hover i {
+  transform: translateX(4px);
 }
 

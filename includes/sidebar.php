@@ -12,8 +12,8 @@ function is_active(string $target): string {
 
     <!-- Brand -->
     <div class="px-6 h-20 border-b border-slate-200 flex items-center gap-3">
-        <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-content center">
-            <span class="material-symbols-outlined text-white text-base leading-none flex items-center justify-center w-full h-full">local_parking</span>
+        <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-square-p text-white text-base"></i>
         </div>
         <div>
             <span class="font-inter text-slate-900 text-base leading-tight">Smart</span><span class="font-inter text-slate-400 text-base leading-tight">Parking</span>
@@ -31,35 +31,35 @@ function is_active(string $target): string {
                 <li>
                     <a href="<?= BASE_URL ?>index.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('index.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">dashboard</span>
+                        <i class="fa-solid fa-house text-slate-400 text-sm"></i>
                         Dashboard
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/operations/gate_simulator.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('gate_simulator.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">door_sensor</span>
+                        <i class="fa-solid fa-door-open text-slate-400 text-sm"></i>
                         Smart Gate
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/operations/active_vehicles.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('active_vehicles.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">directions_car</span>
+                        <i class="fa-solid fa-car text-slate-400 text-sm"></i>
                         Active Vehicles
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/operations/reservation.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('reservation.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">event_available</span>
+                        <i class="fa-solid fa-calendar-check text-slate-400 text-sm"></i>
                         Reservations
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/operations/scan_log.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('scan_log.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">receipt_long</span>
+                        <i class="fa-solid fa-file-invoice-dollar text-slate-400 text-sm"></i>
                         Scan Log
                     </a>
                 </li>
@@ -73,14 +73,14 @@ function is_active(string $target): string {
                 <li>
                     <a href="<?= BASE_URL ?>modules/reports/revenue.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('revenue.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">bar_chart_4_bars</span>
+                        <i class="fa-solid fa-chart-column text-slate-400 text-sm"></i>
                         Revenue
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/reports/slot_map.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('slot_map.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">map</span>
+                        <i class="fa-solid fa-map-location-dot text-slate-400 text-sm"></i>
                         Slot Map
                     </a>
                 </li>
@@ -95,21 +95,21 @@ function is_active(string $target): string {
                 <li>
                     <a href="<?= BASE_URL ?>modules/admin/slots.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('slots.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">table_rows</span>
+                        <i class="fa-solid fa-table-cells-large text-slate-400 text-sm"></i>
                         Manage Slots
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/admin/rates.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('rates.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">payments</span>
+                        <i class="fa-solid fa-money-check-dollar text-slate-400 text-sm"></i>
                         Manage Rates
                     </a>
                 </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/admin/operators.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('operators.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">support_agent</span>
+                        <i class="fa-solid fa-headset text-slate-400 text-sm"></i>
                         Operators
                     </a>
                 </li>
@@ -117,7 +117,7 @@ function is_active(string $target): string {
                 <li>
                     <a href="<?= BASE_URL ?>modules/admin/users.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all <?= is_active('users.php') ?>">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">group</span>
+                        <i class="fa-solid fa-users text-slate-400 text-sm"></i>
                         Users
                     </a>
                 </li>
@@ -145,7 +145,7 @@ function is_active(string $target): string {
         </div>
         <a href="<?= BASE_URL ?>logout.php"
            class="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal font-inter uppercase tracking-widest rounded-lg py-2 transition-all">
-            <span class="material-symbols-outlined text-base">logout</span>
+            <i class="fa-solid fa-power-off text-xs"></i>
             Logout
         </a>
     </div>

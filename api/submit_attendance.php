@@ -15,7 +15,7 @@ $staff_id = (int)($_POST['staff_id'] ?? 0);
 $user_id  = (int)($_SESSION['user_id'] ?? 0);
 
 if (!$staff_id) {
-    echo json_encode(['success' => false, 'message' => 'Harap pilih nama Anda.']);
+    echo json_encode(['success' => false, 'message' => 'Please select your name.']);
     exit;
 }
 
@@ -36,9 +36,9 @@ try {
     if ($staff_data) {
         $_SESSION['staff_id']   = $staff_id;
         $_SESSION['staff_name'] = $staff_data['full_name'];
-        echo json_encode(['success' => true, 'message' => 'Berhasil absen. Selamat bertugas!', 'name' => $staff_data['full_name']]);
+        echo json_encode(['success' => true, 'message' => 'Attendance successful. Have a great shift!', 'name' => $staff_data['full_name']]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Data personel tidak ditemukan.']);
+        echo json_encode(['success' => false, 'message' => 'Personnel identity not found.']);
     }
 
 } catch (PDOException $e) {

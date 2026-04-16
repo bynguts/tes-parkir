@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@remotion/player": "^4.0.448",
-    "framer-motion": "^12.23.12",
+    "framer-motion": "^12.38.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "remotion": "^4.0.448"

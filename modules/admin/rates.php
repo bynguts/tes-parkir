@@ -16,18 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $max_rate   = (float)$_POST['daily_max_rate'];
 
         if ($first_rate <= 0 || $next_rate <= 0 || $max_rate <= 0) {
-            $error = 'Nilai penyesuaian tarif harus di atas Rp 0.';
+            $error = 'Rate adjustment value must be above Rp 0.';
         } else {
             $pdo->prepare("UPDATE parking_rate SET first_hour_rate=?, next_hour_rate=?, daily_max_rate=? WHERE rate_id=?")
                 ->execute([$first_rate, $next_rate, $max_rate, $rate_id]);
-            $msg = 'Konfigurasi tarif parkir berhasil diperbarui ke database.';
+            $msg = 'Parking rate configuration successfully updated in the database.';
         }
     }
 }
 
 $rates = $pdo->query("SELECT * FROM parking_rate ORDER BY vehicle_type")->fetchAll();
-$page_title = 'Konfigurasi Tarif';
-$page_subtitle = 'Pengaturan parameter finansial untuk sistem auto-billing parkir.';
+$page_title = 'Rate Configuration';
+$page_subtitle = 'Financial parameter settings for the parking auto-billing system.';
 
 include '../../includes/header.php';
 ?>
@@ -36,13 +36,13 @@ include '../../includes/header.php';
 
         <?php if ($msg): ?>
         <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter font-medium"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
         <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-red-600">error</span>
+            <i class="fa-solid fa-circle-exclamation text-red-600"></i>
             <p class="text-red-700 text-sm font-inter font-medium"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>
@@ -50,14 +50,14 @@ include '../../includes/header.php';
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <?php foreach ($rates as $r):
                 $is_car = $r['vehicle_type'] === 'car';
-                $icon   = $is_car ? 'directions_car' : 'two_wheeler';
-                $label  = $is_car ? 'Kelas Mobil (Tipe 1)' : 'Kelas Motor (Tipe 2)';
+                $icon   = $is_car ? 'fa-car' : 'fa-motorcycle';
+                $label  = $is_car ? 'Car Class (Type 1)' : 'Motorcycle Class (Type 2)';
                 $color  = $is_car ? 'text-blue-600 bg-blue-50' : 'text-emerald-600 bg-emerald-50';
             ?>
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-100 bg-slate-50">
                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center <?= $color ?>">
-                        <span class="material-symbols-outlined text-2xl"><?= $icon ?></span>
+                        <i class="fa-solid <?= $icon ?> text-xl"></i>
                     </div>
                     <div>
                         <h2 class="font-manrope font-bold text-lg text-slate-900"><?= $label ?></h2>
@@ -74,9 +74,9 @@ include '../../includes/header.php';
                         <div class="space-y-4 mb-5">
                             <?php
                             $fields = [
-                                ['first_hour_rate', 'Tarif Jam Pertama',       500,  (int)$r['first_hour_rate']],
-                                ['next_hour_rate',  'Tarif Per Jam Berikutnya',500,  (int)$r['next_hour_rate']],
-                                ['daily_max_rate',  'Batas Maksimum Harian',   1000, (int)$r['daily_max_rate']],
+                                ['first_hour_rate', 'First Hour Rate',       500,  (int)$r['first_hour_rate']],
+                                ['next_hour_rate',  'Next Hour Rate',        500,  (int)$r['next_hour_rate']],
+                                ['daily_max_rate',  'Daily Maximum Limit',   1000, (int)$r['daily_max_rate']],
                             ];
                             foreach ($fields as [$fname, $flabel, $step, $fval]):
                             ?>
@@ -89,7 +89,7 @@ include '../../includes/header.php';
                                            id="<?= $fname . '_' . $r['rate_id'] ?>"
                                            oninput="updatePreview(<?= $r['rate_id'] ?>)"
                                            class="flex-1 bg-transparent border-none text-sm font-bold font-inter text-slate-900 focus:outline-none text-right">
-                                    <span class="text-slate-400 text-xs font-inter">/jam</span>
+                                    <span class="text-slate-400 text-xs font-inter">/hour</span>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -98,16 +98,16 @@ include '../../includes/header.php';
                         <!-- Billing Preview -->
                         <div class="bg-slate-50 rounded-2xl p-4 mb-5">
                             <div class="flex items-center gap-2 mb-3">
-                                <span class="material-symbols-outlined text-slate-400 text-base">calculate</span>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Simulasi Billing Engine</p>
+                                <i class="fa-solid fa-calculator text-slate-400 text-sm"></i>
+                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Billing Engine Simulation</p>
                             </div>
                             <div id="preview_<?= $r['rate_id'] ?>" class="space-y-1.5"></div>
                         </div>
 
                         <button type="submit"
                                 class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-base">save</span>
-                            Update Parameter Tarif
+                            <i class="fa-solid fa-floppy-disk text-sm"></i>
+                            Update Rate Parameters
                         </button>
                     </form>
                 </div>
@@ -131,7 +131,7 @@ function updatePreview(id) {
         fee = Math.min(fee, max);
         const overMax = fee >= max && max > 0;
         html += `<div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
-                    <span class="text-slate-400 text-xs font-inter">${h} jam</span>
+                    <span class="text-slate-400 text-xs font-inter">${h} hours</span>
                     <span class="font-manrope font-bold text-sm ${overMax ? 'text-amber-600' : 'text-slate-900'}">${fmt(fee)}${overMax ? ' (max)' : ''}</span>
                  </div>`;
     });

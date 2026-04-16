@@ -27,7 +27,7 @@ if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     if ($isApi) {
         header('Content-Type: application/json');
         http_response_code(401);
-        echo json_encode(['error' => 'Sesi telah berakhir. Silakan login kembali.']);
+        echo json_encode(['error' => 'Session has expired. Please log in again.']);
         exit;
     }
     header('Location: ' . BASE_URL . 'login.php');

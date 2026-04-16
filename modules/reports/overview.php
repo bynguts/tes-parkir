@@ -37,10 +37,10 @@ function vite_widget_tags(string $entry): string {
             <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Dashboard Overview</h1>
             <p class="text-slate-400 text-xs font-inter mt-0.5"><?= date('l, d F Y H:i') ?></p>
         </div>
-        <div class="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
-                        <span class="text-xs font-inter font-semibold text-slate-700 uppercase tracking-wider"><?= $role ?></span>
-            <span class="text-slate-300">|</span>
-            <span class="text-sm font-inter text-slate-700"><?= $username ?></span>
+        <div class="flex items-center gap-2">
+            <button class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-bell"></i>
+            </button>
         </div>
     </header>
 
@@ -49,19 +49,19 @@ function vite_widget_tags(string $entry): string {
         <!-- Alerts -->
         <?php if ($car_pct <= 20 && $car_total > 0): ?>
         <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-4">
-            <span class="material-symbols-outlined text-red-500">warning</span>
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
             <div>
-                <p class="font-inter font-semibold text-red-700 text-sm">Kapasitas Mobil Hampir Penuh!</p>
-                <p class="font-inter text-red-500 text-xs">Hanya <?= $car_avail ?> dari <?= $car_total ?> slot tersedia.</p>
+                <p class="font-inter font-semibold text-red-700 text-sm">Car Capacity Almost Full!</p>
+                <p class="font-inter text-red-500 text-xs">Only <?= $car_avail ?> out of <?= $car_total ?> slots available.</p>
             </div>
         </div>
         <?php endif; ?>
         <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
         <div class="flex items-center gap-3 bg-amber-50 rounded-xl px-5 py-4 mb-4">
-            <span class="material-symbols-outlined text-amber-500">warning</span>
+            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
             <div>
-                <p class="font-inter font-semibold text-amber-700 text-sm">Kapasitas Motor Hampir Penuh!</p>
-                <p class="font-inter text-amber-500 text-xs">Hanya <?= $moto_avail ?> dari <?= $moto_total ?> slot tersedia.</p>
+                <p class="font-inter font-semibold text-amber-700 text-sm">Motorcycle Capacity Almost Full!</p>
+                <p class="font-inter text-amber-500 text-xs">Only <?= $moto_avail ?> out of <?= $moto_total ?> slots available.</p>
             </div>
         </div>
         <?php endif; ?>
@@ -71,8 +71,8 @@ function vite_widget_tags(string $entry): string {
             <!-- Revenue hero -->
             <div class="col-span-12 lg:col-span-5 bg-slate-900 rounded-2xl p-8 flex flex-col justify-between min-h-[180px]">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Pendapatan Hari Ini</p>
-                    <span class="material-symbols-outlined text-slate-600">account_balance_wallet</span>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Today's Revenue</p>
+                    <i class="fa-solid fa-wallet text-slate-600"></i>
                 </div>
                 <div id="today-revenue-text">
                     <div class="font-manrope font-extrabold text-4xl text-white leading-none"><?= fmt_idr((float)$today_rev) ?></div>
@@ -83,18 +83,18 @@ function vite_widget_tags(string $entry): string {
             <!-- Active vehicles -->
             <div class="col-span-6 lg:col-span-3 bg-white rounded-2xl p-6 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Kendaraan Aktif</p>
-                    <span class="material-symbols-outlined text-slate-300">timer</span>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Active Vehicles</p>
+                    <i class="fa-solid fa-clock-rotate-left text-slate-300"></i>
                 </div>
                 <div class="font-manrope font-extrabold text-5xl text-slate-900"><?= $active ?></div>
-                <p class="text-slate-400 text-xs font-inter mt-2">Sedang parkir saat ini</p>
+                <p class="text-slate-400 text-xs font-inter mt-2">Currently parked</p>
             </div>
 
             <!-- Slot Mobil -->
             <div class="col-span-6 lg:col-span-4 bg-white rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Mobil</p>
-                    <span class="material-symbols-outlined text-slate-300 text-xl">directions_car</span>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Car Slots</p>
+                    <i class="fa-solid fa-car text-slate-300 text-lg"></i>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $car_avail ?></span>
@@ -103,14 +103,14 @@ function vite_widget_tags(string $entry): string {
                 <div class="w-full bg-slate-100 rounded-full h-2">
                     <div class="h-2 rounded-full transition-all <?= $car_pct > 50 ? 'bg-emerald-500' : ($car_pct > 20 ? 'bg-amber-400' : 'bg-red-500') ?>" style="width:<?= $car_pct ?>%"></div>
                 </div>
-                <p class="text-slate-400 text-xs font-inter mt-2"><?= $car_pct ?>% tersedia</p>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= $car_pct ?>% available</p>
             </div>
 
             <!-- Slot Motor -->
             <div class="col-span-12 lg:col-span-4 bg-white rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Motor</p>
-                    <span class="material-symbols-outlined text-slate-300 text-xl">two_wheeler</span>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Motorcycle Slots</p>
+                    <i class="fa-solid fa-motorcycle text-slate-300 text-lg"></i>
                 </div>
                 <div class="flex items-baseline gap-2 mb-3">
                     <span class="font-manrope font-extrabold text-3xl text-slate-900"><?= $moto_avail ?></span>
@@ -119,24 +119,24 @@ function vite_widget_tags(string $entry): string {
                 <div class="w-full bg-slate-100 rounded-full h-2">
                     <div class="h-2 rounded-full transition-all <?= $moto_pct > 50 ? 'bg-emerald-500' : ($moto_pct > 20 ? 'bg-amber-400' : 'bg-red-500') ?>" style="width:<?= $moto_pct ?>%"></div>
                 </div>
-                <p class="text-slate-400 text-xs font-inter mt-2"><?= $moto_pct ?>% tersedia</p>
+                <p class="text-slate-400 text-xs font-inter mt-2"><?= $moto_pct ?>% available</p>
             </div>
 
             <!-- Quick Access -->
             <div class="col-span-12 lg:col-span-8 bg-white rounded-2xl p-6">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-5">Akses Cepat</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-5">Quick Access</p>
                 <div class="grid grid-cols-3 gap-3">
                     <?php $quick = [
-                        ['../operations/gate_simulator.php', 'door_sensor',      'Smart Gate',     'Entry & exit gate'],
-                        ['../operations/reservation.php',    'event_available',   'Reservasi',      'Pre-booking slot'],
-                        ['slot_map.php',                     'grid_view',         'Peta Slot',      'Real-time slot map'],
-                        ['../operations/active_vehicles.php','directions_car',    'Kendaraan Aktif','Monitor kendaraan'],
-                        ['revenue.php',                      'bar_chart_4_bars',  'Revenue',        'Laporan finansial'],
-                        ['../operations/scan_log.php',       'receipt_long',      'Scan Log',       'Log sensor gate'],
+                        ['../operations/gate_simulator.php', 'fa-solid fa-door-open',      'Smart Gate',     'Entry & exit gate'],
+                        ['../operations/reservation.php',    'fa-solid fa-calendar-check',   'Reservations',   'Slot pre-booking'],
+                        ['slot_map.php',                     'fa-solid fa-layer-group',         'Slot Map',       'Real-time slot map'],
+                        ['../operations/active_vehicles.php','fa-solid fa-car',    'Active Vehicles','Monitor vehicles'],
+                        ['revenue.php',                      'fa-solid fa-chart-simple',  'Revenue',        'Financial reports'],
+                        ['../operations/scan_log.php',       'fa-solid fa-receipt',      'Scan Log',       'Gate sensor logs'],
                     ];
                     foreach ($quick as $q): ?>
                     <a href="<?= $q[0] ?>" class="flex flex-col gap-2 bg-slate-50 hover:bg-slate-100 rounded-xl p-4 transition-all group">
-                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-700 text-2xl transition-colors"><?= $q[1] ?></span>
+                        <i class="<?= $q[1] ?> text-slate-400 group-hover:text-slate-700 text-xl transition-colors"></i>
                         <div>
                             <div class="font-inter font-semibold text-sm text-slate-800"><?= $q[2] ?></div>
                             <div class="font-inter text-xs text-slate-400 mt-0.5"><?= $q[3] ?></div>

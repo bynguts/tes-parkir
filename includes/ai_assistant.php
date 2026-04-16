@@ -11,7 +11,7 @@
         <div class="bg-slate-900 px-5 py-4 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white" style="font-size:18px">smart_toy</span>
+                    <i class="fa-solid fa-wand-magic-sparkles text-white text-base"></i>
                 </div>
                 <div>
                     <h3 class="font-manrope font-extrabold text-white text-sm leading-tight">Archive AI</h3>
@@ -19,7 +19,7 @@
                 </div>
             </div>
             <button onclick="toggleAIChat()" class="text-slate-400 hover:text-white transition-colors">
-                <span class="material-symbols-outlined" style="font-size:20px">close</span>
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
 
@@ -42,15 +42,15 @@
                        class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-inter text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
                        autocomplete="off">
                 <button type="submit" class="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 transition-all flex-shrink-0">
-                    <span class="material-symbols-outlined" style="font-size:16px">send</span>
+                    <i class="fa-solid fa-paper-plane text-[13px]"></i>
                 </button>
             </form>
         </div>
     </div>
 
     <!-- FAB Button -->
-    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all group">
-        <span class="material-symbols-outlined text-white group-hover:rotate-12 transition-transform" style="font-size:22px">smart_toy</span>
+    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 border border-slate-700 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group ai-breathing">
+        <i class="fa-solid fa-wand-magic-sparkles text-white text-xl transition-transform group-hover:rotate-12"></i>
     </button>
 </div>
 
@@ -70,7 +70,7 @@ function toggleAIChat() {
     if (aiChatVisible) {
         win.classList.add('scale-95', 'opacity-0');
         setTimeout(() => win.classList.add('hidden'), 280);
-        fab.querySelector('span').style.transform = '';
+        fab.querySelector('i').style.transform = '';
     } else {
         win.classList.remove('hidden');
         requestAnimationFrame(() => {
@@ -308,5 +308,14 @@ function removeTyping(id) {
 @keyframes aiBubbleIn {
     from { opacity: 0; transform: translateY(8px) scale(.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── AI Breathing Animation ────────────────── */
+.ai-breathing {
+    animation: aiBreathing 3s ease-in-out infinite;
+}
+@keyframes aiBreathing {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3); transform: scale(1); }
+    50% { box-shadow: 0 8px 48px rgba(34,197,94,0.25); transform: scale(1.04); }
 }
 </style>

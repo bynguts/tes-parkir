@@ -303,63 +303,63 @@ echo '<Column ss:Width="160"/>'; // K
 echo "\n";
 
 // Title block
-echo rH(52, cS('SmartParking — Laporan Kinerja Operasional', 'sBrand', 10));
-echo rH(24, cS('Diekspor secara otomatis oleh sistem  ·  '.$exportDate, 'sBrandS', 10));
+echo rH(52, cS('SmartParking — Operational Performance Report', 'sBrand', 10));
+echo rH(24, cS('Automatically exported by the system  ·  '.$exportDate, 'sBrandS', 10));
 echo rSp(14);
 
 // KPI Block 1 — Row labels
 echo rH(16,
-    cS('TOTAL TRANSAKSI SELESAI', 'sKL'), cE('sKL'), cE(),
-    cS('TOTAL KUNJUNGAN KUMULATIF', 'sKLg'), cE('sKLg'), cE(),
-    cS('GROSS REVENUE KESELURUHAN', 'sKLa'), cE('sKLa'), cE(),
-    cS('RATA-RATA REVENUE PER HARI', 'sKLb'), cE('sKLb')
+    cS('TOTAL COMPLETED TRANSACTIONS', 'sKL'), cE('sKL'), cE(),
+    cS('TOTAL CUMULATIVE VISITS', 'sKLg'), cE('sKLg'), cE(),
+    cS('TOTAL GROSS REVENUE', 'sKLa'), cE('sKLa'), cE(),
+    cS('AVERAGE DAILY REVENUE', 'sKLb'), cE('sKLb')
 );
 // KPI Block 1 — Row values
 echo rH(38,
-    cS(number_format($totals['grand_total']??0).' Transaksi', 'sKV'), cE('sKV'), cE(),
-    cS(number_format(($totals['total_cars']??0)+($totals['total_motorcycles']??0)).' Unit', 'sKVg'), cE('sKVg'), cE(),
+    cS(number_format($totals['grand_total']??0).' Transactions', 'sKV'), cE('sKV'), cE(),
+    cS(number_format(($totals['total_cars']??0)+($totals['total_motorcycles']??0)).' Units', 'sKVg'), cE('sKVg'), cE(),
     cS(idr((float)($totals['grand_revenue']??0)), 'sKVa'), cE('sKVa'), cE(),
     cS(idr($avgDaily), 'sKVb'), cE('sKVb')
 );
 echo rSp(14);
 // KPI Block 2 — Row labels
 echo rH(16,
-    cS('MOBIL DILAYANI', 'sKLb'), cE('sKLb'), cE(),
-    cS('MOTOR DILAYANI', 'sKLg'), cE('sKLg'), cE(),
-    cS('REVENUE DARI MOBIL', 'sKLa'), cE('sKLa'), cE(),
-    cS('REVENUE DARI MOTOR', 'sKL'), cE('sKL')
+    cS('CARS SERVED', 'sKLb'), cE('sKLb'), cE(),
+    cS('MOTORCYCLES SERVED', 'sKLg'), cE('sKLg'), cE(),
+    cS('REVENUE FROM CARS', 'sKLa'), cE('sKLa'), cE(),
+    cS('REVENUE FROM MOTORCYCLES', 'sKL'), cE('sKL')
 );
 // KPI Block 2 — Row values
 $carPct = pct((float)($totals['total_cars']??0),(float)max($totals['grand_total']??1,1));
 $motPct = pct((float)($totals['total_motorcycles']??0),(float)max($totals['grand_total']??1,1));
 echo rH(38,
-    cS(number_format($totals['total_cars']??0).' Unit ('.$carPct.')', 'sKVb'), cE('sKVb'), cE(),
-    cS(number_format($totals['total_motorcycles']??0).' Unit ('.$motPct.')', 'sKVg'), cE('sKVg'), cE(),
+    cS(number_format($totals['total_cars']??0).' Units ('.$carPct.')', 'sKVb'), cE('sKVb'), cE(),
+    cS(number_format($totals['total_motorcycles']??0).' Units ('.$motPct.')', 'sKVg'), cE('sKVg'), cE(),
     cS(idr((float)($totals['rev_car']??0)), 'sKVa'), cE('sKVa'), cE(),
     cS(idr((float)($totals['rev_motorcycle']??0)), 'sKV'), cE('sKV')
 );
 echo rSp(14);
 // KPI Block 3
 echo rH(16,
-    cS('RATA-RATA BIAYA/TRANSAKSI', 'sKL'), cE('sKL'), cE(),
-    cS('TRANSAKSI TERBESAR', 'sKLa'), cE('sKLa'), cE(),
-    cS('RATA-RATA DURASI PARKIR', 'sKLb'), cE('sKLb'), cE(),
-    cS('TINGKAT OKUPANSI SEKARANG', 'sKLg'), cE('sKLg')
+    cS('AVERAGE FEE/TRANSACTION', 'sKL'), cE('sKL'), cE(),
+    cS('LARGEST TRANSACTION', 'sKLa'), cE('sKLa'), cE(),
+    cS('AVERAGE PARKING DURATION', 'sKLb'), cE('sKLb'), cE(),
+    cS('CURRENT OCCUPANCY RATE', 'sKLg'), cE('sKLg')
 );
 echo rH(38,
     cS(idr((float)($totals['avg_fee']??0)), 'sKV'), cE('sKV'), cE(),
     cS(idr((float)($totals['max_fee']??0)), 'sKVa'), cE('sKVa'), cE(),
-    cS(round((float)($totals['avg_duration']??0),1).' Jam', 'sKVb'), cE('sKVb'), cE(),
-    cS($occupancyPct.'%  ('.$occupiedNow.'/'.$totalSlots.' Slot)', 'sKVg'), cE('sKVg')
+    cS(round((float)($totals['avg_duration']??0),1).' Hours', 'sKVb'), cE('sKVb'), cE(),
+    cS($occupancyPct.'%  ('.$occupiedNow.'/'.$totalSlots.' Slots)', 'sKVg'), cE('sKVg')
 );
 echo rSp(16);
 
 // Best Day
-echo rH(30, cS('⭐  HARI TERBAIK — REVENUE TERTINGGI', 'sSecA', 10));
+echo rH(30, cS('⭐  BEST DAY — HIGHEST REVENUE', 'sSecA', 10));
 echo rH(32,
-    cS('Tanggal', 'sHdrA'), cS('Hari', 'sHdrA'), cS('Kunjungan', 'sHdrA'),
-    cS('Mobil', 'sHdrA'), cS('Motor', 'sHdrA'), cS('Rev. Mobil', 'sHdrA'),
-    cS('Rev. Motor', 'sHdrA'), cS('Total Revenue', 'sHdrA'),
+    cS('Date', 'sHdrA'), cS('Day', 'sHdrA'), cS('Visits', 'sHdrA'),
+    cS('Cars', 'sHdrA'), cS('Motorcycles', 'sHdrA'), cS('Car Rev.', 'sHdrA'),
+    cS('Moto Rev.', 'sHdrA'), cS('Total Revenue', 'sHdrA'),
     cE('sHdrA'), cE('sHdrA'), cE('sHdrA')
 );
 if ($bestDay) {
@@ -378,44 +378,44 @@ if ($bestDay) {
 echo rSp(16);
 
 // Payment distribution
-echo rH(30, cS('💳  DISTRIBUSI METODE PEMBAYARAN', 'sSecD', 10));
-echo rH(32, cS('Metode', 'sHdr'), cS('Jumlah Transaksi', 'sHdr'), cS('Persentase', 'sHdr'), cE('sHdr',7));
+echo rH(30, cS('💳  PAYMENT METHOD DISTRIBUTION', 'sSecD', 10));
+echo rH(32, cS('Method', 'sHdr'), cS('Transaction Count', 'sHdr'), cS('Percentage', 'sHdr'), cE('sHdr',7));
 $total = (float)max($totals['grand_total']??1,1);
-foreach (['cash' => ['Cash / Tunai','sBcsh'], 'card' => ['Kartu Debit/Kredit','sBcrd'], 'e-wallet' => ['E-Wallet Digital','sBew']] as $mkey => $mval) {
+foreach (['cash' => ['Cash / Manual','sBcsh'], 'card' => ['Debit/Credit Card','sBcrd'], 'e-wallet' => ['Digital E-Wallet','sBew']] as $mkey => $mval) {
     $cnt = (float)($totals['pay_'.$mkey] ?? ($mkey==='e-wallet' ? $totals['pay_ewallet']??0 : 0));
     echo rD(cS($mval[0], $mval[1]), cS(number_format($cnt), 'sDcb'), cS(pct($cnt,$total), 'sDcb'), cE('sD',7));
 }
 echo rSp(16);
 
 // Current tariffs
-echo rH(30, cS('🏷️  TARIF PARKIR YANG BERLAKU', 'sSecT', 10));
-echo rH(32, cS('Jenis Kendaraan','sHdrT'), cS('Jam Pertama','sHdrT'), cS('Jam Berikutnya','sHdrT'), cS('Tarif Maks. Harian','sHdrT'), cE('sHdrT',6));
+echo rH(30, cS('🏷️  APPLICABLE PARKING RATES', 'sSecT', 10));
+echo rH(32, cS('Vehicle Type','sHdrT'), cS('First Hour','sHdrT'), cS('Next Hour','sHdrT'), cS('Daily Max Rate','sHdrT'), cE('sHdrT',6));
 foreach ($rates as $i => $r) {
-    $lbl = $r['vehicle_type']==='car' ? 'Mobil' : 'Sepeda Motor';
+    $lbl = $r['vehicle_type']==='car' ? 'Car' : 'Motorcycle';
     $bs  = $r['vehicle_type']==='car' ? ($i%2?'sBcara':'sBcar') : ($i%2?'sBmota':'sBmot');
     echo rD(cS($lbl,$bs), cS(idr((float)$r['first_hour_rate']),'sM'), cS(idr((float)$r['next_hour_rate']),'sM'), cS(idr((float)$r['daily_max_rate']),'sMg'), cE('sD',6));
 }
 echo rSp(10);
-echo rH(20, cS('Dokumen ini bersifat rahasia dan dibuat secara otomatis pada '.$exportDate.'. Hanya untuk keperluan internal SmartParking.','sFooter',10));
+echo rH(20, cS('This document is confidential and automatically generated on '.$exportDate.'. For internal SmartParking use only.','sFooter',10));
 echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 2: REVENUE HARIAN                                       (11 columns)
+//  SHEET 2: DAILY REVENUE                                       (11 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Revenue Harian', 3);
+wsOpen('Daily Revenue', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="30"/><Column ss:Width="150"/><Column ss:Width="90"/>';
 echo '<Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="130"/><Column ss:Width="130"/><Column ss:Width="140"/>';
 echo '<Column ss:Width="130"/><Column ss:Width="130"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Laporan Revenue Harian', 'sBrand', 10));
-echo rH(22, cS('Sumber: Tabel transaction (status paid) · Dihasilkan: '.$exportDate, 'sBrandS', 10));
-echo rH(34, cS('#','sHdrG'), cS('Tanggal','sHdrG'), cS('Hari','sHdrG'),
-    cS('Mobil','sHdrG'), cS('Motor','sHdrG'), cS('Total Kunjungan','sHdrG'),
-    cS('Revenue Mobil','sHdrG'), cS('Revenue Motor','sHdrG'), cS('Revenue Harian','sHdrG'),
-    cS('Avg Biaya/Trx','sHdrG'), cS('Max Biaya','sHdrG'));
+echo rH(48, cS('SmartParking   |   Daily Revenue Report', 'sBrand', 10));
+echo rH(22, cS('Source: transaction table (paid status) · Generated: '.$exportDate, 'sBrandS', 10));
+echo rH(34, cS('#','sHdrG'), cS('Date','sHdrG'), cS('Day','sHdrG'),
+    cS('Cars','sHdrG'), cS('Motorcycles','sHdrG'), cS('Total Visits','sHdrG'),
+    cS('Car Revenue','sHdrG'), cS('Motorcycle Revenue','sHdrG'), cS('Daily Revenue','sHdrG'),
+    cS('Avg Fee/Trx','sHdrG'), cS('Max Fee','sHdrG'));
 
 foreach ($daily as $i => $row) {
     [$d, $da]  = $i%2 ? ['sDa','sDba'] : ['sD','sDb'];
@@ -432,7 +432,7 @@ foreach ($daily as $i => $row) {
 }
 // Grand total footer
 echo rH(28,
-    cS('','sTot'), cS('TOTAL KUMULATIF','sTot'), cS('','sTot'),
+    cS('','sTot'), cS('CUMULATIVE TOTAL','sTot'), cS('','sTot'),
     cS(number_format($totals['total_cars']??0),'sTotC'), cS(number_format($totals['total_motorcycles']??0),'sTotC'),
     cS(number_format($totals['grand_total']??0),'sTotC'),
     cS(idr((float)($totals['rev_car']??0)),'sTotM'), cS(idr((float)($totals['rev_motorcycle']??0)),'sTotM'),
@@ -443,9 +443,9 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 3: TRANSAKSI LENGKAP                                    (15 columns)
+//  SHEET 3: COMPLETE TRANSACTIONS                                (15 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Transaksi Lengkap', 3);
+wsOpen('Complete Transactions', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="28"/><Column ss:Width="50"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="95"/><Column ss:Width="75"/><Column ss:Width="120"/>';
@@ -453,14 +453,14 @@ echo '<Column ss:Width="110"/><Column ss:Width="75"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="85"/><Column ss:Width="120"/><Column ss:Width="120"/>';
 echo '<Column ss:Width="65"/><Column ss:Width="80"/><Column ss:Width="120"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Log Transaksi Lengkap  (maks. 3.000 record terbaru)', 'sBrand', 14));
-echo rH(22, cS('Hanya transaksi berstatus paid. Dihasilkan: '.$exportDate, 'sBrandS', 14));
+echo rH(48, cS('SmartParking   |   Complete Transaction Log  (max. 3,000 recent records)', 'sBrand', 14));
+echo rH(22, cS('Paid transactions only. Generated: '.$exportDate, 'sBrandS', 14));
 echo rH(34,
-    cS('#','sHdrB'), cS('ID Trx','sHdrB'), cS('Kode Tiket','sHdrB'),
-    cS('Plat Nomor','sHdrB'), cS('Jenis','sHdrB'), cS('Nama Pemilik','sHdrB'),
-    cS('Telepon','sHdrB'), cS('Slot','sHdrB'), cS('Lantai','sHdrB'),
+    cS('#','sHdrB'), cS('Trx ID','sHdrB'), cS('Ticket Code','sHdrB'),
+    cS('Plate Number','sHdrB'), cS('Type','sHdrB'), cS('Owner Name','sHdrB'),
+    cS('Phone','sHdrB'), cS('Slot','sHdrB'), cS('Floor','sHdrB'),
     cS('Operator','sHdrB'), cS('Check-in','sHdrB'), cS('Check-out','sHdrB'),
-    cS('Durasi (Jam)','sHdrB'), cS('Pembayaran','sHdrB'), cS('Total Biaya','sHdrB')
+    cS('Duration (Hrs)','sHdrB'), cS('Payment','sHdrB'), cS('Total Fee','sHdrB')
 );
 foreach ($transactions as $i => $t) {
     [$d,$dc] = $i%2 ? ['sDa','sDca'] : ['sD','sDc'];
@@ -471,7 +471,7 @@ foreach ($transactions as $i => $t) {
     $cout = $t['check_out_time'] ? date('d/m/Y H:i',strtotime($t['check_out_time'])) : '-';
     echo rD(
         cS($i+1,$dc), cS($t['transaction_id'],$dc), cS($t['ticket_code']??'-',$d),
-        cS($t['plate_number']??'-',$d), cS($t['vehicle_type']==='car'?'Mobil':'Motor',$bc),
+        cS($t['plate_number']??'-',$d), cS($t['vehicle_type']==='car'?'Car':'Motor',$bc),
         cS($t['owner_name'],$d), cS($t['owner_phone']??'-',$d),
         cS($t['slot_number'],$dc), cS($t['floor_name'],$d),
         cS($t['operator_name'],$d), cS($cin,$d), cS($cout,$d),
@@ -485,23 +485,23 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 4: KENDARAAN AKTIF SEKARANG                             (9 columns)
+//  SHEET 4: CURRENTLY ACTIVE VEHICLES                             (9 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Kendaraan Aktif (Real-Time)', 3);
+wsOpen('Active Vehicles (Real-Time)', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="28"/><Column ss:Width="100"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="75"/><Column ss:Width="140"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="100"/><Column ss:Width="130"/><Column ss:Width="130"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Kendaraan Sedang Parkir — Real-Time', 'sBrand', 8));
-echo rH(22, cS('Snapshot: '.$exportDate.'  ·  '.count($active).' kendaraan aktif  ·  '.($totalSlots-$occupiedNow).' slot tersedia dari '.$totalSlots, 'sBrandS', 8));
+echo rH(48, cS('SmartParking   |   Currently Parked Vehicles — Real-Time', 'sBrand', 8));
+echo rH(22, cS('Snapshot: '.$exportDate.'  ·  '.count($active).' vehicles active  ·  '.($totalSlots-$occupiedNow).' slots available out of '.$totalSlots, 'sBrandS', 8));
 echo rH(34,
-    cS('#','sHdrA'), cS('Kode Tiket','sHdrA'), cS('Plat Nomor','sHdrA'),
-    cS('Jenis','sHdrA'), cS('Nama Pemilik','sHdrA'), cS('Slot','sHdrA'),
-    cS('Lantai','sHdrA'), cS('Waktu Masuk','sHdrA'), cS('Durasi (Menit)','sHdrA')
+    cS('#','sHdrA'), cS('Ticket Code','sHdrA'), cS('Plate Number','sHdrA'),
+    cS('Type','sHdrA'), cS('Owner Name','sHdrA'), cS('Slot','sHdrA'),
+    cS('Floor','sHdrA'), cS('Check-in Time','sHdrA'), cS('Duration (Min)','sHdrA')
 );
 if (empty($active)) {
-    echo rH(30, cS('Tidak ada kendaraan yang sedang parkir saat laporan ini dicetak.', 'sNote', 8));
+    echo rH(30, cS('No vehicles are currently parked when this report was printed.', 'sNote', 8));
 } else {
     foreach ($active as $i => $v) {
         [$d,$dc] = $i%2 ? ['sDa','sDca'] : ['sD','sDc'];
@@ -509,10 +509,10 @@ if (empty($active)) {
         $durStyle = (int)$v['minutes_elapsed'] > 180 ? 'sBoc' : $dc;
         echo rD(
             cS($i+1,$dc), cS($v['ticket_code']??'-',$d), cS($v['plate_number']??'-',$d),
-            cS($v['vehicle_type']==='car'?'Mobil':'Motor',$bc),
+            cS($v['vehicle_type']==='car'?'Car':'Motor',$bc),
             cS($v['owner_name'],$d), cS($v['slot_number'],$dc),
             cS($v['floor_name'],$d), cS(date('d/m/Y H:i',strtotime($v['check_in_time'])),$d),
-            cS($v['minutes_elapsed'].' mnt',$durStyle)
+            cS($v['minutes_elapsed'].' min',$durStyle)
         );
     }
 }
@@ -520,20 +520,20 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 5: SLOT PARKIR PER LANTAI                               (9 columns)
+//  SHEET 5: PARKING SLOT PER FLOOR                               (9 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Status Slot Parkir', 3);
+wsOpen('Parking Slot Status', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="28"/><Column ss:Width="80"/><Column ss:Width="120"/>';
 echo '<Column ss:Width="85"/><Column ss:Width="70"/><Column ss:Width="85"/>';
 echo '<Column ss:Width="80"/><Column ss:Width="90"/><Column ss:Width="100"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Status Slot Parkir per Lantai', 'sBrand', 8));
-echo rH(22, cS('Snapshot real-time · '.$exportDate, 'sBrandS', 8));
+echo rH(48, cS('SmartParking   |   Parking Slot Status per Floor', 'sBrand', 8));
+echo rH(22, cS('Real-time snapshot · '.$exportDate, 'sBrandS', 8));
 echo rH(34,
-    cS('#','sHdr'), cS('Kode Lantai','sHdr'), cS('Nama Lantai','sHdr'),
-    cS('Jenis Slot','sHdr'), cS('Total','sHdr'), cS('Tersedia','sHdr'),
-    cS('Terisi','sHdr'), cS('Direservasi','sHdr'), cS('Maintenance','sHdr')
+    cS('#','sHdr'), cS('Floor Code','sHdr'), cS('Floor Name','sHdr'),
+    cS('Slot Type','sHdr'), cS('Total','sHdr'), cS('Available','sHdr'),
+    cS('Occupied','sHdr'), cS('Reserved','sHdr'), cS('Maintenance','sHdr')
 );
 $stotals = ['total'=>0,'avail'=>0,'occ'=>0,'res'=>0,'maint'=>0];
 foreach ($slots as $i => $row) {
@@ -541,7 +541,7 @@ foreach ($slots as $i => $row) {
     $bc = $row['slot_type']==='car' ? ($i%2?'sBcara':'sBcar') : ($i%2?'sBmota':'sBmot');
     echo rD(
         cS($i+1,$dc), cS($row['floor_code'],$dc), cS($row['floor_name'],$d),
-        cS($row['slot_type']==='car'?'Mobil':'Sepeda Motor',$bc),
+        cS($row['slot_type']==='car'?'Car':'Motorcycle',$bc),
         cS(number_format($row['total']),$dc),
         cS(number_format($row['avail']),'sBav'), cS(number_format($row['occ']),'sBoc'),
         cS(number_format($row['res']),'sBres'), cS(number_format($row['maint']),'sBmnt')
@@ -557,22 +557,22 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 6: KINERJA OPERATOR                                     (10 columns)
+//  SHEET 6: OPERATOR PERFORMANCE                                     (10 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Kinerja Operator', 3);
+wsOpen('Operator Performance', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="36"/><Column ss:Width="140"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="110"/><Column ss:Width="80"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="80"/><Column ss:Width="130"/><Column ss:Width="150"/>';
 echo '<Column ss:Width="130"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Kinerja Operator — Ranking Revenue', 'sBrand', 9));
-echo rH(22, cS('Berdasarkan total transaksi paid yang dilayani. '.$exportDate, 'sBrandS', 9));
+echo rH(48, cS('SmartParking   |   Operator Performance — Revenue Ranking', 'sBrand', 9));
+echo rH(22, cS('Based on total paid transactions served. '.$exportDate, 'sBrandS', 9));
 echo rH(34,
-    cS('Rank','sHdrT'), cS('Nama Operator','sHdrT'), cS('Shift','sHdrT'),
-    cS('Telepon','sHdrT'), cS('Total Trx','sHdrT'), cS('Mobil','sHdrT'),
-    cS('Motor','sHdrT'), cS('Avg Biaya/Trx','sHdrT'), cS('Total Revenue Handled','sHdrT'),
-    cS('Aktivitas Terakhir','sHdrT')
+    cS('Rank','sHdrT'), cS('Operator Name','sHdrT'), cS('Shift','sHdrT'),
+    cS('Phone','sHdrT'), cS('Total Trx','sHdrT'), cS('Cars','sHdrT'),
+    cS('Motorcycles','sHdrT'), cS('Avg Fee/Trx','sHdrT'), cS('Total Revenue Handled','sHdrT'),
+    cS('Last Activity','sHdrT')
 );
 $medals = ['🥇','🥈','🥉'];
 $rankStyles = ['sRg','sRs','sRb'];
@@ -583,7 +583,7 @@ foreach ($ops as $i => $op) {
     $rk = $i < 3 ? $medals[$i] : ($i+1);
     $shiftStyle = match($op['shift']) { 'morning'=>'sBmor','afternoon'=>'sBaft',default=>'sBnit' };
     $shiftLabel = match($op['shift']) { 'morning'=>'Morning (06-14)','afternoon'=>'Afternoon (14-22)',default=>'Night (22-06)' };
-    $lastAct = $op['last_act'] ? date('d/m/Y H:i',strtotime($op['last_act'])) : 'Belum Ada';
+    $lastAct = $op['last_act'] ? date('d/m/Y H:i',strtotime($op['last_act'])) : 'None Yet';
     $opRevTotal += (float)$op['rev'];
     echo rD(
         cS($rk,$rs), cS($op['full_name'],$i%2?'sDba':'sDb'),
@@ -604,20 +604,20 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 7: ANALISIS JAM SIBUK                                   (7 columns)
+//  SHEET 7: PEAK HOURS ANALYSIS                                   (7 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Analisis Jam Sibuk', 3);
+wsOpen('Peak Hours Analysis', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="110"/><Column ss:Width="120"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="90"/><Column ss:Width="90"/><Column ss:Width="70"/>';
 echo '<Column ss:Width="130"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Analisis Jam Sibuk — Peak Hours', 'sBrand', 6));
-echo rH(22, cS('Berdasarkan waktu check-in semua kendaraan. Berguna untuk perencanaan shift & kapasitas. '.$exportDate, 'sBrandS', 6));
+echo rH(48, cS('SmartParking   |   Peak Hours Analysis', 'sBrand', 6));
+echo rH(22, cS('Based on check-in time of all vehicles. Useful for shift & capacity planning. '.$exportDate, 'sBrandS', 6));
 echo rH(34,
-    cS('Jam (WIB)','sHdrP'), cS('Sesi Operasional','sHdrP'), cS('Total Masuk','sHdrP'),
-    cS('Masuk Mobil','sHdrP'), cS('Masuk Motor','sHdrP'), cS('% dari Total','sHdrP'),
-    cS('Tingkat Aktivitas','sHdrP')
+    cS('Hour (Local)','sHdrP'), cS('Operational Session','sHdrP'), cS('Total Check-ins','sHdrP'),
+    cS('Car Entries','sHdrP'), cS('Motor Entries','sHdrP'), cS('% of Total','sHdrP'),
+    cS('Activity Level','sHdrP')
 );
 
 $filledHours = [];
@@ -628,13 +628,13 @@ for ($hr=0; $hr<24; $hr++) {
     $tot    = (int)$h['total'];
     $pctH   = $grandEntries > 0 ? round($tot/$grandEntries*100,1) : 0;
     $session = match(true) {
-        $hr>=5  && $hr<9  => 'Subuh (05:00-08:59)',
-        $hr>=9  && $hr<12 => 'Pagi (09:00-11:59)',
-        $hr>=12 && $hr<14 => 'Siang (12:00-13:59)',
-        $hr>=14 && $hr<17 => 'Sore (14:00-16:59)',
-        $hr>=17 && $hr<20 => 'Petang (17:00-19:59)',
-        $hr>=20 && $hr<23 => 'Malam (20:00-22:59)',
-        default           => 'Dini Hari (23:00-04:59)',
+        $hr>=5  && $hr<9  => 'Dawn (05:00-08:59)',
+        $hr>=9  && $hr<12 => 'Morning (09:00-11:59)',
+        $hr>=12 && $hr<14 => 'Noon (12:00-13:59)',
+        $hr>=14 && $hr<17 => 'Afternoon (14:00-16:59)',
+        $hr>=17 && $hr<20 => 'Early Evening (17:00-19:59)',
+        $hr>=20 && $hr<23 => 'Night (20:00-22:59)',
+        default           => 'Late Night (23:00-04:59)',
     };
     [$level,$lstyle] = match(true) {
         $pctH>=10 => ['🔴 VERY HIGH','sLvh'],
@@ -653,7 +653,7 @@ for ($hr=0; $hr<24; $hr++) {
     );
 }
 echo rH(28,
-    cS(sprintf('%02d jam operasional',24),'sTot'), cS('TOTAL SEMUA JAM','sTot'),
+    cS(sprintf('%02d business hours',24),'sTot'), cS('TOTAL ALL HOURS','sTot'),
     cS(number_format($grandEntries),'sTotC'),
     cS(number_format(array_sum(array_column($hours,'cars'))),'sTotC'),
     cS(number_format(array_sum(array_column($hours,'motos'))),'sTotC'),
@@ -663,24 +663,24 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 8: RESERVASI                                            (10 columns)
+//  SHEET 8: RESERVATIONS                                            (10 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Reservasi', 3);
+wsOpen('Reservations', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="28"/><Column ss:Width="120"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="75"/><Column ss:Width="130"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="100"/><Column ss:Width="125"/><Column ss:Width="125"/>';
 echo '<Column ss:Width="90"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Log Reservasi (maks. 500 terbaru)', 'sBrand', 9));
+echo rH(48, cS('SmartParking   |   Reservation Log (max. 500 recent)', 'sBrand', 9));
 echo rH(22, cS($exportDate, 'sBrandS', 9));
 if (empty($reservations)) {
-    echo rH(30, cS('Belum ada data reservasi.', 'sNote', 9));
+    echo rH(30, cS('No reservation data available.', 'sNote', 9));
 } else {
     echo rH(34,
-        cS('#','sHdrP'), cS('Kode Reservasi','sHdrP'), cS('Plat Nomor','sHdrP'),
-        cS('Jenis','sHdrP'), cS('Nama Pemilik','sHdrP'), cS('Slot','sHdrP'),
-        cS('Lantai','sHdrP'), cS('Dari','sHdrP'), cS('Sampai','sHdrP'),
+        cS('#','sHdrP'), cS('Reservation Code','sHdrP'), cS('Plate Number','sHdrP'),
+        cS('Type','sHdrP'), cS('Owner Name','sHdrP'), cS('Slot','sHdrP'),
+        cS('Floor','sHdrP'), cS('From','sHdrP'), cS('Until','sHdrP'),
         cS('Status','sHdrP')
     );
     foreach ($reservations as $i => $r) {
@@ -689,7 +689,7 @@ if (empty($reservations)) {
         $ss = match($r['status']) { 'confirmed'=>'sBconf','cancelled','expired'=>'sBcncl',default=>'sBpend' };
         echo rD(
             cS($i+1,$dc), cS($r['reservation_code'],$d), cS($r['plate_number']??'-',$d),
-            cS($r['vehicle_type']==='car'?'Mobil':'Motor',$bc),
+            cS($r['vehicle_type']==='car'?'Car':'Motor',$bc),
             cS($r['owner_name'],$d), cS($r['slot_number'],$dc), cS($r['floor_name'],$d),
             cS(date('d/m/Y H:i',strtotime($r['reserved_from'])),$d),
             cS(date('d/m/Y H:i',strtotime($r['reserved_until'])),$d),
@@ -701,31 +701,31 @@ echo '</Table>'."\n";
 wsClose();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SHEET 9: TARIF PARKIR                                         (6 columns)
+//  SHEET 9: PARKING RATES                                         (6 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Tarif Parkir');
+wsOpen('Parking Rates');
 echo '<Table ss:DefaultRowHeight="20">'."\n";
 echo '<Column ss:Width="28"/><Column ss:Width="150"/><Column ss:Width="140"/>';
 echo '<Column ss:Width="140"/><Column ss:Width="150"/><Column ss:Width="200"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Struktur Tarif Parkir', 'sBrand', 5));
-echo rH(22, cS('Tarif aktif yang berlaku pada sistem. Hubungi Administrator untuk perubahan. '.$exportDate, 'sBrandS', 5));
+echo rH(48, cS('SmartParking   |   Parking Rate Structure', 'sBrand', 5));
+echo rH(22, cS('Active rates applicable on the system. Contact Administrator for changes. '.$exportDate, 'sBrandS', 5));
 echo rSp(14);
 
-echo rH(30, cS('Jenis Kendaraan','sSecT'), cS('Tarif Jam Pertama','sSecT'), cS('Tarif Jam Berikutnya','sSecT'), cS('Tarif Maks. Harian','sSecT'), cS('Keterangan','sSecT'));
+echo rH(30, cS('Vehicle Type','sSecT'), cS('First Hour Rate','sSecT'), cS('Next Hour Rate','sSecT'), cS('Daily Max Rate','sSecT'), cS('Notes','sSecT'));
 foreach ($rates as $i => $r) {
-    $lbl = $r['vehicle_type']==='car' ? '🚗  Mobil' : '🏍️  Sepeda Motor';
+    $lbl = $r['vehicle_type']==='car' ? '🚗  Car' : '🏍️  Motorcycle';
     $bs  = $r['vehicle_type']==='car' ? 'sBcar' : 'sBmot';
     echo rH(26,
         cE(), cS($lbl,$bs), cS(idr((float)$r['first_hour_rate']),'sMg'),
         cS(idr((float)$r['next_hour_rate']),'sM'), cS(idr((float)$r['daily_max_rate']),'sMg'),
-        cS('Berlaku semua lantai. Dihitung per jam penuh.','sD')
+        cS('Applicable to all floors. Calculated per full hour.','sD')
     );
 }
 echo rSp(10);
-echo rH(28, cS('Catatan','sNote'), cS('Tarif harian maksimum berlaku jika kendaraan parkir lebih dari 24 jam berturut-turut. Biaya = jam pertama + (durasi-1) × jam berikutnya, hingga batas tarif harian.','sNote',4));
+echo rH(28, cS('Note','sNote'), cS('Daily maximum rate applies if the vehicle is parked for more than 24 consecutive hours. Cost = first hour + (duration-1) × next hour, up to the daily rate limit.','sNote',4));
 echo rSp(14);
-echo rH(20, cS('SmartParking System  ·  Laporan ini bersifat rahasia dan hanya untuk keperluan internal  ·  '.$exportDate,'sFooter',5));
+echo rH(20, cS('SmartParking System  ·  This report is confidential and for internal use only  ·  '.$exportDate,'sFooter',5));
 echo '</Table>'."\n";
 wsClose();
 

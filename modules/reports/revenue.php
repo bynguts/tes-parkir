@@ -29,8 +29,8 @@ $totals = $pdo->query("
     WHERE t.payment_status='paid' AND t.check_out_time IS NOT NULL
 ")->fetch();
 
-$page_title = 'Laporan Revenue';
-$page_subtitle = 'Ringkasan agregat finansial dan kinerja harian.';
+$page_title = 'Revenue Report';
+$page_subtitle = 'Aggregated financial summary and daily performance.';
 
 include '../../includes/header.php';
 ?>
@@ -42,23 +42,23 @@ include '../../includes/header.php';
             <div class="bg-slate-900 rounded-2xl p-6">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Total Trx</p>
                 <div class="font-manrope font-extrabold text-4xl text-white"><?= number_format($totals['grand_total'] ?? 0) ?></div>
-                <p class="text-slate-500 text-xs font-inter mt-2">transaksi lunas</p>
+                <p class="text-slate-500 text-xs font-inter mt-2">paid transactions</p>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Mobil Keluar</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Cars Exited</p>
                 <div class="flex items-center gap-3 mb-1">
                     <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-blue-600 text-xl">directions_car</span>
+                        <i class="fa-solid fa-car text-blue-600 text-lg"></i>
                     </div>
                     <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_cars'] ?? 0) ?></div>
                 </div>
                 <p class="text-slate-400 text-xs font-inter mt-3"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Motor Keluar</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Motorcycles Exited</p>
                 <div class="flex items-center gap-3 mb-1">
                     <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-emerald-600 text-xl">two_wheeler</span>
+                        <i class="fa-solid fa-motorcycle text-emerald-600 text-lg"></i>
                     </div>
                     <div class="font-manrope font-extrabold text-4xl text-slate-900"><?= number_format($totals['total_motorcycles'] ?? 0) ?></div>
                 </div>
@@ -67,42 +67,42 @@ include '../../includes/header.php';
             <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-amber-400">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-3">Total Net Revenue</p>
                 <div class="font-manrope font-extrabold text-2xl text-amber-600"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></div>
-                <p class="text-slate-400 text-xs font-inter mt-2">pendapatan kumulatif</p>
+                <p class="text-slate-400 text-xs font-inter mt-2">cumulative revenue</p>
             </div>
         </div>
 
         <!-- Daily Breakdown Table -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-2">
-                <span class="material-symbols-outlined text-slate-400 text-xl">calendar_month</span>
-                <h2 class="font-manrope font-bold text-lg text-slate-900">Breakdown Harian</h2>
+                <i class="fa-solid fa-calendar-days text-slate-400 text-lg"></i>
+                <h2 class="font-manrope font-bold text-lg text-slate-900">Daily Breakdown</h2>
             </div>
             <div class="overflow-auto">
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-slate-100">
-                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tanggal Operasional</th>
-                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Vol. Mobil</th>
-                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Vol. Motor</th>
-                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Total Kunjungan</th>
-                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Rev. Mobil</th>
-                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Rev. Motor</th>
-                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Revenue Harian</th>
+                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Operational Date</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Car Vol.</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Moto Vol.</th>
+                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Total Visits</th>
+                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Car Rev.</th>
+                            <th class="text-right px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Moto Rev.</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Daily Revenue</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         <?php if (empty($daily)): ?>
                         <tr>
                             <td colspan="7" class="text-center py-16">
-                                <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">folder_open</span>
-                                <p class="text-slate-400 text-sm font-inter">Belum ada data transaksi yang tercatat.</p>
+                                <i class="fa-solid fa-folder-open text-5xl text-slate-200 block mb-3"></i>
+                                <p class="text-slate-400 text-sm font-inter">No transaction data recorded yet.</p>
                             </td>
                         </tr>
                         <?php else: foreach ($daily as $row): ?>
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 font-inter font-semibold text-sm text-slate-800">
                                 <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-slate-300 text-base">event</span>
+                                    <i class="fa-solid fa-calendar text-slate-300 text-sm"></i>
                                     <?= date('D, d M Y', strtotime($row['date'])) ?>
                                 </div>
                             </td>
@@ -122,7 +122,7 @@ include '../../includes/header.php';
                     <?php if (!empty($daily)): ?>
                     <tfoot class="bg-slate-50">
                         <tr class="border-t-2 border-slate-200">
-                            <td class="px-6 py-4 font-inter font-bold text-xs uppercase tracking-widest text-slate-400">Kumulatif Total</td>
+                            <td class="px-6 py-4 font-inter font-bold text-xs uppercase tracking-widest text-slate-400">Cumulative Total</td>
                             <td class="px-4 py-4 text-center font-manrope font-bold text-slate-900"><?= number_format($totals['total_cars'] ?? 0) ?></td>
                             <td class="px-4 py-4 text-center font-manrope font-bold text-slate-900"><?= number_format($totals['total_motorcycles'] ?? 0) ?></td>
                             <td class="px-4 py-4 text-center font-manrope font-extrabold text-2xl text-slate-900"><?= number_format($totals['grand_total'] ?? 0) ?></td>

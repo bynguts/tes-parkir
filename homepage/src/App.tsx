@@ -42,34 +42,34 @@ export function App() {
 
             <div className="d-flex flex-wrap gap-2 mt-4">
               {isLoggedIn ? (
-                <a className="btn btn-success home-btn" href="index.php">
-                  <i className="fas fa-tachometer-alt me-2" />
+                <a className="btn btn-success home-btn d-flex align-items-center" href="index.php">
+                  <i className="fa-solid fa-grip me-2"></i>
                   Go to Dashboard
                 </a>
               ) : (
-                <a className="btn btn-success home-btn" href={buildLoginHref(next)}>
-                  <i className="fas fa-shield-alt me-2" />
+                <a className="btn btn-success home-btn d-flex align-items-center" href={buildLoginHref(next)}>
+                  <i className="fa-solid fa-right-to-bracket me-2"></i>
                   Login Workspace
                 </a>
               )}
 
-              <a className="btn btn-outline-light home-btn home-btn-secondary" href="#features">
-                <i className="fas fa-layer-group me-2" />
+              <a className="btn btn-outline-light home-btn home-btn-secondary d-flex align-items-center" href="#features">
+                <i className="fa-solid fa-compass me-2"></i>
                 Explore Features
               </a>
             </div>
 
             <div className="home-trust mt-4">
               <div className="trust-pill">
-                <i className="fas fa-lock me-2" />
+                <i className="fa-solid fa-user-shield me-2 text-success" style={{ fontSize: 16 }}></i>
                 Secure session & role-based access
               </div>
               <div className="trust-pill">
-                <i className="fas fa-bolt me-2" />
+                <i className="fa-solid fa-bolt-lightning me-2 text-warning" style={{ fontSize: 16 }}></i>
                 Operator-first workflows
               </div>
               <div className="trust-pill">
-                <i className="fas fa-shield-halved me-2" />
+                <i className="fa-solid fa-shield-heart me-2 text-info" style={{ fontSize: 16 }}></i>
                 Audit-friendly logs
               </div>
             </div>
@@ -84,40 +84,56 @@ export function App() {
           <div className="home-section-title">Core Modules</div>
           <div className="row g-3 mt-1">
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="modules/operations/gate_simulator.php">
+              <motion.a 
+                whileHover={{ y: -4 }}
+                className="glass-card home-feature hover-nudge" 
+                href="modules/operations/gate_simulator.php"
+              >
                 <div className="home-feature-icon text-success">
-                  <i className="fas fa-door-open" />
+                  <i className="fa-solid fa-door-open"></i>
                 </div>
                 <div className="home-feature-title">Smart Gate</div>
                 <div className="home-feature-desc">Entry & exit simulator and scanning flow.</div>
-              </a>
+              </motion.a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="modules/reports/slot_map.php">
+              <motion.a 
+                whileHover={{ y: -4 }}
+                className="glass-card home-feature hover-nudge" 
+                href="modules/reports/slot_map.php"
+              >
                 <div className="home-feature-icon text-warning">
-                  <i className="fas fa-map" />
+                  <i className="fa-solid fa-map-location-dot"></i>
                 </div>
                 <div className="home-feature-title">Slot Map</div>
                 <div className="home-feature-desc">Real-time slot visualization by area.</div>
-              </a>
+              </motion.a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="modules/reports/revenue.php">
+              <motion.a 
+                whileHover={{ y: -4 }}
+                className="glass-card home-feature hover-nudge" 
+                href="modules/reports/revenue.php"
+              >
                 <div className="home-feature-icon text-info">
-                  <i className="fas fa-chart-line" />
+                  <i className="fa-solid fa-chart-line"></i>
                 </div>
                 <div className="home-feature-title">Revenue</div>
                 <div className="home-feature-desc">Daily trends and finance aggregates.</div>
-              </a>
+              </motion.a>
             </div>
             <div className="col-12 col-md-6 col-xl-3">
-              <a className="glass-card home-feature" href="modules/operations/reservation.php">
+              <motion.a 
+                whileHover={{ y: -4 }}
+                className="glass-card home-feature hover-nudge" 
+                href="modules/operations/reservation.php"
+              >
                 <div className="home-feature-icon text-primary">
-                  <i className="fas fa-calendar-check" />
+                  <i className="fa-solid fa-calendar-check"></i>
                 </div>
                 <div className="home-feature-title">Reservations</div>
                 <div className="home-feature-desc">Premium allocation and pre-booking.</div>
-              </a>
+              </motion.a>
             </div>
           </div>
         </div>

@@ -36,8 +36,8 @@ $floor_summary = $pdo->query("
 $fs = [];
 foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
 
-$page_title = 'Peta Slot Parkir';
-$page_subtitle = 'Visualisasi pemetaan slot kendaraan per lantai secara real-time.';
+$page_title = 'Parking Slot Map';
+$page_subtitle = 'Real-time visualization of vehicle slot mapping per floor.';
 $page_actions = '
 <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -85,18 +85,18 @@ include '../../includes/header.php';
 
         <!-- Legend -->
         <div class="bg-white rounded-2xl px-6 py-4 mb-6 flex flex-wrap items-center gap-6 shadow-sm border border-slate-100">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Legenda:</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Legend:</span>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <span class="material-symbols-outlined text-emerald-500 text-base">radio_button_checked</span> Tersedia
+                <i class="fa-solid fa-circle-dot text-emerald-500 text-xs"></i> Available
             </div>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <span class="material-symbols-outlined text-red-500 text-base">radio_button_checked</span> Terisi
+                <i class="fa-solid fa-circle-dot text-red-500 text-xs"></i> Occupied
             </div>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <span class="material-symbols-outlined text-amber-500 text-base">lock</span> Direservasi
+                <i class="fa-solid fa-lock text-amber-500 text-xs"></i> Reserved
             </div>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <span class="material-symbols-outlined text-slate-400 text-base">build</span> Perawatan
+                <i class="fa-solid fa-wrench text-slate-400 text-xs"></i> Maintenance
             </div>
         </div>
 
@@ -106,13 +106,13 @@ include '../../includes/header.php';
             <div class="px-6 py-5 flex justify-between items-center border-b border-slate-100">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="material-symbols-outlined text-slate-400 text-xl">apartment</span>
+                        <i class="fa-solid fa-building text-slate-400 text-lg"></i>
                         <h2 class="font-manrope font-bold text-lg text-slate-900"><?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?></h2>
                     </div>
                     <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code]; ?>
                     <div class="text-slate-400 text-xs font-inter flex gap-4 mt-1 ml-7">
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-blue-500">directions_car</span> Mobil: <strong class="text-slate-700"><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-emerald-500">two_wheeler</span> Motor: <strong class="text-slate-700"><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-car text-xs text-blue-500"></i> Cars: <strong class="text-slate-700"><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-motorcycle text-xs text-emerald-500"></i> Moto: <strong class="text-slate-700"><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -123,9 +123,9 @@ include '../../includes/header.php';
                     $pct_cls = $pct > 50 ? 'bg-emerald-50 text-emerald-700' : ($pct > 20 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700');
                 ?>
                 <div class="text-right">
-                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Kapasitas</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Capacity</div>
                     <span class="font-manrope font-extrabold text-2xl <?= explode(' ', $pct_cls)[1] ?>"><?= $pct ?>%</span>
-                    <div class="text-slate-400 text-xs font-inter">tersedia</div>
+                    <div class="text-slate-400 text-xs font-inter">available</div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -135,26 +135,26 @@ include '../../includes/header.php';
                 <div class="mb-6">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-10 h-10 rounded-xl <?= $type === 'car' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600' ?> flex items-center justify-center">
-                            <span class="material-symbols-outlined text-xl"><?= $type === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
+                            <i class="fa-solid <?= $type === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
                         </div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter"><?= $type === 'car' ? 'Zona Mobil' : 'Zona Motor' ?></span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter"><?= $type === 'car' ? 'Car Zone' : 'Motorcycle Zone' ?></span>
                         <div class="flex-1 h-px bg-slate-100"></div>
                     </div>
                     <div class="slot-grid">
                         <?php foreach ($slots as $s):
                             $mins = (int)$s['minutes_parked'];
-                            $dur  = $mins > 0 ? ($mins >= 60 ? floor($mins/60).'j '.($mins%60).'m' : $mins.'m') : '';
+                            $dur  = $mins > 0 ? ($mins >= 60 ? floor($mins/60).'h '.($mins%60).'m' : $mins.'m') : '';
                         ?>
                         <div class="slot-box <?= $s['status'] ?>">
                             <span class="slot-icon">
                                 <?php if ($s['status'] === 'available'): ?>
-                                    <span class="material-symbols-outlined text-emerald-500">radio_button_checked</span>
+                                    <i class="fa-solid fa-circle-dot text-emerald-500 text-sm"></i>
                                 <?php elseif ($s['status'] === 'occupied'): ?>
-                                    <span class="material-symbols-outlined text-red-500">radio_button_checked</span>
+                                    <i class="fa-solid fa-circle-dot text-red-500 text-sm"></i>
                                 <?php elseif ($s['status'] === 'reserved'): ?>
-                                    <span class="material-symbols-outlined text-amber-500">lock</span>
+                                    <i class="fa-solid fa-lock text-amber-500 text-sm"></i>
                                 <?php else: ?>
-                                    <span class="material-symbols-outlined text-slate-400">build</span>
+                                    <i class="fa-solid fa-wrench text-slate-400 text-sm"></i>
                                 <?php endif; ?>
                             </span>
                             <div class="slot-num"><?= htmlspecialchars($s['slot_number']) ?></div>

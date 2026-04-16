@@ -14,12 +14,12 @@ $active = $pdo->query("
     ORDER BY t.check_in_time
 ")->fetchAll();
 
-$page_title = 'Kendaraan Aktif';
-$page_subtitle = "Total: " . count($active) . " kendaraan terparkir";
+$page_title = 'Active Vehicles';
+$page_subtitle = "Total: " . count($active) . " vehicles parked";
 $page_actions = '
 <button onclick="location.reload()"
         class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-    <span class="material-symbols-outlined text-base">refresh</span>
+    <i class="fa-solid fa-arrows-rotate text-sm"></i>
     Refresh
 </button>';
 
@@ -33,24 +33,24 @@ include '../../includes/header.php';
                     <thead class="sticky top-0 bg-white z-10">
                     <tr class="border-b border-slate-100">
                         <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Trx ID</th>
-                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tiket</th>
-                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tipe</th>
-                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Lantai</th>
+                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Ticket</th>
+                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Type</th>
+                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Floor</th>
                         <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Check-In</th>
-                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Durasi</th>
+                        <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Duration</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     <?php if (empty($active)): ?>
                     <tr>
                         <td colspan="6" class="text-center py-16">
-                            <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">car_tag</span>
-                            <p class="text-slate-400 text-sm font-inter">Tidak ada kendaraan yang sedang parkir saat ini.</p>
+                            <i class="fa-solid fa-car-side text-5xl text-slate-200 block mb-3"></i>
+                            <p class="text-slate-400 text-sm font-inter">No vehicles are currently parked.</p>
                         </td>
                     </tr>
                     <?php else: foreach ($active as $row):
                         $mins = (int)$row['minutes_parked'];
-                        $dur  = floor($mins/60).'j '.($mins%60).'m';
+                        $dur  = floor($mins/60).'h '.($mins%60).'m';
                         $is_overdue = $mins >= 480;
                     ?>
                     <tr class="hover:bg-slate-50 transition-colors <?= $is_overdue ? 'bg-amber-50/50' : '' ?>">
@@ -62,16 +62,16 @@ include '../../includes/header.php';
                             <?php if ($row['vehicle_type'] === 'car'): ?>
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-xl text-blue-600">directions_car</span>
+                                        <i class="fa-solid fa-car text-xl text-blue-600"></i>
                                     </div>
-                                    <span class="font-inter font-semibold text-sm text-slate-800">Mobil</span>
+                                    <span class="font-inter font-semibold text-sm text-slate-800">Car</span>
                                 </div>
                             <?php else: ?>
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-xl text-emerald-600">two_wheeler</span>
+                                        <i class="fa-solid fa-motorcycle text-xl text-emerald-600"></i>
                                     </div>
-                                    <span class="font-inter font-semibold text-sm text-slate-800">Motor</span>
+                                    <span class="font-inter font-semibold text-sm text-slate-800">Motorcycle</span>
                                 </div>
                             <?php endif; ?>
                         </td>
@@ -80,14 +80,14 @@ include '../../includes/header.php';
                         </td>
                         <td class="px-4 py-4 text-slate-600 text-sm font-inter">
                             <div class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-slate-300 text-base">schedule</span>
+                                <i class="fa-solid fa-clock text-slate-300 text-sm"></i>
                                 <?= date('H:i, d M', strtotime($row['check_in_time'])) ?>
                             </div>
                         </td>
                         <td class="px-4 py-4">
                             <?php if ($is_overdue): ?>
                             <span class="flex items-center gap-1.5 text-amber-600 text-sm font-bold font-inter">
-                                <span class="material-symbols-outlined text-base">warning</span>
+                                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
                                 <?= $dur ?>
                             </span>
                             <?php else: ?>
@@ -103,8 +103,8 @@ include '../../includes/header.php';
 
         <?php if (!empty($active)): ?>
         <div class="flex items-center gap-2 mt-4 text-slate-400 text-sm font-inter">
-            <span class="material-symbols-outlined text-base text-amber-500">info</span>
-            Sorotan kuning menandakan kendaraan telah parkir lebih dari 8 jam.
+            <i class="fa-solid fa-circle-info text-xs text-amber-500"></i>
+            Yellow highlighting indicates a vehicle that has been parked for more than 8 hours.
         </div>
         <?php endif; ?>
     </div>

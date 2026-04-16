@@ -17,20 +17,20 @@ $logs = $pdo->query("
     LIMIT 200
 ")->fetchAll();
 
-$page_title = 'Scan Log Engine';
-$page_subtitle = 'Log forensik aktivitas sensor gate masuk dan keluar.';
+$page_title = 'Security Scan History';
+$page_subtitle = 'Forensic logs for entry/exit gate sensor activity.';
 $page_actions = '
 <div class="flex items-center gap-3">
     <div class="relative">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-        <input type="text" id="searchLog" placeholder="Cari tiket..."
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <input type="text" id="searchLog" placeholder="Search ticket..."
                oninput="filterLog(this.value)"
                class="bg-slate-100 border-none rounded-full pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
     </div>
     <button onclick="document.getElementById(\'modalHapus\').classList.remove(\'hidden\')"
             class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-        <span class="material-symbols-outlined text-base">delete_sweep</span>
-        Hapus Log
+        <i class="fa-solid fa-broom text-base"></i>
+        Purge History
     </button>
 </div>';
 
@@ -44,10 +44,10 @@ include '../../includes/header.php';
                     <thead class="sticky top-0 bg-white z-10">
                         <tr class="border-b border-slate-100">
                             <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter w-12">No</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Kode Tiket</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Timestamp Masuk</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Timestamp Keluar</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Durasi</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Ticket Code</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Entry Timestamp</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Exit Timestamp</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Duration</th>
                             <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Status</th>
                         </tr>
                     </thead>
@@ -55,15 +55,15 @@ include '../../includes/header.php';
                         <?php if (empty($logs)): ?>
                         <tr>
                             <td colspan="6" class="text-center py-16">
-                                <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">history_toggle_off</span>
-                                <p class="text-slate-400 text-sm font-inter">Belum ada aktivitas sensor tercatat.</p>
+                                <i class="fa-solid fa-clock-rotate-left text-5xl text-slate-200 block mb-3"></i>
+                                <p class="text-slate-400 text-sm font-inter">No sensor activity logs detected.</p>
                             </td>
                         </tr>
                         <?php else: $no = 1; foreach ($logs as $row):
                             $menit = (int)$row['durasi_menit'];
                             $jam   = floor($menit / 60);
                             $sisa  = $menit % 60;
-                            $dur   = $jam > 0 ? "{$jam}j {$sisa}m" : "{$sisa}m";
+                            $dur   = $jam > 0 ? "{$jam}h {$sisa}m" : "{$sisa}m";
                             $is_aktif = $row['status_parkir'] === 'parkir';
                         ?>
                         <tr class="hover:bg-slate-50 transition-colors">
@@ -73,7 +73,7 @@ include '../../includes/header.php';
                             </td>
                             <td class="px-4 py-4 text-slate-600 text-sm font-inter">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-blue-400 text-base">login</span>
+                                    <i class="fa-solid fa-right-to-bracket text-blue-400 text-sm"></i>
                                     <?= date('H:i:s, d M Y', strtotime($row['waktu_masuk'])) ?>
                                 </div>
                             </td>
@@ -82,7 +82,7 @@ include '../../includes/header.php';
                                     <span class="text-slate-400">—</span>
                                 <?php else: ?>
                                     <div class="flex items-center gap-1.5">
-                                        <span class="material-symbols-outlined text-emerald-400 text-base">logout</span>
+                                        <i class="fa-solid fa-right-from-bracket text-emerald-400 text-sm"></i>
                                         <?= date('H:i:s, d M Y', strtotime($row['waktu_keluar'])) ?>
                                     </div>
                                 <?php endif; ?>
@@ -98,12 +98,12 @@ include '../../includes/header.php';
                                 <?php if ($is_aktif): ?>
                                     <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold font-inter px-3 py-1 rounded-full">
                                         <span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-                                        Aktif
+                                        Active
                                     </span>
                                 <?php else: ?>
                                     <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter px-3 py-1 rounded-full">
-                                        <span class="material-symbols-outlined text-xs">check_circle</span>
-                                        Keluar
+                                        <i class="fa-solid fa-circle-check text-[10px]"></i>
+                                        Exited
                                     </span>
                                 <?php endif; ?>
                             </td>
@@ -120,22 +120,22 @@ include '../../includes/header.php';
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-red-500 text-xl">delete_forever</span>
-                <h2 class="font-manrope font-bold text-lg text-slate-900">Danger Zone: Hapus Log</h2>
+                <i class="fa-solid fa-trash-can text-red-500 text-lg"></i>
+                <h2 class="font-manrope font-bold text-lg text-slate-900">Danger Zone: Purge History</h2>
             </div>
             <button onclick="document.getElementById('modalHapus').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
-                <span class="material-symbols-outlined">close</span>
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
 
         <div class="px-6 py-5">
-            <p class="text-slate-500 text-sm font-inter mb-5">Penghapusan data ini bersifat permanen. Data revenue yang terkait akan ikut terhapus.</p>
+            <p class="text-slate-500 text-sm font-inter mb-5">Deleting this data is permanent. Revenue data related to these logs may also be affected.</p>
 
             <!-- Tabs -->
             <div class="flex gap-2 mb-5">
                 <button id="tabBtnDate" onclick="switchTab('date')"
                         class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl bg-slate-900 text-white transition-all">
-                    Per Tanggal
+                    By Date
                 </button>
                 <button id="tabBtnAll" onclick="switchTab('all')"
                         class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl bg-slate-100 text-red-600 transition-all">
@@ -147,19 +147,19 @@ include '../../includes/header.php';
                 <div id="daftarTanggal" class="max-h-52 overflow-y-auto no-scrollbar rounded-xl bg-slate-50 p-2 mb-4 space-y-1"></div>
                 <button id="btnHapusTanggal" disabled onclick="hapusLog('by_date')"
                         class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-xl disabled:opacity-40 transition-all">
-                    Hapus Tanggal Terpilih
+                    Delete Selected Date
                 </button>
             </div>
 
             <div id="tabAll" class="hidden">
                 <div class="bg-red-50 rounded-xl p-4 mb-4 text-center">
-                    <span class="material-symbols-outlined text-red-400 text-4xl block mb-2">warning</span>
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 text-4xl block mb-2"></i>
                     <p class="text-red-700 font-bold text-sm font-inter">SYSTEM WIPE WARNING</p>
-                    <p class="text-slate-500 text-xs font-inter mt-1">Tindakan ini akan menghancurkan seluruh riwayat operasional.</p>
+                    <p class="text-slate-500 text-xs font-inter mt-1">This action will destroy ALL recorded operational history.</p>
                 </div>
                 <button onclick="hapusLog('all')"
                         class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-xl transition-all">
-                    Eksekusi Format Total
+                    Execute Total Format
                 </button>
             </div>
 
@@ -191,14 +191,14 @@ observer.observe(document.getElementById('modalHapus'), { attributes: true, attr
 
 function loadDates() {
     const c = document.getElementById('daftarTanggal');
-    c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm animate-pulse">Memindai indeks data...</div>';
+    c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm animate-pulse">Scanning index...</div>';
     selectedDate = null;
     document.getElementById('btnHapusTanggal').disabled = true;
 
     fetch('get_log_dates.php')
         .then(r => r.json())
         .then(data => {
-            if (!data.length) { c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Index log kosong.</div>'; return; }
+            if (!data.length) { c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Index empty.</div>'; return; }
             let html = '';
             data.forEach(d => {
                 html += `<div class="date-item flex justify-between items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-100 transition-all" data-date="${d.date}" onclick="selectDate(this,'${d.date}')">
@@ -207,14 +207,14 @@ function loadDates() {
                         <div class="text-slate-400 text-xs font-inter mt-0.5">${d.day}</div>
                     </div>
                     <div class="flex gap-2 text-xs font-inter">
-                        <span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">${d.scan_count} Masuk</span>
-                        <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${d.exited} Keluar</span>
+                        <span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">${d.scan_count} In</span>
+                        <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${d.exited} Out</span>
                     </div>
                 </div>`;
             });
             c.innerHTML = html;
         })
-        .catch(() => { c.innerHTML = '<div class="text-center py-3 text-red-500 text-sm">Gagal menghubungi endpoint.</div>'; });
+        .catch(() => { c.innerHTML = '<div class="text-center py-3 text-red-500 text-sm">Connection failure.</div>'; });
 }
 
 function selectDate(el, date) {
@@ -232,8 +232,8 @@ function hapusLog(mode) {
     if (mode === 'by_date' && !selectedDate) return;
 
     const konfirm = mode === 'by_date'
-        ? `Yakin hapus log tanggal ${selectedDate}?`
-        : `Yakin format SEMUA data operasional log?`;
+        ? `Are you sure you want to delete logs for ${selectedDate}?`
+        : `Are you sure you want to WIPE ALL operational logs?`;
     if (!confirm(konfirm)) return;
 
     const body = mode === 'by_date'
@@ -246,11 +246,11 @@ function hapusLog(mode) {
         box.classList.remove('hidden');
         if (data.success) {
             box.className = 'mt-4 flex items-center gap-2 text-emerald-700 font-inter text-sm';
-            box.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Berhasil: ${data.deleted_scans} record dihapus.`;
+            box.innerHTML = `<i class="fa-solid fa-circle-check text-base"></i> Success: ${data.deleted_scans} records purged.`;
             setTimeout(() => location.reload(), 1500);
         } else {
             box.className = 'mt-4 flex items-center gap-2 text-red-600 font-inter text-sm';
-            box.innerHTML = `<span class="material-symbols-outlined text-lg">error</span> ${data.message}`;
+            box.innerHTML = `<i class="fa-solid fa-circle-exclamation text-base"></i> ${data.message}`;
         }
     })
     .catch(() => {

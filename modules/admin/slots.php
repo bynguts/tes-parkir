@@ -15,19 +15,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $floor_id = (int)($_POST['floor_id'] ?? 0);
 
         if (!$num || !in_array($type, ['car','motorcycle']) || $floor_id <= 0) {
-            $error = 'Data konfigurasi slot tidak lengkap.';
+            $error = 'Slot configuration data is incomplete.';
         } else {
             $fcheck = $pdo->prepare("SELECT floor_id FROM floor WHERE floor_id = ?");
             $fcheck->execute([$floor_id]);
             if (!$fcheck->fetch()) {
-                $error = 'Referensi lantai tidak valid pada sistem.';
+                $error = 'Invalid floor reference in the system.';
             } else {
                 try {
                     $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor_id) VALUES (?,?,?)")
                         ->execute([$num, $type, $floor_id]);
-                    $msg = "Slot <strong>{$num}</strong> berhasil diinisialisasi dalam database.";
+                    $msg = "Slot <strong>{$num}</strong> successfully initialized in the database.";
                 } catch (PDOException $e) {
-                    $error = 'Nomor slot sudah terdaftar pada floor record ini.';
+                    $error = 'Slot number is already registered for this floor.';
                 }
             }
         }
@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id     = (int)$_POST['slot_id'];
         $status = $_POST['status'] ?? '';
         if (!in_array($status, ['available','occupied','reserved','maintenance'])) {
-            $error = 'Nilai state tidak valid.';
+            $error = 'Invalid state value.';
         } else {
             $pdo->prepare("UPDATE parking_slot SET status=? WHERE slot_id=?")->execute([$status, $id]);
-            $msg = 'State slot berhasil disinkronisasi.';
+            $msg = 'Slot state successfully synchronized.';
         }
     }
 
@@ -49,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $occupied = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE slot_id=? AND payment_status='unpaid'");
         $occupied->execute([$id]);
         if ($occupied->fetchColumn() > 0) {
-            $error = 'Pelanggaran Constraint: Slot aktif terikat dengan sesi transaksi yang berjalan.';
+            $error = 'Constraint Violation: Active slot is tied to an ongoing transaction session.';
         } else {
             $pdo->prepare("DELETE FROM parking_slot WHERE slot_id=?")->execute([$id]);
-            $msg = 'Slot dihapus secara permanen.';
+            $msg = 'Slot permanently deleted.';
         }
     }
 }
@@ -66,13 +66,13 @@ $slots = $pdo->query("
 
 $floors_list = $pdo->query("SELECT floor_id, floor_code, floor_name FROM floor ORDER BY floor_code")->fetchAll();
 
-$page_title = 'Kelola Inventori Slot';
-$page_subtitle = 'Konfigurasi kapasitas, letak, dan state slot pada area parkir.';
+$page_title = 'Manage Slot Inventory';
+$page_subtitle = 'Configure capacity, location, and state of slots in the parking area.';
 $page_actions = '
 <button onclick="document.getElementById(\'addModal\').classList.remove(\'hidden\')"
         class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
-    <span class="material-symbols-outlined text-base">add_circle</span>
-    Tambah Slot
+    <i class="fa-solid fa-circle-plus text-sm"></i>
+    Add Slot
 </button>';
 
 include '../../includes/header.php';
@@ -82,13 +82,13 @@ include '../../includes/header.php';
 
         <?php if ($msg): ?>
         <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
         <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
-            <span class="material-symbols-outlined text-red-600">error</span>
+            <i class="fa-solid fa-circle-exclamation text-red-600"></i>
             <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>
@@ -98,24 +98,24 @@ include '../../includes/header.php';
                 <table class="w-full">
                     <thead class="sticky top-0 bg-white z-10">
                         <tr class="border-b border-slate-100">
-                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Lantai</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Tipe</th>
+                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot / Floor</th>
+                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Type</th>
                             <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Status</th>
-                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Aksi</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                     <?php if (empty($slots)): ?>
                     <tr><td colspan="4" class="text-center py-16">
-                        <span class="material-symbols-outlined text-5xl text-slate-200 block mb-3">local_parking</span>
-                        <p class="text-slate-400 text-sm font-inter">Belum ada slot yang dikonfigurasi.</p>
+                        <i class="fa-solid fa-square-p text-5xl text-slate-200 block mb-3"></i>
+                        <p class="text-slate-400 text-sm font-inter">No slots have been configured yet.</p>
                     </td></tr>
                     <?php else: foreach ($slots as $s):
                         $stMap = [
-                            'available'   => ['bg-emerald-50 text-emerald-700',  'Tersedia'],
-                            'occupied'    => ['bg-red-50 text-red-700',          'Terisi'],
-                            'reserved'    => ['bg-amber-50 text-amber-700',      'Direservasi'],
-                            'maintenance' => ['bg-slate-100 text-slate-500',     'Perawatan'],
+                            'available'   => ['bg-emerald-50 text-emerald-700',  'Available'],
+                            'occupied'    => ['bg-red-50 text-red-700',          'Occupied'],
+                            'reserved'    => ['bg-amber-50 text-amber-700',      'Reserved'],
+                            'maintenance' => ['bg-slate-100 text-slate-500',     'Maintenance'],
                         ];
                         [$stCls, $stLabel] = $stMap[$s['status']] ?? ['bg-slate-100 text-slate-500', $s['status']];
                     ?>
@@ -126,8 +126,8 @@ include '../../includes/header.php';
                         </td>
                         <td class="px-4 py-4">
                             <div class="flex items-center gap-2 text-slate-600 text-sm font-inter">
-                                <span class="material-symbols-outlined <?= $s['slot_type'] === 'car' ? 'text-blue-500' : 'text-emerald-500' ?> text-base"><?= $s['slot_type'] === 'car' ? 'directions_car' : 'two_wheeler' ?></span>
-                                <?= $s['slot_type'] === 'car' ? 'Mobil' : 'Motor' ?>
+                                <i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-blue-500' : 'fa-motorcycle text-emerald-500' ?> text-sm"></i>
+                                <?= $s['slot_type'] === 'car' ? 'Car' : 'Motorcycle' ?>
                             </div>
                         </td>
                         <td class="px-4 py-4 text-center">
@@ -149,12 +149,12 @@ include '../../includes/header.php';
                                 </form>
 
                                 <!-- Delete -->
-                                <form method="POST" onsubmit="return confirm('Hapus slot <?= htmlspecialchars($s['slot_number'], ENT_QUOTES) ?> secara permanen?')">
+                                <form method="POST" onsubmit="return confirm('Permanently delete slot <?= htmlspecialchars($s['slot_number'], ENT_QUOTES) ?>?')">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>">
                                     <button class="flex items-center gap-1 text-red-600 bg-red-50 hover:bg-red-100 text-xs font-bold font-inter px-3 py-2 rounded-xl transition-all">
-                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                        <i class="fa-solid fa-trash-can text-[10px]"></i>
                                     </button>
                                 </form>
                             </div>
@@ -173,11 +173,11 @@ include '../../includes/header.php';
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4">
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-slate-600">add_box</span>
-                <h2 class="font-manrope font-bold text-lg text-slate-900">Inisialisasi Slot Baru</h2>
+                <i class="fa-solid fa-square-plus text-slate-600"></i>
+                <h2 class="font-manrope font-bold text-lg text-slate-900">Initialize New Slot</h2>
             </div>
             <button onclick="document.getElementById('addModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
-                <span class="material-symbols-outlined">close</span>
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
         <form method="POST" class="p-6 space-y-4">
@@ -185,22 +185,22 @@ include '../../includes/header.php';
             <input type="hidden" name="action" value="add">
 
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Nomor Slot</label>
-                <input type="text" name="slot_number" required placeholder="Contoh: A-01"
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Slot Number</label>
+                <input type="text" name="slot_number" required placeholder="Example: A-01"
                        class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all"
                        oninput="this.value=this.value.toUpperCase()">
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Tipe Kendaraan</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Vehicle Type</label>
                 <select name="slot_type" class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none">
-                    <option value="car">🚗 Mobil</option>
-                    <option value="motorcycle">🏍 Motor</option>
+                    <option value="car">🚗 Car</option>
+                    <option value="motorcycle">🏍 Motorcycle</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Lantai</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Floor</label>
                 <select name="floor_id" class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all appearance-none" required>
                     <?php foreach ($floors_list as $f): ?>
                     <option value="<?= $f['floor_id'] ?>"><?= htmlspecialchars($f['floor_code']) ?> — <?= htmlspecialchars($f['floor_name']) ?></option>
@@ -210,9 +210,9 @@ include '../../includes/header.php';
 
             <div class="flex gap-2 pt-2">
                 <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')"
-                        class="flex-1 bg-slate-100 text-slate-700 font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Batal</button>
+                        class="flex-1 bg-slate-100 text-slate-700 font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Cancel</button>
                 <button type="submit"
-                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Simpan</button>
+                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all">Save</button>
             </div>
         </form>
     </div>
