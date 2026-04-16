@@ -165,6 +165,28 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
         </div>
 
         <div class="flex items-center gap-4">
+            <!-- Universal Export Button (Only on Dashboard) -->
+            <?php if (isset($page_title) && $page_title === 'Dashboard'): ?>
+                <?php
+                // Build a root-relative path to the export script.
+                // Works regardless of which module depth the page is included from.
+                $scriptDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+                // Walk up to find root (where login.php lives)
+                $depth = substr_count(str_replace('\\','/',$scriptDir), '/') -
+                         substr_count(str_replace('\\','/',rtrim(parse_url(BASE_URL,PHP_URL_PATH),'/\\')), '/');
+                $prefix = str_repeat('../', max(0,$depth));
+                $exportUrl = $prefix . 'modules/reports/export_excel.php';
+                ?>
+                <a href="<?= htmlspecialchars($exportUrl) ?>" target="_blank"
+                   class="bg-white border border-slate-200 text-slate-900 px-5 py-2.5 rounded-lg font-bold text-sm font-manrope transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+                   title="Ekspor seluruh data SmartParking ke Excel">
+                    <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0, 'wght' 300;">
+                        ios_share
+                    </span>
+                    Export
+                </a>
+            <?php endif; ?>
+
             <!-- Page specific actions -->
             <?php if (isset($page_actions)) echo $page_actions; ?>
 

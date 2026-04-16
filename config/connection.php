@@ -25,10 +25,21 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', $url);
 }
 
-$db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
-$db_name = defined('DB_NAME') ? DB_NAME : 'parking_db_v2';
-$db_user = defined('DB_USER') ? DB_USER : 'root';
-$db_pass = defined('DB_PASS') ? DB_PASS : '';
+// Simple .env loader
+if (file_exists(ROOT_PATH . '.env')) {
+    $lines = file(ROOT_PATH . '.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2);
+        putenv(trim($name) . "=" . trim($value));
+        $_ENV[trim($name)] = trim($value);
+    }
+}
+
+$db_host = getenv('DB_HOST') ?: (defined('DB_HOST') ? DB_HOST : 'localhost');
+$db_name = getenv('DB_NAME') ?: (defined('DB_NAME') ? DB_NAME : 'parking_db_v2');
+$db_user = getenv('DB_USER') ?: (defined('DB_USER') ? DB_USER : 'root');
+$db_pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : (defined('DB_PASS') ? DB_PASS : '');
 
 try {
     $pdo = new PDO(

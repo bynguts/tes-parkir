@@ -142,9 +142,9 @@ foreach ($c['floors'] as $f) {
 // ── 2. OPENROUTER CONFIGURATION ───────────────────────────────────────────
 $apiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
-// [LEAD NOTE]: Paste your OpenRouter API Key and preferred Model ID here.
-$apiKey  = "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";
-$modelId = "nvidia/nemotron-3-super-120b-a12b:free"; // Ganti dengan model pilihan Anda (e.g., 'anthropic/claude-3.5-sonnet')
+// [LEAD NOTE]: Credentials moved to .env for security.
+$apiKey  = getenv('OPENROUTER_API_KEY') ?: '';
+$modelId = getenv('OPENROUTER_MODEL') ?: "google/gemini-2.0-flash-001"; // Default model if not set
 
 $systemPrompt = "
 Anda adalah 'Archive AI', asisten cerdas eksklusif untuk SmartParking Enterprise.
