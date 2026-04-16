@@ -86,19 +86,27 @@ $page_title = $page_title ?? 'Parking System';
             background: #94a3b8;
         }
 
-        /* Hide main page scrollbar while keeping it scrollable */
-        html, body {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
-            overflow-x: hidden;
-            overflow-y: auto;
-            scroll-behavior: smooth;
+        /* --- Sticky Header Fix ---
+         * Body must NOT scroll. Scroll happens inside <main>.
+         * This makes `sticky top-0` inside <main> work on ALL pages. */
+        html {
+            height: 100%;
+            overflow: hidden;
         }
-        html::-webkit-scrollbar, 
-        body::-webkit-scrollbar {
-            width: 0px !important;
-            height: 0px !important;
-            background: transparent !important;
+        body {
+            height: 100%;
+            overflow: hidden;
+            overflow-x: hidden;
+        }
+        /* <main> is the actual scroll container */
+        main {
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;      /* Firefox */
+            -ms-overflow-style: none;   /* IE/Edge */
+        }
+        main::-webkit-scrollbar {
             display: none;
         }
 
