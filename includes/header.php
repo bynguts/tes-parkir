@@ -32,11 +32,11 @@ $page_title = $page_title ?? 'Parking System';
                     'inter': ['Inter', 'sans-serif'],
                 },
                 colors: {
-                    'surface': '#f2f4f7',
+                    'surface': '#f8fafc',
                     'surface-bright': '#ffffff',
                     'on-surface': '#0f172a',
                     'primary-fixed': '#0f172a',
-                    'secondary-fixed': '#64748b',
+                    'secondary-fixed': 'rgba(15, 23, 42, 0.4)',
                 },
             }
         }
@@ -139,7 +139,7 @@ $page_title = $page_title ?? 'Parking System';
         .progress-bar-fill { transition: width 0.8s ease; }
     </style>
 </head>
-<body class="bg-[#f2f4f7] text-slate-900 overflow-hidden">
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
 <?php
 if (!isset($hide_sidebar) || !$hide_sidebar) {
     include 'sidebar.php';
@@ -147,21 +147,21 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 ?>
 
 <!-- Main Content Wrapper & Scroll Container -->
-<main class="pl-64 min-h-screen bg-[#f2f4f7] text-on-surface">
+<main class="pl-64 min-h-screen bg-slate-50 text-on-surface">
 
     <!-- Global Top Bar (Sticky) -->
     <?php if (!isset($hide_header) || !$hide_header): ?>
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <header class="flex justify-between items-center px-6 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-900/10">
         <div class="flex flex-col">
             <h1 class="font-manrope font-extrabold text-2xl text-slate-900"><?= $page_title ?></h1>
             <?php if (isset($page_subtitle) && $page_subtitle): ?>
-                <span class="text-slate-400 text-[11px] font-inter font-medium uppercase tracking-wider -mt-1">
+                <span class="text-slate-900/40 text-[11px] font-inter font-medium uppercase tracking-wider -mt-1">
                     <?= $page_subtitle ?>
                 </span>
             <?php endif; ?>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
             <!-- Universal Export Button (Only on Dashboard) -->
             <?php if (isset($page_title) && $page_title === 'Dashboard'): ?>
                 <?php
@@ -175,7 +175,7 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
                 $exportUrl = $prefix . 'modules/reports/export_excel.php';
                 ?>
                 <a href="<?= htmlspecialchars($exportUrl) ?>" target="_blank"
-                   class="bg-white border border-slate-200 text-slate-900 px-5 py-2.5 rounded-2xl font-semibold text-sm font-manrope transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+                   class="bg-white border border-slate-900/10 text-slate-900 px-5 py-2.5 rounded-2xl font-semibold text-sm font-manrope transition-all hover:bg-slate-900/5 flex items-center gap-2 shadow-sm"
                    title="Export all SmartParking data to Excel">
                     <i class="fa-solid fa-share-from-square text-lg opacity-75"></i>
                     Export
@@ -186,7 +186,7 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             <?php if (isset($page_actions)) echo $page_actions; ?>
 
             <!-- Settings / Notifications Placeholder -->
-            <button class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+            <button class="w-10 h-10 rounded-full bg-slate-900/5 flex items-center justify-center text-slate-900/40 hover:bg-slate-900/10 transition-colors">
                 <i class="fa-solid fa-bell"></i>
             </button>
         </div>

@@ -39,7 +39,7 @@ foreach ($floor_summary as $row) { $fs[$row['floor']] = $row; }
 $page_title = 'Parking Slot Map';
 $page_subtitle = 'Real-time visualization of vehicle slot mapping per floor.';
 $page_actions = '
-<div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+<div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 text-[11px] font-extrabold font-inter uppercase tracking-[0.2em] px-4 py-2 rounded-lg border border-emerald-500/20">
     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
     <span id="lastRefresh">Live Sync</span>
 </div>';
@@ -48,71 +48,74 @@ include '../../includes/header.php';
 ?>
 
 <style>
-.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
+<style>
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 12px; }
 .slot-box {
-    border-radius: 12px;
-    height: 125px; /* Fixed height for stability */
+    border-radius: 1rem;
+    height: 110px; 
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 8px;
+    padding: 12px;
     cursor: pointer;
-    transition: all .2s;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    background: #f8fafc;
-    border: 1.5px solid transparent;
+    background: white;
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    border-left: 4px solid transparent;
 }
-.slot-box:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-.slot-box.available   { background: #f0fdf4; border-color: #4ade80; }
-.slot-box.occupied    { background: #fef2f2; border-color: #fca5a5; }
-.slot-box.reserved    { background: #fffbeb; border-color: #fcd34d; }
-.slot-box.maintenance { background: #f1f5f9; border-color: #cbd5e1; }
+.slot-box:hover { transform: translateY(-4px); box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.1); border-color: rgba(15, 23, 42, 0.1); }
+
+/* Silk White Status Accents */
+.slot-box.available   { border-left-color: #10b981; }
+.slot-box.occupied    { border-left-color: #ef4444; }
+.slot-box.reserved    { border-left-color: #f59e0b; }
+.slot-box.maintenance { border-left-color: #64748b; }
 
 .slot-num  { 
     font-weight: 800; 
-    font-size: 14px; 
-    margin-top: 4px; 
+    font-size: 15px; 
     font-family: 'Manrope', sans-serif; 
     color: #0f172a;
 }
-.slot-icon { font-size: 24px; display: block; margin-bottom: 2px; }
-.slot-plate    { font-size: 9px; color: #334155; margin-top: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-weight: 700; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; }
-.slot-duration { font-size: 9px; color: #64748b; margin-top: 3px; font-family: 'Inter', sans-serif; }
+.slot-icon { font-size: 20px; color: rgba(15, 23, 42, 0.2); margin-bottom: 4px; }
+.slot-plate    { font-size: 9px; color: #0f172a; margin-top: 8px; background: rgba(15, 23, 42, 0.04); border-radius: 6px; padding: 3px 8px; font-family: monospace; font-weight: 700; width: 100%; text-align: center; }
+.slot-duration { font-size: 9px; color: rgba(15, 23, 42, 0.4); margin-top: 3px; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 </style>
 
-    <div class="p-10 max-w-[1440px] mx-auto">
+    <div class="p-6">
 
         <!-- Legend -->
-        <div class="bg-white rounded-2xl px-6 py-4 mb-6 flex flex-wrap items-center gap-6 shadow-sm border border-slate-100">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Legend:</span>
-            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <i class="fa-solid fa-circle-dot text-emerald-500 text-xs"></i> Available
+        <div class="bg-white rounded-2xl px-6 py-4 mb-6 flex flex-wrap items-center gap-6 ring-1 ring-slate-900/5 shadow-sm">
+            <span class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Legend:</span>
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
+                <i class="fa-solid fa-circle text-emerald-500 text-[10px]"></i> Available
             </div>
-            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <i class="fa-solid fa-circle-dot text-red-500 text-xs"></i> Occupied
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
+                <i class="fa-solid fa-circle text-red-500 text-[10px]"></i> Occupied
             </div>
-            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <i class="fa-solid fa-lock text-amber-500 text-xs"></i> Reserved
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
+                <i class="fa-solid fa-circle text-amber-500 text-[10px]"></i> Reserved
             </div>
-            <div class="flex items-center gap-2 text-sm font-inter text-slate-600">
-                <i class="fa-solid fa-wrench text-slate-400 text-xs"></i> Maintenance
+            <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
+                <i class="fa-solid fa-circle text-slate-900/20 text-[10px]"></i> Maintenance
             </div>
         </div>
 
         <?php foreach ($floors as $floor_code => $types): ?>
-        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-900/5 overflow-hidden mb-6">
             <!-- Floor header -->
-            <div class="px-6 py-5 flex justify-between items-center border-b border-slate-100">
+            <div class="px-8 py-6 flex justify-between items-center border-b border-slate-900/10">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
-                        <i class="fa-solid fa-building text-slate-400 text-lg"></i>
-                        <h2 class="font-manrope font-bold text-lg text-slate-900"><?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?></h2>
+                        <i class="fa-solid fa-building text-slate-900/20 text-lg"></i>
+                        <h2 class="font-manrope font-extrabold text-xl text-slate-900 tracking-tight"><?= htmlspecialchars($fs[$floor_code]['floor_name'] ?? $floor_code) ?></h2>
                     </div>
                     <?php if (isset($fs[$floor_code])): $f = $fs[$floor_code]; ?>
-                    <div class="text-slate-400 text-xs font-inter flex gap-4 mt-1 ml-7">
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-car text-xs text-blue-500"></i> Cars: <strong class="text-slate-700"><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-motorcycle text-xs text-emerald-500"></i> Moto: <strong class="text-slate-700"><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
+                    <div class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-[0.2em] font-inter flex gap-4 mt-1.5 ml-7">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-car text-slate-900/20"></i> Cars: <strong class="text-slate-900 font-manrope"><?= $f['car_avail'] ?>/<?= $f['car_total'] ?></strong></span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-motorcycle text-slate-900/20"></i> Moto: <strong class="text-slate-900 font-manrope"><?= $f['moto_avail'] ?>/<?= $f['moto_total'] ?></strong></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -120,25 +123,25 @@ include '../../includes/header.php';
                     $total_avail = $f['car_avail'] + $f['moto_avail'];
                     $total_all   = $f['car_total'] + $f['moto_total'];
                     $pct = $total_all > 0 ? round($total_avail / $total_all * 100) : 0;
-                    $pct_cls = $pct > 50 ? 'bg-emerald-50 text-emerald-700' : ($pct > 20 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700');
+                    $pct_cls = $pct > 50 ? 'bg-emerald-50/10 text-emerald-700 border-emerald-500/10' : ($pct > 20 ? 'bg-amber-50/10 text-amber-700 border-amber-500/10' : 'bg-red-50/10 text-red-700 border-red-500/10');
                 ?>
                 <div class="text-right">
-                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Capacity</div>
-                    <span class="font-manrope font-extrabold text-2xl <?= explode(' ', $pct_cls)[1] ?>"><?= $pct ?>%</span>
-                    <div class="text-slate-400 text-xs font-inter">available</div>
+                    <div class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter mb-1">Live Occupancy</div>
+                    <span class="font-manrope font-extrabold text-3xl <?= explode(' ', $pct_cls)[1] ?>"><?= $pct ?>%</span>
+                    <div class="text-slate-900/40 text-[11px] uppercase font-extrabold tracking-[0.2em] font-inter mt-1">available</div>
                 </div>
                 <?php endif; ?>
             </div>
 
-            <div class="p-6">
+            <div class="p-8">
                 <?php foreach ($types as $type => $slots): ?>
-                <div class="mb-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl <?= $type === 'car' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600' ?> flex items-center justify-center">
+                <div class="mb-8 last:mb-0">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-slate-900/5 text-slate-900/40 border border-slate-900/10 flex items-center justify-center transition-all group-hover:bg-slate-900 group-hover:text-white">
                             <i class="fa-solid <?= $type === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
                         </div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter"><?= $type === 'car' ? 'Car Zone' : 'Motorcycle Zone' ?></span>
-                        <div class="flex-1 h-px bg-slate-100"></div>
+                        <span class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter"><?= $type === 'car' ? 'Automobile Section' : 'Two-Wheeler Section' ?></span>
+                        <div class="flex-1 h-px bg-slate-900/[0.05]"></div>
                     </div>
                     <div class="slot-grid">
                         <?php foreach ($slots as $s):
@@ -147,15 +150,7 @@ include '../../includes/header.php';
                         ?>
                         <div class="slot-box <?= $s['status'] ?>">
                             <span class="slot-icon">
-                                <?php if ($s['status'] === 'available'): ?>
-                                    <i class="fa-solid fa-circle-dot text-emerald-500 text-sm"></i>
-                                <?php elseif ($s['status'] === 'occupied'): ?>
-                                    <i class="fa-solid fa-circle-dot text-red-500 text-sm"></i>
-                                <?php elseif ($s['status'] === 'reserved'): ?>
-                                    <i class="fa-solid fa-lock text-amber-500 text-sm"></i>
-                                <?php else: ?>
-                                    <i class="fa-solid fa-wrench text-slate-400 text-sm"></i>
-                                <?php endif; ?>
+                                <i class="fa-solid <?= $type === 'car' ? 'fa-car' : 'fa-motorcycle' ?>"></i>
                             </span>
                             <div class="slot-num"><?= htmlspecialchars($s['slot_number']) ?></div>
                             <?php if ($s['status'] === 'occupied' && $s['plate_number']): ?>

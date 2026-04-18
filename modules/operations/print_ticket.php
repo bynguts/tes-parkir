@@ -118,15 +118,15 @@ if (isset($_GET['ticket_code'])) {
         body{font-family:'Courier Prime', 'Courier New', monospace;background:#f0f0f0;display:flex;justify-content:center;padding:20px}
         .ticket{background:#fff;width:320px;padding:25px 20px;text-align:center;box-shadow:0 0 10px rgba(0,0,0,.1)}
         .logo-wrap{display:flex;justify-content:center;margin-bottom:12px}
-        .logo-oval{width:150px;height:75px;background:#555;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:10px;position:relative;overflow:hidden;border:1px solid #333}
-        .logo-oval::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-image:radial-gradient(#666 1px,transparent 1px);background-size:3px 3px;opacity:.2}
-        .logo-text{font-size:16px;font-weight:900;letter-spacing:1px;text-transform:uppercase;z-index:1;text-shadow:1px 1px 2px rgba(0,0,0,.5);line-height:1}
-        .welcome{font-size:14px;margin-bottom:5px;font-weight:bold}
-        .ticket-id{font-size:16px;font-weight:900;margin:10px 0;letter-spacing:1px;background:#eee;padding:5px;display:inline-block;border:1px solid #ccc}
-        .barcode-container{margin:15px 0}.barcode-container img{max-width:160px;height:auto}
-        .branch-name{font-size:13px;font-weight:bold;margin-bottom:5px}
-        .info-row{font-size:11px;margin:2px 0}
-        .disclaimer{font-size:10px;margin-top:15px;line-height:1.4;font-weight:bold;text-transform:uppercase}
+        .logo-oval{width:150px;height:75px;background:#0f172a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:10px;position:relative;overflow:hidden;border:2px solid #0f172a}
+        .logo-oval::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-image:radial-gradient(rgba(255,255,255,0.1) 1px,transparent 1px);background-size:3px 3px;opacity:.5}
+        .logo-text{font-size:16px;font-weight:900;letter-spacing:1px;text-transform:uppercase;z-index:1;line-height:1}
+        .welcome{font-size:14px;margin-bottom:5px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;margin-top:10px}
+        .ticket-id{font-size:18px;font-weight:900;margin:10px 0;letter-spacing:2px;background:#f8fafc;padding:8px 15px;display:inline-block;border:2px solid #0f172a;border-radius:8px}
+        .barcode-container{margin:15px 0}.barcode-container img{max-width:160px;height:auto;border: 1px solid #f1f5f9; padding: 10px; border-radius: 12px;}
+        .branch-name{font-size:14px;font-weight:900;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+        .info-row{font-size:12px;margin:4px 0;font-weight:700}
+        .disclaimer{font-size:10px;margin-top:20px;line-height:1.4;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#0f172a/60}
         @media print{body{background:none;padding:0}.ticket{box-shadow:none;width:100%;margin:0;padding:10px}.no-print{display:none}}
     </style>
 </head>
@@ -134,17 +134,18 @@ if (isset($_GET['ticket_code'])) {
     <div class="ticket">
         <div class="logo-wrap">
             <div class="logo-oval">
-                <span class="logo-text">BERSERK</span>
-                <span class="logo-text" style="font-size:12px">STORE</span>
+                <span class="logo-text">SMART</span>
+                <span class="logo-text" style="font-size:12px;opacity:0.7">PARKING</span>
             </div>
         </div>
-        <div class="welcome">Welcome</div>
+        <div class="welcome">Validated Ticket</div>
         <div class="ticket-id"><?= htmlspecialchars($code) ?></div>
+        <div class="ticket-date" style="font-weight:800; font-size:11px; margin-bottom:5px;"><?= date('d F Y, H:i') ?></div>
         <div class="barcode-container"><img src="<?= $barcode_url ?>" alt="QR Code"></div>
-        <div class="branch-name">Berserk Store Parking</div>
-        <div class="info-row">Entry Time : <?= $checkin_fmt ?></div>
-        <div class="info-row">Slot : <?= htmlspecialchars($d['slot_number']) ?> / Floor <?= htmlspecialchars($d['floor']) ?></div>
-        <p class="disclaimer">Ensure your vehicle is securely locked.<br>Keep this ticket for checkout.</p>
+        <div class="branch-name">Enterprise Parking Hub</div>
+        <div class="info-row">ENTRY_SCAN : <?= $checkin_fmt ?></div>
+        <div class="info-row">LOC_ALLOC : <?= htmlspecialchars($d['slot_number']) ?> / FLR <?= htmlspecialchars($d['floor']) ?></div>
+        <p class="disclaimer">Secure vehicle lock engaged.<br>Retain ticket for automated exit.</p>
     </div>
 </body>
 </html>

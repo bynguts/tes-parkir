@@ -20,6 +20,7 @@ database/*.sql
 .stitch/
 .antigravity/
 .gemini/
+.tempmediaStorage/
 CLAUDE.md
 *.jsonl
 
@@ -30,13 +31,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# --- PHP/Web Runtime ---
-pids
-*.pid
-*.seed
-*.pid.lock
-vendor/
+# --- Dependencies ---
 node_modules/
+vendor/
+homepage/node_modules/
 bower_components/
 
 # --- IDEs & Editors ---
@@ -55,9 +53,12 @@ bower_components/
 Thumbs.db
 desktop.ini
 
-# --- Build & Cache ---
+# --- Build & Temporary ---
 dist/
 build/
+homepage/dist/
+scratch/
+temp/
 .cache/
 .sass-cache/
 .parcel-cache/

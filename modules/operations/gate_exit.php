@@ -94,7 +94,7 @@ $vtype_icon  = $trx['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler'
 $fee_fmt     = fmt_idr($total_fee);
 $duration_label = $hours_total . ' h (' . (int)$trx['minutes_parked'] . ' m)';
 $slot_label  = htmlspecialchars($trx['slot_number'] . ' / Floor ' . $trx['floor']);
-$now_fmt     = date('d M Y H:i:s');
+$now_fmt     = date('d M y H:i:s');
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -104,7 +104,7 @@ $now_fmt     = date('d M Y H:i:s');
     <title>Vehicle Checkout — SmartParking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -115,65 +115,69 @@ $now_fmt     = date('d M Y H:i:s');
         .fade-up { animation: fadeUp 0.5s cubic-bezier(.16,1,.3,1) forwards; }
     </style>
 </head>
-<body class="min-h-screen bg-[#f2f4f7] flex items-center justify-center px-4">
+<body class="min-h-screen bg-slate-50 flex items-center justify-center px-4 font-inter antialiased">
 
 <div class="w-full max-w-sm fade-up">
 
     <!-- Success badge -->
     <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200">
-            <i class="fa-solid fa-circle-check text-white text-3xl"></i>
+        <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/10 border border-emerald-500/20">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-3xl"></i>
         </div>
-        <h1 class="font-manrope font-extrabold text-2xl text-slate-900">Vehicle Checkout</h1>
-        <p class="text-slate-400 text-sm mt-1">Ticket Validated — Gate Released</p>
-        <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter uppercase tracking-widest px-4 py-1.5 rounded-full mt-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            GATE RELEASED
+        <h1 class="font-manrope font-extrabold text-2xl text-slate-900 tracking-tight">Checkout Complete</h1>
+        <p class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-widest mt-1">Ticket Validated — Gate Released</p>
+        <span class="inline-flex items-center gap-2 bg-emerald-50/10 text-emerald-600 text-[10px] font-extrabold font-inter uppercase tracking-[0.15em] px-4 py-1.5 rounded-lg mt-3 border border-emerald-500/10 shadow-sm backdrop-blur-md">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            LANE_EXIT_OPEN
         </span>
     </div>
 
     <!-- Receipt card -->
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
+    <div class="bg-white rounded-3xl shadow-[0_20px_50px_rgba(15,23,42,0.04)] p-8 mb-5 ring-1 ring-slate-900/5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-slate-900/[0.02] rounded-full -mr-16 -mt-16 blur-2xl"></div>
 
-        <div class="space-y-3 mb-5">
+        <div class="space-y-4 mb-8 relative z-10">
             <?php
             $rows = [
-                ['Vehicle',    '<i class="fa-solid fa-' . ($trx['vehicle_type'] === 'car' ? 'car' : 'motorcycle') . ' text-sm align-middle"></i> ' . ($trx['vehicle_type'] === 'car' ? 'Car' : 'Motorcycle')],
+                ['Vehicle',    '<i class="fa-solid fa-' . ($trx['vehicle_type'] === 'car' ? 'car' : 'motorcycle') . ' text-sm text-slate-900/30"></i> ' . ($trx['vehicle_type'] === 'car' ? 'Car' : 'Motorcycle')],
                 ['Slot',       $slot_label],
-                ['Ticket Code', '<code class="font-code text-xs bg-slate-100 px-2 py-0.5 rounded">' . htmlspecialchars($code) . '</code>'],
-                ['Check-in',   htmlspecialchars($trx['check_in_time'])],
-                ['Check-out',  $now_fmt],
+                ['Ticket Code', '<code class="font-code text-[11px] font-bold bg-slate-900/5 px-2 py-0.5 rounded-lg text-slate-900">' . htmlspecialchars($code) . '</code>'],
+                ['Check-in',   date('d M H:i', strtotime($trx['check_in_time']))],
+                ['Check-out',  date('H:i')],
                 ['Duration',   $duration_label],
             ];
             foreach ($rows as [$label, $value]):
             ?>
-            <div class="flex justify-between items-start py-2 border-b border-slate-50">
-                <span class="text-slate-400 text-sm font-inter"><?= $label ?></span>
-                <span class="text-slate-800 text-sm font-semibold font-inter text-right max-w-[55%]"><?= $value ?></span>
+            <div class="flex justify-between items-center py-1">
+                <span class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-[0.2em] font-inter"><?= $label ?></span>
+                <span class="text-slate-900 text-[13px] font-bold font-inter text-right"><?= $value ?></span>
             </div>
             <?php endforeach; ?>
         </div>
 
         <!-- Fee highlight -->
-        <div class="bg-slate-900 rounded-xl px-5 py-4 text-center">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-1">Total Parking Fee</p>
-            <p class="font-manrope font-extrabold text-3xl text-white"><?= $fee_fmt ?></p>
+        <div class="bg-slate-900 rounded-2xl px-5 py-6 text-center shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none"></div>
+            <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40 font-inter mb-1.5 relative z-10">Total Parking Fee</p>
+            <p class="font-manrope font-extrabold text-4xl text-white relative z-10 drop-shadow-md tracking-tighter"><?= $fee_fmt ?></p>
         </div>
     </div>
 
     <a href="gate_simulator.php"
-       class="flex items-center justify-center gap-2 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3.5 transition-all">
-        <i class="fa-solid fa-arrow-left text-base"></i>
-        Back to Gate Simulator
+       class="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-slate-900 font-extrabold font-inter text-[11px] uppercase tracking-[0.15em] rounded-2xl py-4.5 transition-all shadow-sm ring-1 ring-slate-900/5 hover:shadow-lg active:scale-[0.98]">
+        <i class="fa-solid fa-arrow-left text-base text-slate-900/40"></i>
+        Return to Simulator
     </a>
 
-    <p class="text-center text-slate-400 text-xs font-inter mt-4">Auto-redirect in <span id="cnt">8</span>s</p>
+    <p class="text-center text-slate-900/40 text-[10px] font-extrabold font-inter mt-6 uppercase tracking-[0.3em]">
+        Redirecting in <span id="cnt" class="text-slate-900">8</span>s
+    </p>
 </div>
 
 <script>
 let s = 8;
 const c = document.getElementById('cnt');
-setInterval(() => { s--; c.textContent = s; if (s <= 0) window.location.href = 'gate_simulator.php'; }, 1000);
+setInterval(() => { s--; if(c) c.textContent = s; if (s <= 0) window.location.href = 'gate_simulator.php'; }, 1000);
 </script>
 </body>
 </html>

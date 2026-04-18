@@ -8,10 +8,19 @@ $logs = $pdo->query("
         e.scan_time        AS waktu_masuk,
         x.scan_time        AS waktu_keluar,
         TIMESTAMPDIFF(MINUTE, e.scan_time, IFNULL(x.scan_time, NOW())) AS durasi_menit,
-        CASE WHEN x.scan_id IS NOT NULL THEN 'keluar' ELSE 'parkir' END AS status_parkir
+        CASE WHEN x.scan_id IS NOT NULL THEN 'keluar' ELSE 'parkir' END AS status_parkir,
+        COALESCE(t.total_fee, 
+            LEAST(
+                pr.first_hour_rate + (GREATEST(0, CEIL(TIMESTAMPDIFF(MINUTE, e.scan_time, NOW()) / 60) - 1) * pr.next_hour_rate),
+                pr.daily_max_rate
+            )
+        ) as total_fee
     FROM plate_scan_log e
     LEFT JOIN plate_scan_log x
         ON x.ticket_code = e.ticket_code AND x.scan_type = 'exit'
+    LEFT JOIN ticket tk ON e.ticket_code = tk.ticket_code
+    LEFT JOIN `transaction` t ON tk.transaction_id = t.transaction_id
+    LEFT JOIN parking_rate pr ON t.rate_id = pr.rate_id
     WHERE e.scan_type = 'entry' AND e.gate_action = 'open'
     ORDER BY e.scan_time DESC
     LIMIT 200
@@ -22,13 +31,13 @@ $page_subtitle = 'Forensic logs for entry/exit gate sensor activity.';
 $page_actions = '
 <div class="flex items-center gap-3">
     <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-900/40 text-sm"></i>
         <input type="text" id="searchLog" placeholder="Search ticket..."
                oninput="filterLog(this.value)"
-               class="bg-slate-100 border-none rounded-full pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
+               class="bg-slate-900/5 border-none rounded-lg pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
     </div>
     <button onclick="document.getElementById(\'modalHapus\').classList.remove(\'hidden\')"
-            class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all">
+            class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-lg transition-all">
         <i class="fa-solid fa-broom text-base"></i>
         Purge History
     </button>
@@ -37,26 +46,27 @@ $page_actions = '
 include '../../includes/header.php';
 ?>
 
-    <div class="p-8">
-        <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
+    <div class="p-6">
+        <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
             <div class="overflow-auto max-h-[72vh] no-scrollbar">
                 <table class="w-full" id="logTable">
                     <thead class="sticky top-0 bg-white z-10">
-                        <tr class="border-b border-slate-100">
-                            <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter w-12">No</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Ticket Code</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Entry Timestamp</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Exit Timestamp</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Duration</th>
-                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Status</th>
+                        <tr class="border-b border-slate-900/10">
+                            <th class="text-left px-6 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter w-12">No</th>
+                            <th class="text-left px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Ticket Code</th>
+                            <th class="text-left px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Entry Timestamp</th>
+                            <th class="text-left px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Exit Timestamp</th>
+                            <th class="text-left px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Duration</th>
+                            <th class="text-left px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Price</th>
+                            <th class="text-center px-4 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-50">
+                    <tbody class="divide-y divide-slate-900/[0.03]">
                         <?php if (empty($logs)): ?>
                         <tr>
-                            <td colspan="6" class="text-center py-16">
-                                <i class="fa-solid fa-clock-rotate-left text-5xl text-slate-200 block mb-3"></i>
-                                <p class="text-slate-400 text-sm font-inter">No sensor activity logs detected.</p>
+                            <td colspan="7" class="text-center py-16">
+                                <i class="fa-solid fa-clock-rotate-left text-5xl text-slate-900/10 block mb-3"></i>
+                                <p class="text-slate-900/40 text-sm font-inter">No sensor activity logs detected.</p>
                             </td>
                         </tr>
                         <?php else: $no = 1; foreach ($logs as $row):
@@ -66,24 +76,24 @@ include '../../includes/header.php';
                             $dur   = $jam > 0 ? "{$jam}h {$sisa}m" : "{$sisa}m";
                             $is_aktif = $row['status_parkir'] === 'parkir';
                         ?>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 text-slate-400 text-sm font-inter"><?= $no++ ?></td>
+                        <tr class="hover:bg-slate-900/[0.02] transition-colors">
+                            <td class="px-6 py-4 text-slate-900/40 text-sm font-inter"><?= $no++ ?></td>
                             <td class="px-4 py-4">
-                                <code class="font-code text-sm text-slate-800 bg-slate-100 px-3 py-1 rounded-lg font-bold transition-all hover:bg-slate-200"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
+                                <code class="font-code text-sm text-slate-900 bg-slate-900/5 px-3 py-1 rounded-lg font-bold transition-all hover:bg-slate-900/10"><?= htmlspecialchars($row['ticket_code'] ?? '-') ?></code>
                             </td>
-                            <td class="px-4 py-4 text-slate-600 text-sm font-inter">
+                            <td class="px-4 py-4 text-slate-900/60 text-sm font-inter">
                                 <div class="flex items-center gap-1.5">
                                     <i class="fa-solid fa-right-to-bracket text-blue-400 text-sm"></i>
-                                    <?= date('H:i:s, d M Y', strtotime($row['waktu_masuk'])) ?>
+                                    <?= date('H:i:s, d M y', strtotime($row['waktu_masuk'])) ?>
                                 </div>
                             </td>
-                            <td class="px-4 py-4 text-slate-600 text-sm font-inter">
+                            <td class="px-4 py-4 text-slate-900/60 text-sm font-inter">
                                 <?php if ($is_aktif): ?>
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-900/40">—</span>
                                 <?php else: ?>
                                     <div class="flex items-center gap-1.5">
                                         <i class="fa-solid fa-right-from-bracket text-emerald-400 text-sm"></i>
-                                        <?= date('H:i:s, d M Y', strtotime($row['waktu_keluar'])) ?>
+                                        <?= date('H:i:s, d M y', strtotime($row['waktu_keluar'])) ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
@@ -91,17 +101,20 @@ include '../../includes/header.php';
                                 <?php if ($is_aktif): ?>
                                     <span class="text-amber-600 text-sm font-bold font-inter"><?= $dur ?></span>
                                 <?php else: ?>
-                                    <span class="text-slate-600 text-sm font-inter"><?= $dur ?></span>
+                                    <span class="text-slate-900/60 text-sm font-inter"><?= $dur ?></span>
                                 <?php endif; ?>
+                            </td>
+                            <td class="px-4 py-4">
+                                <span class="text-slate-900 text-sm font-bold font-inter"><?= $row['total_fee'] ? fmt_idr((float)$row['total_fee']) : 'Rp 0' ?></span>
                             </td>
                             <td class="px-4 py-4 text-center">
                                 <?php if ($is_aktif): ?>
-                                    <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold font-inter px-3 py-1 rounded-full">
+                                    <span class="inline-flex items-center gap-2 bg-amber-500/10 text-amber-700 text-[10px] font-extrabold font-inter uppercase tracking-widest px-3 py-1.5 rounded-lg border border-amber-500/10 shadow-sm">
                                         <span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
                                         Active
                                     </span>
                                 <?php else: ?>
-                                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-bold font-inter px-3 py-1 rounded-full">
+                                    <span class="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-700 text-[10px] font-extrabold font-inter uppercase tracking-widest px-3 py-1.5 rounded-lg border border-emerald-500/10 shadow-sm">
                                         <i class="fa-solid fa-circle-check text-[10px]"></i>
                                         Exited
                                     </span>
@@ -115,50 +128,49 @@ include '../../includes/header.php';
         </div>
     </div>
 
-<!-- MODAL: Hapus Riwayat (Tailwind) -->
 <div id="modalHapus" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+    <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_30px_60px_-12px_rgba(15,23,42,0.15)] w-full max-w-md mx-4">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-900/10">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-trash-can text-red-500 text-lg"></i>
                 <h2 class="font-manrope font-bold text-lg text-slate-900">Danger Zone: Purge History</h2>
             </div>
-            <button onclick="document.getElementById('modalHapus').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+            <button onclick="document.getElementById('modalHapus').classList.add('hidden')" class="text-slate-900/40 hover:text-slate-900">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
 
         <div class="px-6 py-5">
-            <p class="text-slate-500 text-sm font-inter mb-5">Deleting this data is permanent. Revenue data related to these logs may also be affected.</p>
+            <p class="text-slate-900/50 text-sm font-inter mb-5">Deleting this data is permanent. Revenue data related to these logs may also be affected.</p>
 
             <!-- Tabs -->
             <div class="flex gap-2 mb-5">
                 <button id="tabBtnDate" onclick="switchTab('date')"
-                        class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl bg-slate-900 text-white transition-all">
+                        class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-lg bg-slate-900 text-white transition-all">
                     By Date
                 </button>
                 <button id="tabBtnAll" onclick="switchTab('all')"
-                        class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl bg-slate-100 text-red-600 transition-all">
+                        class="flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-lg bg-slate-900/5 text-red-600 transition-all">
                     Wipe All
                 </button>
             </div>
 
             <div id="tabDate">
-                <div id="daftarTanggal" class="max-h-52 overflow-y-auto no-scrollbar rounded-xl bg-slate-50 p-2 mb-4 space-y-1"></div>
+                <div id="daftarTanggal" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-900/[0.03] p-2 mb-4 space-y-1"></div>
                 <button id="btnHapusTanggal" disabled onclick="hapusLog('by_date')"
-                        class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-xl disabled:opacity-40 transition-all">
+                        class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-lg disabled:opacity-40 transition-all">
                     Delete Selected Date
                 </button>
             </div>
 
             <div id="tabAll" class="hidden">
-                <div class="bg-red-50 rounded-xl p-4 mb-4 text-center">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400 text-4xl block mb-2"></i>
+                <div class="bg-red-50/10 rounded-2xl p-4 mb-4 text-center border border-red-500/20">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl block mb-2"></i>
                     <p class="text-red-700 font-bold text-sm font-inter">SYSTEM WIPE WARNING</p>
-                    <p class="text-slate-500 text-xs font-inter mt-1">This action will destroy ALL recorded operational history.</p>
+                    <p class="text-slate-900/50 text-xs font-inter mt-1">This action will destroy ALL recorded operational history.</p>
                 </div>
                 <button onclick="hapusLog('all')"
-                        class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-xl transition-all">
+                        class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-lg transition-all">
                     Execute Total Format
                 </button>
             </div>
@@ -175,8 +187,8 @@ let selectedDate = null;
 function switchTab(tab) {
     document.getElementById('tabDate').classList.toggle('hidden', tab !== 'date');
     document.getElementById('tabAll').classList.toggle('hidden', tab !== 'all');
-    document.getElementById('tabBtnDate').className = `flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl transition-all ${tab==='date' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`;
-    document.getElementById('tabBtnAll').className  = `flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-xl transition-all ${tab==='all'  ? 'bg-red-600 text-white' : 'bg-slate-100 text-red-600'}`;
+    document.getElementById('tabBtnDate').className = `flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-lg transition-all ${tab==='date' ? 'bg-slate-900 text-white' : 'bg-slate-900/5 text-slate-900/60'}`;
+    document.getElementById('tabBtnAll').className  = `flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-lg transition-all ${tab==='all'  ? 'bg-red-600 text-white' : 'bg-slate-900/5 text-red-600'}`;
 }
 
 document.getElementById('modalHapus').addEventListener('click', function(e) {
@@ -191,7 +203,7 @@ observer.observe(document.getElementById('modalHapus'), { attributes: true, attr
 
 function loadDates() {
     const c = document.getElementById('daftarTanggal');
-    c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm animate-pulse">Scanning index...</div>';
+    c.innerHTML = '<div class="text-center py-4 text-slate-900/40 text-sm animate-pulse">Scanning index...</div>';
     selectedDate = null;
     document.getElementById('btnHapusTanggal').disabled = true;
 
@@ -201,14 +213,14 @@ function loadDates() {
             if (!data.length) { c.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Index empty.</div>'; return; }
             let html = '';
             data.forEach(d => {
-                html += `<div class="date-item flex justify-between items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-100 transition-all" data-date="${d.date}" onclick="selectDate(this,'${d.date}')">
+                html += `<div class="date-item flex justify-between items-center px-4 py-3 rounded-lg cursor-pointer hover:bg-slate-900/5 transition-all" data-date="${d.date}" onclick="selectDate(this,'${d.date}')">
                     <div>
-                        <div class="font-inter font-bold text-sm text-slate-800">${d.date}</div>
-                        <div class="text-slate-400 text-xs font-inter mt-0.5">${d.day}</div>
+                        <div class="font-inter font-bold text-sm text-slate-900">${d.date}</div>
+                        <div class="text-slate-900/40 text-xs font-inter mt-0.5">${d.day}</div>
                     </div>
                     <div class="flex gap-2 text-xs font-inter">
-                        <span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">${d.scan_count} In</span>
-                        <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${d.exited} Out</span>
+                        <span class="bg-slate-900/10 text-slate-900/60 px-2 py-0.5 rounded-lg">${d.scan_count} In</span>
+                        <span class="bg-emerald-50/10 text-emerald-700 px-2 py-0.5 rounded-lg">${d.exited} Out</span>
                     </div>
                 </div>`;
             });

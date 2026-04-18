@@ -49,7 +49,7 @@
     </div>
 
     <!-- FAB Button -->
-    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 border border-slate-700 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group ai-breathing">
+    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 border border-slate-700 rounded-full shadow-[0_8px_32px_rgba(15,23,42,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group ai-breathing">
         <i class="fa-solid fa-wand-magic-sparkles text-white text-xl transition-transform group-hover:rotate-12"></i>
     </button>
 </div>
@@ -176,7 +176,7 @@ function removeTyping(id) {
 /* ── Bubble Base ───────────────────────────── */
 .ai-bubble-bot {
     background: #f1f5f9;
-    color: #1e293b;
+    color: #0f172a;
     border-radius: 0 16px 16px 16px;
     padding: 10px 14px;
     font-size: 13px;
@@ -193,7 +193,7 @@ function removeTyping(id) {
     -webkit-overflow-scrolling: touch;
     margin: 8px 0;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 .ai-bubble-user {
     background: #0f172a;
@@ -223,14 +223,10 @@ function removeTyping(id) {
 }
 .ai-bubble-bot h1 { font-size: 15px; }
 .ai-bubble-bot h2 { font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-.ai-bubble-bot h3 { font-size: 13px; color: #334155; }
-.ai-bubble-bot p  { margin: 6px 0; }
-.ai-bubble-bot strong { font-weight: 700; color: #0f172a; }
-.ai-bubble-bot em { font-style: italic; color: #475569; }
-.ai-bubble-bot ul, .ai-bubble-bot ol {
-    padding-left: 16px;
-    margin: 6px 0;
-}
+.ai-bubble-bot h3 { font-size: 13px; color: #0f172a; font-weight: 800; }
+.ai-bubble-bot p { margin-bottom: 0.75rem; }
+.ai-bubble-bot em { font-style: italic; color: rgba(15, 23, 42, 0.6); }
+.ai-bubble-bot ul, .ai-bubble-bot ol { margin-bottom: 1rem; padding-left: 1.25rem; }
 .ai-bubble-bot li { margin: 3px 0; }
 .ai-bubble-bot hr {
     border: none;
@@ -248,7 +244,7 @@ function removeTyping(id) {
 .ai-bubble-bot blockquote {
     border-left: 3px solid #94a3b8;
     padding-left: 10px;
-    color: #64748b;
+    color: rgba(15, 23, 42, 0.6);
     margin: 6px 0;
     font-style: italic;
 }
@@ -261,15 +257,17 @@ function removeTyping(id) {
     table-layout: auto;
 }
 .ai-table-scroll thead {
-    background: #1e293b;
+    background: #0f172a;
     color: #f8fafc;
 }
 .ai-table-scroll thead th {
     padding: 6px 10px;
     text-align: left;
-    font-weight: 600;
-    white-space: nowrap;   /* header never wraps */
-    font-size: 10.5px;
+    font-weight: 800;
+    white-space: nowrap;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 .ai-table-scroll tbody tr {
     border-bottom: 1px solid #e2e8f0;
@@ -281,7 +279,7 @@ function removeTyping(id) {
     padding: 5px 10px;
     color: #334155;
     vertical-align: middle;
-    white-space: nowrap;   /* cells don't wrap → scroll instead */
+    white-space: nowrap;
 }
 .ai-table-scroll tbody tr:nth-child(even) { background: #f8fafc; }
 /* Scrollbar styling for table container */
@@ -289,10 +287,11 @@ function removeTyping(id) {
 .ai-table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 
 /* ── Typing Indicator Dots ─────────────────── */
-.ai-dot {
-    width: 7px; height: 7px;
-    background: #94a3b8;
+.ai-typing-dot {
+    width: 4px; height: 4px;
+    background: #0f172a;
     border-radius: 50%;
+    opacity: 0.3;
     display: inline-block;
     animation: aiDotBounce .9s infinite ease-in-out;
 }
@@ -315,7 +314,7 @@ function removeTyping(id) {
     animation: aiBreathing 3s ease-in-out infinite;
 }
 @keyframes aiBreathing {
-    0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3); transform: scale(1); }
+    0%, 100% { box-shadow: 0 8px 32px rgba(15, 23, 42, 0.3); transform: scale(1); }
     50% { box-shadow: 0 8px 48px rgba(34,197,94,0.25); transform: scale(1.04); }
 }
 </style>

@@ -173,9 +173,9 @@ $B2p = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weigh
 $styles = [
   // brand
   'sBrand'  => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0F172A" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="3" ss:Color="#F59E0B"/></Borders>',
-  'sBrandS' => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#94A3B8"/><Interior ss:Color="#1E293B" ss:Pattern="Solid"/>',
+  'sBrandS' => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#94A3B8"/><Interior ss:Color="#0F172A" ss:Pattern="Solid"/>',
   // section headers
-  'sSecD'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E293B" ss:Pattern="Solid"/>',
+  'sSecD'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0F172A" ss:Pattern="Solid"/>',
   'sSecB'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1D4ED8" ss:Pattern="Solid"/>',
   'sSecG'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#15803D" ss:Pattern="Solid"/>',
   'sSecA'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#B45309" ss:Pattern="Solid"/>',
@@ -251,7 +251,7 @@ $styles = [
   'sRna'    => "<Alignment ss:H=\"Center\" ss:V=\"Center\"/><Font ss:FontName=\"Calibri\" ss:Size=\"11\" ss:Color=\"#475569\"/><Interior ss:Color=\"#F8FAFC\" ss:Pattern=\"Solid\"/>$B",
   // misc
   'sNote'   => '<Alignment ss:H="Left" ss:V="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="9" ss:Italic="1" ss:Color="#713F12"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/>',
-  'sMeta'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#94A3B8"/><Interior ss:Color="#1E293B" ss:Pattern="Solid"/>',
+  'sMeta'   => '<Alignment ss:H="Left" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#94A3B8"/><Interior ss:Color="#0F172A" ss:Pattern="Solid"/>',
   'sFooter' => '<Alignment ss:H="Center" ss:V="Center"/><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#64748B"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>',
 ];
 

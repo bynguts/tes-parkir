@@ -88,7 +88,7 @@ $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 $page_title = 'Reservation Management';
 $page_subtitle = 'Manage pre-booking and priority parking slot allocation.';
 $page_actions = '
-<span class="bg-slate-100 text-slate-600 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-full">
+<span class="bg-slate-900/5 text-slate-900/60 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-lg">
     ' . count($reservations) . ' Active
 </span>';
 
@@ -106,7 +106,7 @@ include '../../includes/header.php';
     background: #0f172a !important;
     border-radius: 20px !important;
     border: 1px solid #334155 !important;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7) !important;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
     padding: 12px !important;
     width: 388px !important;
     box-sizing: border-box !important;
@@ -122,14 +122,14 @@ include '../../includes/header.php';
 
 .flatpickr-day.selected  { background: #3b82f6 !important; border-color: #3b82f6 !important; font-weight: 700; }
 .flatpickr-day.today     { border-color: #3b82f6 !important; }
-.flatpickr-day:hover     { background: #1e293b !important; }
-.flatpickr-day.flatpickr-disabled { color: #334155 !important; pointer-events: none; }
+.flatpickr-day:hover     { background: #0f172a !important; }
+.flatpickr-day.flatpickr-disabled { color: #0f172a !important; pointer-events: none; }
 
 /* Show prev/next month day numbers — subtle so they don't confuse current month */
 .flatpickr-day.nextMonthDay,
-.flatpickr-day.prevMonthDay { color: #475569 !important; font-weight: 400 !important; }
+.flatpickr-day.prevMonthDay { color: #334155 !important; font-weight: 400 !important; }
 .flatpickr-day.nextMonthDay:hover,
-.flatpickr-day.prevMonthDay:hover { background: #1e293b !important; color: #94a3b8 !important; }
+.flatpickr-day.prevMonthDay:hover { background: #0f172a !important; color: #475569 !important; }
 
 /* Global text */
 .flatpickr-months, .flatpickr-weekday, .flatpickr-day {
@@ -170,20 +170,53 @@ include '../../includes/header.php';
 .flatpickr-time .numInputWrapper, .flatpickr-time input { display: none !important; }
 .flatpickr-time-separator { color: #fff !important; font-size: 24px !important; font-weight: 800 !important; }
 
-/* Injected custom selects style via JS */
 .fp-inject {
-    background: #1e293b; color: #fff; font-weight: 700; font-size: 15px;
-    padding: 6px 10px; border-radius: 10px; border: 1px solid #475569;
+    background: #ffffff; color: #0f172a; font-weight: 700; font-size: 15px;
+    padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.1);
     cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
 }
+.flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after { border-bottom-color: #ffffff !important; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover { background: #0f172a !important; border-color: #0f172a !important; color: #ffffff !important; font-weight: 800 !important; }
+.flatpickr-day.prevMonthDay { color: rgba(15, 23, 42, 0.2) !important; font-weight: 400 !important; }
+.flatpickr-day.nextMonthDay { color: rgba(15, 23, 42, 0.2) !important; font-weight: 400 !important; }
+.flatpickr-day.prevMonthDay:hover { background: rgba(15, 23, 42, 0.05) !important; color: rgba(15, 23, 42, 0.4) !important; }
+.flatpickr-day:hover { background: rgba(15, 23, 42, 0.05) !important; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; }
+.flatpickr-current-month input.cur-year { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; font-size: 13px; }
+.flatpickr-weekday { color: rgba(15, 23, 42, 0.3) !important; font-size: 10px !important; font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.1em; }
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { color: #0f172a !important; fill: #0f172a !important; }
+.flatpickr-time {
+    border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+.flatpickr-time input { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; color: #0f172a !important; }
+.flatpickr-time .flatpickr-time-separator { color: rgba(15, 23, 42, 0.4) !important; font-weight: 800 !important; }
+.flatpickr-time .flatpickr-am-pm { font-family: 'Inter', sans-serif !important; font-weight: 800 !important; color: #0f172a !important; text-transform: uppercase; letter-spacing: 0.05em; }
 
-/* Custom bottom bar */
+/* Slot Selection Dropdown Styling */
+.slot-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f172a' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    padding: 6px 32px 6px 10px; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.1);
+}
+.slot-select:focus { ring: 2px solid #0f172a; border-color: transparent; outline: none; }
+
+/* Custom Time Dropdowns for Flatpickr */
+.time-dropdown-container {
+    padding: 14px 8px 4px; border-top: 1px solid rgba(15, 23, 42, 0.1); margin-top: 8px;
+}
+.time-unit-select {
+    background: transparent; border: none; color: rgba(15, 23, 42, 0.6);
+}
+
 .flatpickr-custom-btn {
     display: flex; justify-content: space-between;
-    padding: 14px 8px 4px; border-top: 1px solid #334155; margin-top: 8px;
+    padding: 14px 8px 4px; border-top: 1px solid rgba(15, 23, 42, 0.1); margin-top: 8px;
 }
 .flatpickr-custom-btn button {
-    background: transparent; border: none; color: #64748b;
+    background: transparent; border: none; color: rgba(15, 23, 42, 0.4);
     font-size: 11px; cursor: pointer; font-family: 'Inter', sans-serif;
     font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; transition: color .15s;
 }
@@ -191,16 +224,16 @@ include '../../includes/header.php';
 .flatpickr-custom-btn button.ok   { color: #22c55e; }
 </style>
 
-    <div class="p-8 max-w-[1440px] mx-auto">
+    <div class="p-6">
 
         <?php if ($msg): ?>
-        <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
+        <div class="flex items-center gap-3 bg-emerald-50/10 rounded-2xl px-5 py-4 mb-6 border border-emerald-500/20">
             <i class="fa-solid fa-circle-check text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
-        <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
+        <div class="flex items-center gap-3 bg-red-50/10 rounded-2xl px-5 py-4 mb-6 border border-red-500/20">
             <i class="fa-solid fa-circle-exclamation text-red-600"></i>
             <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
         </div>
@@ -209,9 +242,9 @@ include '../../includes/header.php';
         <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
 
             <!-- CREATE FORM -->
-            <div class="bg-white rounded-2xl shadow-sm self-start" style="overflow: visible;">
-                <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-plus text-slate-400 text-lg"></i>
+            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] self-start" style="overflow: visible;">
+                <div class="px-6 py-5 border-b border-slate-900/10 flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-plus text-slate-900/40 text-lg"></i>
                     <h2 class="font-manrope font-bold text-lg text-slate-900">Create New Reservation</h2>
                 </div>
                 <div class="p-6">
@@ -222,15 +255,15 @@ include '../../includes/header.php';
 
                         <!-- Vehicle type selector -->
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Vehicle Type</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Vehicle Type</label>
                             <div class="grid grid-cols-2 gap-2">
                                 <button type="button" id="btnCar" onclick="setType('car')"
-                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-900 bg-slate-900 text-white transition-all">
+                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 border-slate-900 bg-slate-900 text-white transition-all">
                                     <i class="fa-solid fa-car text-2xl"></i>
                                     <span class="text-xs font-bold font-inter">Car</span>
                                 </button>
                                 <button type="button" id="btnMoto" onclick="setType('motorcycle')"
-                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-400 transition-all">
+                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40 transition-all">
                                     <i class="fa-solid fa-motorcycle text-2xl"></i>
                                     <span class="text-xs font-bold font-inter">Motorcycle</span>
                                 </button>
@@ -238,40 +271,40 @@ include '../../includes/header.php';
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Plate Number <span class="text-red-500">*</span></label>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Plate Number <span class="text-red-500">*</span></label>
                             <input type="text" name="plate_number"
-                                   class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 text-center uppercase tracking-widest transition-all"
+                                   class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 text-center uppercase tracking-widest transition-all"
                                    placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Owner Name</label>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Owner Name</label>
                                 <input type="text" name="owner_name" placeholder="Optional"
-                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Phone Number</label>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Phone Number</label>
                                 <input type="tel" name="owner_phone" placeholder="08xxxx"
-                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Start Time <span class="text-red-500">*</span></label>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Start Time <span class="text-red-500">*</span></label>
                                 <input type="text" name="reserved_from" id="from_dt" required placeholder="Choose time..."
-                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
+                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">End Time <span class="text-red-500">*</span></label>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">End Time <span class="text-red-500">*</span></label>
                                 <input type="text" name="reserved_until" id="until_dt" required placeholder="Choose time..."
-                                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
+                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
                             </div>
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3.5 transition-all flex items-center justify-center gap-2">
+                                class="w-full bg-slate-900 hover:bg-slate-900/90 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-lg py-3.5 transition-all flex items-center justify-center gap-2">
                             <i class="fa-solid fa-calendar-check text-base"></i>
                             Process Reservation
                         </button>
@@ -280,42 +313,42 @@ include '../../includes/header.php';
             </div>
 
             <!-- ACTIVE RESERVATIONS -->
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-days text-slate-400 text-lg"></i>
+            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-900/10 flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-days text-slate-900/40 text-lg"></i>
                     <h2 class="font-manrope font-bold text-lg text-slate-900">Active Reservation Queue</h2>
                 </div>
                 <?php if (empty($reservations)): ?>
                 <div class="flex flex-col items-center justify-center py-24 text-center">
-                    <i class="fa-solid fa-calendar-times text-6xl text-slate-200 block mb-4"></i>
-                    <p class="text-slate-400 text-sm font-inter">No active reservations scheduled.</p>
+                    <i class="fa-solid fa-calendar-times text-6xl text-slate-900/10 block mb-4"></i>
+                    <p class="text-slate-900/40 text-sm font-inter">No active reservations scheduled.</p>
                 </div>
                 <?php else: ?>
                 <div class="overflow-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b border-slate-100">
-                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Validation Code</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Client / Vehicle</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Slot Allocation</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Period</th>
-                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Action</th>
+                            <tr class="border-b border-slate-900/10">
+                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Validation Code</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Client / Vehicle</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Slot Allocation</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Period</th>
+                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-50">
+                        <tbody class="divide-y divide-slate-900/[0.03]">
                             <?php foreach ($reservations as $r): ?>
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-900/[0.02] transition-colors">
                                 <td class="px-6 py-4">
-                                    <code class="font-mono text-sm text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg font-bold"><?= htmlspecialchars($r['reservation_code']) ?></code>
+                                    <code class="font-mono text-sm text-slate-900 bg-slate-900/5 px-3 py-1.5 rounded-lg font-bold"><?= htmlspecialchars($r['reservation_code']) ?></code>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl <?= $r['vehicle_type'] === 'car' ? 'bg-blue-50' : 'bg-emerald-50' ?> flex items-center justify-center">
+                                        <div class="w-10 h-10 rounded-lg <?= $r['vehicle_type'] === 'car' ? 'bg-blue-50/10' : 'bg-emerald-50/10' ?> flex items-center justify-center">
                                             <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"></i>
                                         </div>
                                         <div>
-                                            <div class="font-inter font-bold text-sm text-slate-800"><?= htmlspecialchars($r['plate_number']) ?></div>
-                                            <div class="text-slate-400 text-xs font-inter"><?= htmlspecialchars($r['owner_name']) ?></div>
+                                            <div class="font-inter font-bold text-sm text-slate-900"><?= htmlspecialchars($r['plate_number']) ?></div>
+                                            <div class="text-slate-900/40 text-xs font-inter"><?= htmlspecialchars($r['owner_name']) ?></div>
                                         </div>
                                     </div>
                                 </td>
@@ -323,12 +356,12 @@ include '../../includes/header.php';
                                     <span class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($r['slot_number']) ?></span>
                                 </td>
                                 <td class="px-4 py-4">
-                                    <div class="flex items-center gap-1.5 text-slate-700 text-xs font-inter">
+                                    <div class="flex items-center gap-1.5 text-slate-900/60 text-xs font-inter">
                                         <i class="fa-solid fa-clock text-blue-400 text-[10px]"></i>
                                         <?= date('d M H:i', strtotime($r['reserved_from'])) ?>
                                     </div>
-                                    <div class="flex items-center gap-1.5 text-slate-400 text-xs font-inter mt-0.5">
-                                        <i class="fa-solid fa-arrow-right text-slate-300 text-[10px]"></i>
+                                    <div class="flex items-center gap-1.5 text-slate-900/40 text-xs font-inter mt-0.5">
+                                        <i class="fa-solid fa-arrow-right text-slate-900/20 text-[10px]"></i>
                                         until <?= date('H:i', strtotime($r['reserved_until'])) ?>
                                     </div>
                                 </td>
@@ -337,7 +370,7 @@ include '../../includes/header.php';
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="cancel">
                                         <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
-                                        <button class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold font-inter px-4 py-2 rounded-xl transition-all ml-auto">
+                                        <button class="flex items-center gap-1.5 bg-red-50/10 hover:bg-red-50/20 text-red-600 text-xs font-bold font-inter px-4 py-2 rounded-lg transition-all ml-auto border border-red-500/20">
                                             <i class="fa-solid fa-xmark text-sm"></i>
                                             Cancel
                                         </button>
@@ -360,8 +393,8 @@ function setType(t) {
     document.getElementById('vtype_hidden').value = t;
     var car  = document.getElementById('btnCar');
     var moto = document.getElementById('btnMoto');
-    car.className  = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 transition-all ' + (t === 'car'        ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-400');
-    moto.className = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-xl border-2 transition-all ' + (t === 'motorcycle' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-400');
+    car.className  = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 transition-all ' + (t === 'car'        ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40');
+    moto.className = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 transition-all ' + (t === 'motorcycle' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40');
 }
 
 document.addEventListener('DOMContentLoaded', function () {

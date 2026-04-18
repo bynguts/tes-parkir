@@ -32,16 +32,16 @@ $page_subtitle = 'Financial parameter settings for the parking auto-billing syst
 include '../../includes/header.php';
 ?>
 
-    <div class="p-8 max-w-[1440px] mx-auto">
+    <div class="p-6">
 
         <?php if ($msg): ?>
-        <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-5 py-4 mb-6">
+        <div class="flex items-center gap-3 bg-emerald-50 rounded-2xl px-5 py-4 mb-6">
             <i class="fa-solid fa-circle-check text-emerald-600"></i>
             <p class="text-emerald-700 text-sm font-inter font-medium"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
-        <div class="flex items-center gap-3 bg-red-50 rounded-xl px-5 py-4 mb-6">
+        <div class="flex items-center gap-3 bg-red-50 rounded-2xl px-5 py-4 mb-6">
             <i class="fa-solid fa-circle-exclamation text-red-600"></i>
             <p class="text-red-700 text-sm font-inter font-medium"><?= htmlspecialchars($error) ?></p>
         </div>
@@ -54,14 +54,14 @@ include '../../includes/header.php';
                 $label  = $is_car ? 'Car Class (Type 1)' : 'Motorcycle Class (Type 2)';
                 $color  = $is_car ? 'text-blue-600 bg-blue-50' : 'text-emerald-600 bg-emerald-50';
             ?>
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-100 bg-slate-50">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center <?= $color ?>">
+            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
+                <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-900/10 bg-slate-900/[0.02]">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center <?= $color ?>">
                         <i class="fa-solid <?= $icon ?> text-xl"></i>
                     </div>
                     <div>
                         <h2 class="font-manrope font-bold text-lg text-slate-900"><?= $label ?></h2>
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Rate Configuration</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Rate Configuration</p>
                     </div>
                 </div>
 
@@ -81,31 +81,31 @@ include '../../includes/header.php';
                             foreach ($fields as [$fname, $flabel, $step, $fval]):
                             ?>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2"><?= $flabel ?></label>
-                                <div class="flex items-center gap-2 bg-slate-100 rounded-full px-5 py-2.5 focus-within:ring-2 focus-within:ring-slate-900 transition-all">
-                                    <span class="text-slate-500 text-sm font-bold font-inter">Rp</span>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2"><?= $flabel ?></label>
+                                <div class="flex items-center gap-2 bg-slate-900/5 rounded-xl px-5 py-3 focus-within:ring-2 focus-within:ring-slate-900 transition-all">
+                                    <span class="text-slate-900/40 text-sm font-bold font-inter">Rp</span>
                                     <input type="number" name="<?= $fname ?>"
                                            value="<?= $fval ?>" min="0" step="<?= $step ?>" required
                                            id="<?= $fname . '_' . $r['rate_id'] ?>"
                                            oninput="updatePreview(<?= $r['rate_id'] ?>)"
                                            class="flex-1 bg-transparent border-none text-sm font-bold font-inter text-slate-900 focus:outline-none text-right">
-                                    <span class="text-slate-400 text-xs font-inter">/hour</span>
+                                    <span class="text-slate-900/30 text-xs font-inter tracking-tight">/hour</span>
                                 </div>
                             </div>
                             <?php endforeach; ?>
                         </div>
 
                         <!-- Billing Preview -->
-                        <div class="bg-slate-50 rounded-2xl p-4 mb-5">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i class="fa-solid fa-calculator text-slate-400 text-sm"></i>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter">Billing Engine Simulation</p>
+                        <div class="bg-slate-900/[0.02] rounded-xl p-5 mb-5 border border-slate-900/5">
+                            <div class="flex items-center gap-2 mb-4">
+                                <i class="fa-solid fa-calculator text-slate-900/20 text-sm"></i>
+                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Billing Engine Simulation</p>
                             </div>
-                            <div id="preview_<?= $r['rate_id'] ?>" class="space-y-1.5"></div>
+                            <div id="preview_<?= $r['rate_id'] ?>" class="space-y-2"></div>
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-xl py-3 transition-all flex items-center justify-center gap-2">
+                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-3.5 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10">
                             <i class="fa-solid fa-floppy-disk text-sm"></i>
                             Update Rate Parameters
                         </button>

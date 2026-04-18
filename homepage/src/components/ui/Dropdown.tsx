@@ -30,7 +30,7 @@ export const Dropdown = ({ label, items, icon }: DropdownProps) => {
       >
         {icon && <i className={`${icon} text-base opacity-60`}></i>}
         <span className="font-semibold">{label}</span>
-        <motion.i 
+        <motion.i
           animate={{ rotate: isOpen ? 180 : 0 }}
           className="fa-solid fa-chevron-down text-[10px] opacity-40 ml-1"
         />

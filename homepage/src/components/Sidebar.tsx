@@ -33,7 +33,7 @@ const NavItem = ({ icon, label, isActive, href, alert, isLogout }: SidebarItemPr
         {isActive && (
           <motion.div
             layoutId="active-pill"
-            className="absolute -left-3 w-1.5 h-6 bg-emerald-500 rounded-r-full"
+            className="absolute -left-3 w-1.5 h-6 bg-emerald-50 rounded-r-full"
             initial={{ opacity: 0, x: -5 }}
             animate={{ opacity: 1, x: 0 }}
           />
@@ -137,7 +137,7 @@ export const Sidebar = ({ username, role, currentPath = "index.php" }: SidebarPr
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-inter font-bold shadow-md">
               {username.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-50 border-2 border-white rounded-full shadow-sm" />
           </div>
           <div className="min-w-0">
             <div className="text-sm font-inter font-bold text-slate-800 truncate">{username}</div>

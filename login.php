@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -94,68 +94,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.6s cubic-bezier(.16,1,.3,1) forwards; }
+        h1, h2 { font-family: 'Manrope', sans-serif; font-weight: 800; }
     </style>
 </head>
 
-<body class="min-h-screen bg-[#f2f4f7] flex items-center justify-center px-4">
+<body class="min-h-screen bg-slate-50 flex items-center justify-center px-4 font-inter antialiased">
 
-<!-- Asymmetric background accent -->
-<div class="fixed top-0 right-0 w-[600px] h-[600px] bg-slate-900 rounded-bl-[120px] opacity-[0.04] pointer-events-none"></div>
-<div class="fixed bottom-0 left-0 w-[400px] h-[400px] bg-slate-900 rounded-tr-[80px] opacity-[0.03] pointer-events-none"></div>
+<!-- Asymmetric background accents -->
+<div class="fixed top-0 right-0 w-[600px] h-[600px] bg-slate-900 rounded-full opacity-[0.02] -mr-32 -mt-32 pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 w-[400px] h-[400px] bg-slate-900 rounded-full opacity-[0.015] -ml-20 -mb-20 pointer-events-none"></div>
 
 <div class="w-full max-w-sm fade-up">
 
     <!-- Brand mark -->
     <div class="text-center mb-10">
-        <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-square-p text-white text-xl"></i>
+        <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-slate-900/20 ring-4 ring-white">
+            <i class="fa-solid fa-square-p text-white text-2xl"></i>
         </div>
-        <h1 class="font-manrope font-extrabold text-2xl text-slate-900">SmartParking</h1>
-        <p class="text-slate-400 text-sm mt-1 font-inter">Enterprise Management System</p>
+        <h1 class="font-manrope font-extrabold text-3xl text-slate-900 tracking-tight">SmartParking</h1>
+        <p class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-[0.2em] mt-2 font-inter">Enterprise System</p>
     </div>
 
     <!-- Card -->
-    <div class="bg-white rounded-2xl shadow-sm p-8">
+    <div class="bg-white rounded-3xl ring-1 ring-slate-900/5 shadow-[0_20px_50px_rgba(15,23,42,0.04)] p-10 relative overflow-hidden">
+        <!-- Subtle glass reflection -->
+        <div class="absolute -top-24 -left-24 w-48 h-48 bg-slate-900/[0.02] rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10">
+            <h2 class="font-manrope font-extrabold text-2xl text-slate-900 mb-1">Sign in</h2>
+            <p class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-widest font-inter mb-8">Secure Corporate Access</p>
 
-        <h2 class="font-manrope font-bold text-xl text-slate-900 mb-1">Sign in</h2>
-        <p class="text-slate-400 text-xs font-inter mb-6">Enter your corporate credentials to continue.</p>
+            <?php if ($error): ?>
+            <div class="flex items-start gap-3 bg-red-50/10 border border-red-500/20 rounded-2xl p-4 mb-6">
+                <i class="fa-solid fa-circle-exclamation text-red-500 text-sm mt-1"></i>
+                <p class="text-red-700 text-xs font-bold font-inter leading-snug"><?= htmlspecialchars($error) ?></p>
+            </div>
+            <?php endif; ?>
 
-        <?php if ($error): ?>
-        <div class="flex items-start gap-3 bg-red-50 rounded-xl p-4 mb-5">
-            <i class="fa-solid fa-circle-exclamation text-red-500 text-sm mt-1"></i>
-            <p class="text-red-700 text-sm font-inter leading-snug"><?= htmlspecialchars($error) ?></p>
+            <form method="POST" class="space-y-5">
+                <?= csrf_field() ?>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase tracking-widest text-slate-900/40 font-inter mb-2 ml-1">Username</label>
+                    <input type="text" name="username"
+                           class="w-full bg-slate-50 border border-slate-900/5 rounded-2xl px-5 py-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all font-inter font-semibold placeholder-slate-900/20"
+                           placeholder="admin.id"
+                           value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
+                           autocomplete="username" required autofocus>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase tracking-widest text-slate-900/40 font-inter mb-2 ml-1">Password</label>
+                    <input type="password" name="password"
+                           class="w-full bg-slate-50 border border-slate-900/5 rounded-2xl px-5 py-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all font-inter font-semibold placeholder-slate-900/20"
+                           placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold font-inter rounded-2xl uppercase tracking-[0.15em] text-[11px] py-4.5 transition-all mt-6 shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98]">
+                    Authenticate
+                </button>
+            </form>
         </div>
-        <?php endif; ?>
-
-        <form method="POST" class="space-y-4">
-            <?= csrf_field() ?>
-
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Username</label>
-                <input type="text" name="username"
-                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all font-inter font-medium placeholder-slate-400"
-                       placeholder="your.username"
-                       value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
-                       autocomplete="username" required autofocus>
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-inter mb-2">Password</label>
-                <input type="password" name="password"
-                       class="w-full bg-slate-100 border-none rounded-full px-5 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all font-inter font-medium"
-                       placeholder="••••••••" autocomplete="current-password" required>
-            </div>
-
-            <button type="submit"
-                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter rounded-xl uppercase tracking-widest text-xs py-3.5 transition-all mt-2 shadow-sm">
-                Authenticate Session
-            </button>
-        </form>
     </div>
 
-    <p class="text-center text-slate-400 text-[10px] font-inter mt-6 uppercase tracking-widest">
-        Secure Enterprise Environment © <?= date('Y') ?>
-    </p>
+    <div class="mt-10 flex flex-col items-center gap-4">
+        <div class="h-px w-12 bg-slate-900/10"></div>
+        <p class="text-center text-slate-900/30 text-[10px] font-extrabold font-inter uppercase tracking-[0.3em]">
+            Precision Engineering © <?= date('Y') ?>
+        </p>
+    </div>
 </div>
 
 </body>

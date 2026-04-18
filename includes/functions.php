@@ -43,7 +43,7 @@ function calculate_fee(int $minutes, float $first_rate, float $next_rate, float 
 // ── Ticket code generator ─────────────────────────────────────────────────
 function generate_ticket_code(PDO $pdo): string {
     do {
-        $code = 'TKT-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+        $code = 'TKT-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
         $stmt = $pdo->prepare("SELECT ticket_id FROM ticket WHERE ticket_code = ?");
         $stmt->execute([$code]);
     } while ($stmt->fetch());
@@ -53,7 +53,7 @@ function generate_ticket_code(PDO $pdo): string {
 // ── Reservation code generator ────────────────────────────────────────────
 function generate_reservation_code(PDO $pdo): string {
     do {
-        $code = 'RES-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+        $code = 'RSV-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
         $stmt = $pdo->prepare("SELECT reservation_id FROM reservation WHERE reservation_code = ?");
         $stmt->execute([$code]);
     } while ($stmt->fetch());
@@ -79,22 +79,78 @@ function fmt_idr(float $amount): string {
 // [3NF NOTE] Fungsi ini hanya query slot_type & status dari parking_slot,
 //            tidak membutuhkan JOIN ke floor — tidak ada perubahan diperlukan.
 function get_slot_summary(PDO $pdo): array {
+    // 1. Get base counts from parking_slot
     $stmt = $pdo->query("
         SELECT slot_type,
                SUM(status = 'available') AS avail,
+               SUM(status = 'occupied') AS occupied,
+               SUM(status = 'reserved') AS reserved,
+               SUM(status = 'maintenance') AS maintenance,
                COUNT(*) AS total
         FROM parking_slot
         GROUP BY slot_type
     ");
+    
     $result = [];
     foreach ($stmt->fetchAll() as $row) {
         $result[$row['slot_type']] = [
-            'avail' => (int)$row['avail'],
-            'total' => (int)$row['total'],
+            'avail'       => (int)$row['avail'],
+            'occupied'    => (int)$row['occupied'],
+            'reserved'    => (int)$row['reserved'],
+            'maintenance' => (int)$row['maintenance'],
+            'total'       => (int)$row['total'],
         ];
     }
+
+    // 2. Add upcoming confirmed reservations for today that aren't yet marked 'reserved' in the slot table
+    // This ensures availability decreases and "Reserved" count increases as soon as a reservation is made for today.
+    $upcoming = $pdo->query("
+        SELECT ps.slot_type, COUNT(*) as count
+        FROM reservation r
+        JOIN parking_slot ps ON r.slot_id = ps.slot_id
+        WHERE r.status = 'confirmed' 
+          AND DATE(r.reserved_from) = CURDATE()
+          AND ps.status = 'available'
+        GROUP BY ps.slot_type
+    ")->fetchAll();
+
+    foreach ($upcoming as $up) {
+        if (isset($result[$up['slot_type']])) {
+            $count = (int)$up['count'];
+            $result[$up['slot_type']]['reserved'] += $count;
+            $result[$up['slot_type']]['avail']    -= $count;
+            // Ensure avail doesn't go below 0
+            if ($result[$up['slot_type']]['avail'] < 0) $result[$up['slot_type']]['avail'] = 0;
+        }
+    }
+
     return $result;
 }
+
+/**
+ * Ensures parking_slot statuses are in sync with active transactions and reservations.
+ */
+function sync_slot_statuses(PDO $pdo): void {
+    $pdo->exec("UPDATE parking_slot SET status = 'available' WHERE status IN ('occupied', 'reserved')");
+    $pdo->exec("
+        UPDATE parking_slot s
+        JOIN `transaction` t ON s.slot_id = t.slot_id
+        SET s.status = 'occupied'
+        WHERE t.payment_status = 'unpaid'
+    ");
+    // Sync Reserved (with 15-minute buffer)
+    $pdo->exec("
+        UPDATE parking_slot s
+        JOIN reservation r ON s.slot_id = r.slot_id
+        SET s.status = 'reserved'
+        WHERE r.status = 'confirmed' 
+          AND r.reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE) 
+          AND r.reserved_until >= NOW()
+          AND s.status = 'available'
+    ");
+
+}
+
 
 // ── Role check ────────────────────────────────────────────────────────────
 function require_role(string ...$roles): void {
