@@ -163,11 +163,44 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
         </div>
 
         <div class="flex items-center gap-3 ml-auto">
+            <!-- Theme Toggle -->
+            <button id="theme-toggle" class="w-11 h-11 rounded-2xl bg-white border border-slate-900/10 flex items-center justify-center text-slate-900 hover:bg-slate-900/5 transition-all shadow-sm">
+                <i class="fa-solid fa-moon text-slate-900/60 transition-all duration-300" id="theme-icon"></i>
+            </button>
+
             <!-- Universal Export -->
             <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">
                 <i class="fa-solid fa-file-export text-slate-900/60"></i>
                 <span>Export</span>
             </button>
+
+            <script>
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const root = document.documentElement;
+
+            // Check for saved theme
+            if (localStorage.getItem('theme') === 'dark') {
+                root.setAttribute('data-theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                root.setAttribute('data-theme', 'light');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const isDark = root.getAttribute('data-theme') === 'dark';
+                const newTheme = isDark ? 'light' : 'dark';
+                
+                root.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                if (newTheme === 'dark') {
+                    themeIcon.classList.replace('fa-moon', 'fa-sun');
+                } else {
+                    themeIcon.classList.replace('fa-sun', 'fa-moon');
+                }
+            });
+            </script>
 
             <!-- How to use -->
             <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">

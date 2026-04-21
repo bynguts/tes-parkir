@@ -146,45 +146,21 @@ if (!$on_duty) {
 include 'includes/header.php';
 ?>
 
-<style id="dashboard-custom-theme">
-    /* 1. Base Layout & Background */
-    main.pl-64 {
-        background: radial-gradient(circle at top right, #FFFFFF, #F5F4F6) !important;
-        min-height: 100vh;
-    }
+<link rel="stylesheet" href="assets/css/theme.css" id="dashboard-custom-theme">
 
-    /* 2. Standardized Card System */
-    .bento-card {
-        background-color: #FFFFFF !important;
-        border: 2px solid rgba(202, 199, 209, 0.2) !important;
-        box-shadow: 0 15px 35px -5px rgba(53, 49, 52, 0.04) !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        border-radius: 1.5rem !important; /* 24px */
-    }
-
-    .bento-card:hover {
-        transform: none !important;
-        box-shadow: 0 0 70px -10px rgba(53, 49, 52, 0.25) !important;
-        border-color: #353134 !important;
-    }
-
-    /* 3. Dark Mode Card (Revenue) */
-    .bento-card-dark {
-        background: #0f172a !important;
-        border: none !important;
-    }
-    .bg-slate-900\/5.rounded-2xl {
-        background-color: rgba(202, 199, 209, 0.15) !important;
-        border: 1px solid #CAC7D1 !important;
-    }
-</style>
+<script>
+    // Force dark mode specifically for dashboard auditing
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
+</script>
 
     <div class="px-10 py-10">
 
         <!-- Alerts -->
         <?php if ($car_pct <= 20 && $car_total > 0): ?>
-        <div class="flex items-center gap-4 bg-white border border-red-100 rounded-2xl px-6 py-4 mb-6 shadow-sm">
-            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0">
+        <div class="flex items-center gap-4 bento-card px-6 py-4 mb-6 relative overflow-hidden">
+            <div class="absolute inset-0 status-badge-over opacity-10 pointer-events-none"></div>
+            <div class="w-10 h-10 rounded-full status-badge-over flex items-center justify-center shrink-0 shadow-sm relative z-10">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <div>
@@ -194,8 +170,9 @@ include 'includes/header.php';
         </div>
         <?php endif; ?>
         <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
-        <div class="flex items-center gap-4 bg-white border border-amber-100 rounded-2xl px-6 py-4 mb-6 shadow-sm">
-            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+        <div class="flex items-center gap-4 bento-card px-6 py-4 mb-6 relative overflow-hidden">
+            <div class="absolute inset-0 status-badge-maintenance opacity-10 pointer-events-none"></div>
+            <div class="w-10 h-10 rounded-full status-badge-maintenance flex items-center justify-center shrink-0 shadow-sm relative z-10">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <div>
@@ -234,9 +211,9 @@ include 'includes/header.php';
 
                     <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
                         <div class="flex items-center justify-between text-[10px] font-extrabold tracking-widest uppercase">
-                            <span class="text-secondary">Reserved: <span class="text-primary"><?= $res_count ?></span></span>
-                            <span class="text-emerald-600/70 px-4 border-x border-slate-100">Free: <span class="text-emerald-600"><?= $car_avail + $moto_avail ?></span></span>
-                            <span class="text-amber-600/70">Maint: <span class="text-amber-600"><?= $mnt_count ?></span></span>
+                            <span class="status-text-reserved opacity-70">Reserved: <span class="status-text-reserved opacity-100"><?= $res_count ?></span></span>
+                            <span class="status-text-available opacity-70 px-4 border-x border-slate-100">Free: <span class="status-text-available opacity-100"><?= $car_avail + $moto_avail ?></span></span>
+                            <span class="status-text-maintenance opacity-70">Maint: <span class="status-text-maintenance opacity-100"><?= $mnt_count ?></span></span>
                         </div>
                     </div>
                 </div>
@@ -261,7 +238,7 @@ include 'includes/header.php';
                             <?= fmt_idr((float)$today_rev) ?>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-1 <?= $is_rev_up_7d ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100' ?> text-[10px] font-bold rounded-lg border flex items-center gap-1.5 shadow-sm">
+                            <span class="px-2.5 py-1 <?= $is_rev_up_7d ? 'status-badge-available' : 'status-badge-over' ?> text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid <?= $is_rev_up_7d ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
                                 <?= number_format(abs($rev_pct_7d), 1) ?>%
                             </span>
@@ -347,8 +324,8 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50/50 text-emerald-600 border border-emerald-100 rounded-full">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <div class="flex items-center gap-1.5 px-3 py-1 status-badge-available rounded-full">
+                            <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
                             <span class="text-[9px] font-black uppercase tracking-wider">Live</span>
                         </div>
                     </div>
@@ -371,9 +348,9 @@ include 'includes/header.php';
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">
                                 <span id="cctv-label" class="text-[8px] font-mono text-white/80 bg-slate-900/40 px-1.5 py-0.5 rounded leading-none uppercase tracking-widest">CAM_01_ENTRY</span>
-                                <div class="flex items-center gap-1.5 bg-red-500/80 px-2 py-0.5 rounded shadow-lg">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                    <span class="text-[8px] font-black text-white uppercase tracking-widest">REC</span>
+                                <div class="flex items-center gap-1.5 status-badge-over px-2 py-0.5 rounded shadow-lg">
+                                    <span class="w-1.5 h-1.5 rounded-full status-dot-over animate-pulse"></span>
+                                    <span class="text-[8px] font-black uppercase tracking-widest">REC</span>
                                 </div>
                             </div>
                         </div>
@@ -536,11 +513,11 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest border bg-slate-50 text-slate-400 border-slate-200">Reserved</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-reserved">Reserved</span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest border bg-emerald-50 text-emerald-600 border-emerald-100">Parked</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-parked">Parked</span>
                                             <?php else: ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest border bg-slate-900 text-white border-slate-900">Departed</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-departed">Departed</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -569,8 +546,8 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg shadow-sm">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg shadow-sm">
+                            <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
                             <span class="text-[11px] font-extrabold uppercase tracking-wider"><?= count($active_staff) ?> Active</span>
                         </div>
                     </div>
@@ -589,7 +566,7 @@ include 'includes/header.php';
                                         <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold font-manrope">
                                             <?= strtoupper(substr($st['full_name'], 0, 1)) ?>
                                         </div>
-                                        <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-50 border-2 border-white rounded-full"></div>
+                                        <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 status-dot-available border-2 border-white rounded-full"></div>
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-[11px] font-extrabold text-slate-900 truncate"><?= htmlspecialchars($st['full_name']) ?></p>
@@ -625,7 +602,7 @@ include 'includes/header.php';
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full <?= $duration_trend <= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100' ?> border text-[11px] font-bold">
+                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full <?= $duration_trend <= 0 ? 'status-badge-available' : 'status-badge-over' ?> text-[11px] font-bold">
                                 <i class="fa-solid <?= $duration_trend <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up' ?>"></i>
                                 <?= abs(round($duration_trend, 1)) ?>%
                             </div>
@@ -869,6 +846,13 @@ function initStatusDoughnut() {
         };
     };
 
+    const rootStyles = getComputedStyle(document.documentElement);
+    const c_parked = rootStyles.getPropertyValue('--status-parked-bg').trim() || '#0f172a';
+    const c_reserved = rootStyles.getPropertyValue('--status-reserved-bg').trim() || '#CAC7D1';
+    const c_free = rootStyles.getPropertyValue('--status-available-bg').trim() || '#10b981';
+    const c_maint = rootStyles.getPropertyValue('--status-maintenance-bg').trim() || '#f59e0b';
+    const c_surface = rootStyles.getPropertyValue('--surface').trim() || '#ffffff';
+
     const ctx = document.getElementById('activeStatusDoughnut').getContext('2d');
     new Chart(ctx, {
         type: 'doughnut',
@@ -876,16 +860,11 @@ function initStatusDoughnut() {
             labels: ['Parked', 'Reserved', 'Free', 'Maint'],
             datasets: [{
                 data: [<?= $active ?>, <?= $res_count ?>, <?= $car_avail + $moto_avail ?>, <?= $mnt_count ?>],
-                backgroundColor: [
-                    '#0f172a', // Today Revenue Black
-                    '#CAC7D1', // Theme Accent
-                    '#10b981', // Emerald-500
-                    '#f59e0b'  // Amber-500
-                ],
+                backgroundColor: [c_parked, c_reserved, c_free, c_maint],
                 borderWidth: 2,
-                borderColor: '#ffffff',
+                borderColor: c_surface,
                 hoverBorderWidth: 2,
-                hoverBorderColor: '#ffffff',
+                hoverBorderColor: c_surface,
                 borderRadius: 10,
                 spacing: 0,
                 hoverOffset: 6
@@ -962,12 +941,14 @@ function initStatusDoughnut() {
                 ctx.font = '600 22px Inter';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#353134';
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#353134';
+                ctx.fillStyle = textColor;
                 ctx.fillText(pctText, centerX, centerY - 6);
 
                 // Draw Label
                 ctx.font = '400 11px Inter';
-                ctx.fillStyle = '#CAC7D1'; 
+                const labelColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#CAC7D1';
+                ctx.fillStyle = labelColor; 
                 ctx.fillText('Occupied', centerX, centerY + 12);
                 
                 ctx.restore();

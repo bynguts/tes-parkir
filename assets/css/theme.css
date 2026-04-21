@@ -1,0 +1,111 @@
+/* 1. Theme Variables (Indigo Night) */
+:root {
+    --brand: #6366f1;
+    --brand-subtle: #eef2ff;
+    --sidebar: #1e1b4b;
+    --surface: #ffffff;
+    --surface-alt: #f0f0ff;
+    --bg-page: #f8f7ff;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: rgba(99, 102, 241, 0.15);
+    --hover-border: #6366f1;
+    --shadow-color: rgba(99, 102, 241, 0.08);
+
+    /* Universal Status Colors (Constant in all themes) */
+    --status-available-bg: #064e3b;
+    --status-available-text: #34d399;
+    
+    --status-parked-bg: #1e3a8a;
+    --status-parked-text: #60a5fa;
+    
+    --status-reserved-bg: #4c1d95;
+    --status-reserved-text: #a78bfa;
+    
+    --status-maintenance-bg: #78350f;
+    --status-maintenance-text: #fbbf24;
+    
+    --status-departed-bg: #0f172a;
+    --status-departed-text: #94a3b8;
+    
+    --status-over-bg: #450a0a;
+    --status-over-text: #f87171;
+}
+
+[data-theme="dark"] {
+    --brand: #818cf8;
+    --brand-subtle: #1e1b4b;
+    --sidebar: #13112a;
+    --surface: #1a1830;
+    --surface-alt: #221f3d;
+    --bg-page: #0f0e1a;
+    --text-primary: #ffffff;
+    --text-secondary: #a5a6f6;
+    --border-color: rgba(255, 255, 255, 0.05);
+    --hover-border: #818cf8;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/* 2. Base Layout & Background */
+main.pl-64 {
+    background-color: var(--bg-page) !important;
+    background-image: none !important; /* Remove radial gradient for solid brand look */
+    min-height: 100vh;
+    transition: background-color 0.5s ease;
+    color: var(--text-primary);
+}
+
+/* 3. Standardized Card System */
+.bento-card {
+    background-color: var(--surface) !important;
+    border: 2px solid var(--border-color) !important;
+    box-shadow: 0 15px 35px -5px var(--shadow-color) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 1.5rem !important; /* 24px */
+    color: var(--text-primary);
+}
+
+.bento-card:hover {
+    transform: none !important;
+    box-shadow: 0 0 70px -10px var(--shadow-color) !important;
+    border-color: var(--hover-border) !important;
+}
+
+/* Override Tailwind text classes to use variables */
+.text-slate-900 { color: var(--text-primary) !important; }
+.text-slate-400, .text-slate-500 { color: var(--text-secondary) !important; }
+
+/* Apply alt surface to nested items like personnel cards */
+.bg-slate-900\/5 {
+    background-color: var(--surface-alt) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Progress Bars */
+.progress-track { background-color: var(--surface-alt); border: 1px solid var(--border-color); }
+.progress-fill { background-color: var(--brand); transition: width 1s ease-out; }
+
+/* 4. Universal Status Classes */
+.status-badge-available { background-color: transparent !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-text) !important; }
+.status-dot-available { background-color: var(--status-available-text) !important; }
+.status-text-available { color: var(--status-available-text) !important; }
+
+.status-badge-parked { background-color: transparent !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-text) !important; }
+.status-dot-parked { background-color: var(--status-parked-text) !important; }
+.status-text-parked { color: var(--status-parked-text) !important; }
+
+.status-badge-reserved { background-color: transparent !important; color: var(--status-reserved-text) !important; border: 1px solid var(--status-reserved-text) !important; }
+.status-dot-reserved { background-color: var(--status-reserved-text) !important; }
+.status-text-reserved { color: var(--status-reserved-text) !important; }
+
+.status-badge-maintenance { background-color: transparent !important; color: var(--status-maintenance-text) !important; border: 1px solid var(--status-maintenance-text) !important; }
+.status-dot-maintenance { background-color: var(--status-maintenance-text) !important; }
+.status-text-maintenance { color: var(--status-maintenance-text) !important; }
+
+.status-badge-departed { background-color: transparent !important; color: var(--status-departed-text) !important; border: 1px solid var(--status-departed-text) !important; }
+.status-dot-departed { background-color: var(--status-departed-text) !important; }
+.status-text-departed { color: var(--status-departed-text) !important; }
+
+.status-badge-over { background-color: transparent !important; color: var(--status-over-text) !important; border: 1px solid var(--status-over-text) !important; }
+.status-dot-over { background-color: var(--status-over-text) !important; }
+.status-text-over { color: var(--status-over-text) !important; }
