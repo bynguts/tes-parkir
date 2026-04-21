@@ -123,9 +123,49 @@ main.pl-64 {
     opacity: 0.7;
 }
 
+
 .icon-container {
     background-color: var(--surface-alt);
     color: var(--brand);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 10px var(--shadow-color);
 }
+
+/* 6. Custom Components */
+.toggle-container {
+    background-color: var(--surface-alt) !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 0.25rem !important;
+    border-radius: 0.75rem !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+.toggle-btn {
+    flex: 1 !important;
+    padding: 0.45rem 0 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+}
+
+.toggle-btn.active {
+    background-color: var(--brand) !important;
+    color: var(--surface) !important;
+    box-shadow: 0 2px 8px var(--shadow-color) !important;
+}
+
+.status-dot-ring {
+    border: 2px solid var(--surface-alt) !important;
+}
+
+.toggle-btn:not(.active):hover {
+    color: var(--text-primary) !important;
+    background-color: var(--border-color);
+}
+

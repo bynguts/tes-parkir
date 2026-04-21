@@ -325,20 +325,18 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-3 py-1 status-badge-available rounded-full">
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg">
                             <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
-                            <span class="text-[9px] font-black uppercase tracking-wider">Live</span>
+                            <span class="text-[11px] font-inter font-medium">Live</span>
                         </div>
                     </div>
 
                     <!-- Camera Selection -->
-                    <div class="flex gap-2 mb-4 bg-slate-900/5 p-1 rounded-xl border border-slate-900/5">
-                        <button onclick="switchCam('entry')" id="btn-cam-entry" 
-                                class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm">
+                    <div class="toggle-container mb-4">
+                        <button onclick="switchCam('entry')" id="btn-cam-entry" class="toggle-btn active">
                             Entry
                         </button>
-                        <button onclick="switchCam('exit')" id="btn-cam-exit" 
-                                class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all">
+                        <button onclick="switchCam('exit')" id="btn-cam-exit" class="toggle-btn">
                             Exit
                         </button>
                     </div>
@@ -349,9 +347,9 @@ include 'includes/header.php';
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">
                                 <span id="cctv-label" class="text-[8px] font-mono text-white/80 bg-slate-900/40 px-1.5 py-0.5 rounded leading-none uppercase tracking-widest">CAM_01_ENTRY</span>
-                                <div class="flex items-center gap-1.5 status-badge-over px-2 py-0.5 rounded shadow-lg">
+                                <div class="flex items-center gap-1.5 status-badge-over px-2.5 py-1 rounded-lg">
                                     <span class="w-1.5 h-1.5 rounded-full status-dot-over animate-pulse"></span>
-                                    <span class="text-[8px] font-black uppercase tracking-widest">REC</span>
+                                    <span class="text-[11px] font-inter font-medium">REC</span>
                                 </div>
                             </div>
                         </div>
@@ -379,21 +377,15 @@ include 'includes/header.php';
                     <div class="mt-auto pt-6 border-t border-slate-900/5 flex items-center justify-between">
                         <div class="flex gap-8">
                             <div class="flex items-center gap-3 group/legend cursor-default">
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
+                                <div class="w-2.5 h-2.5 rounded-full status-dot-parked"></div>
                                 <span class="text-xs font-inter text-tertiary">Cars</span>
                             </div>
                             <div class="flex items-center gap-3 group/legend cursor-default">
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                                <span class="text-xs font-inter text-tertiary">Motos</span>
+                                <div class="w-2.5 h-2.5 rounded-full status-dot-available"></div>
+                                <span class="text-xs font-inter text-tertiary">Motorcycles</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50/50 rounded-lg border border-slate-100/50 group/monitor">
-                            <div class="relative w-2 h-2">
-                                <span class="absolute inset-0 bg-slate-400 rounded-full animate-ping opacity-25"></span>
-                                <span class="relative block w-2 h-2 bg-slate-500 rounded-full"></span>
-                            </div>
-                            <p class="text-xs font-inter text-secondary">Live Monitor</p>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -462,12 +454,12 @@ include 'includes/header.php';
                         <table class="w-full font-inter border-collapse table-fixed activity-table">
                             <thead>
                                 <tr class="border-b border-slate-900/5">
-                                    <th class="py-2 w-[10%] text-left">Vehicle</th>
-                                    <th class="py-2 w-[15%] text-center">Plate</th>
-                                    <th class="py-2 w-[15%] text-center">In</th>
-                                    <th class="py-2 w-[15%] text-center">Out</th>
-                                    <th class="py-2 w-[15%] text-center">Price</th>
-                                    <th class="py-2 w-[10%] text-right">Status</th>
+                                    <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">In</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Out</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Price</th>
+                                    <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-900/5">
@@ -482,10 +474,10 @@ include 'includes/header.php';
                                     </td>
                                     <td class="py-2 text-center align-middle">
                                         <div class="flex flex-col items-center justify-center">
-                                            <span class="text-sm font-semibold text-primary leading-none mb-1">
+                                            <span class="text-sm font-medium text-primary leading-none mb-1">
                                                 <?= $log['plate_number'] ?: '------' ?>
                                             </span>
-                                            <span class="text-xs font-code text-tertiary leading-none">
+                                            <span class="text-[10px] font-inter text-tertiary leading-none">
                                                 <?= $log['code'] ?: 'PENDING' ?>
                                             </span>
                                         </div>
@@ -547,7 +539,7 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg shadow-sm">
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg">
                             <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
                             <span class="text-xs font-semibold"><?= count($active_staff) ?> Active</span>
                         </div>
@@ -567,7 +559,7 @@ include 'includes/header.php';
                                         <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold font-manrope">
                                             <?= strtoupper(substr($st['full_name'], 0, 1)) ?>
                                         </div>
-                                        <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 status-dot-available border-2 border-white rounded-full"></div>
+                                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 status-dot-available status-dot-ring rounded-full translate-x-[-0.5px] translate-y-[-0.5px]"></div>
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-primary truncate"><?= htmlspecialchars($st['full_name']) ?></p>
@@ -684,35 +676,7 @@ document.getElementById('attendanceForm').addEventListener('submit', function(e)
 </script>
 <?php endif; ?>
 
-<script>
-function switchCam(type) {
-    const img = document.getElementById('cctv-img');
-    const label = document.getElementById('cctv-label');
-    const btnEntry = document.getElementById('btn-cam-entry');
-    const btnExit = document.getElementById('btn-cam-exit');
-    
-    img.style.opacity = '0';
-    
-    setTimeout(() => {
-        if (type === 'entry') {
-            img.src = 'assets/img/entry_gate.jpg';
-            label.textContent = 'CAM_01_ENTRY';
-            btnEntry.classList.add('bg-slate-900', 'text-white');
-            btnEntry.classList.remove('text-slate-900/40');
-            btnExit.classList.remove('bg-slate-900', 'text-white');
-            btnExit.classList.add('text-slate-900/40');
-        } else {
-            img.src = 'assets/img/exit_gate.jpg';
-            label.textContent = 'CAM_02_EXIT';
-            btnExit.classList.add('bg-slate-900', 'text-white');
-            btnExit.classList.remove('text-slate-900/40');
-            btnEntry.classList.remove('bg-slate-900', 'text-white');
-            btnEntry.classList.add('text-slate-900/40');
-        }
-        img.style.opacity = '0.6';
-    }, 300);
-}
-</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -720,7 +684,21 @@ let trafficChart = null;
 
 function initChart(data) {
     const ctx = document.getElementById('trafficChart').getContext('2d');
+    const rootStyles = getComputedStyle(document.documentElement);
+    const textColor = rootStyles.getPropertyValue('--text-primary').trim();
+    const secondaryColor = rootStyles.getPropertyValue('--text-secondary').trim();
+    const borderColor = rootStyles.getPropertyValue('--border-color').trim();
+    const surfaceColor = rootStyles.getPropertyValue('--surface').trim();
+    const brandColor = rootStyles.getPropertyValue('--brand').trim();
+    const carColor = rootStyles.getPropertyValue('--status-parked-text').trim();
+    const motoColor = rootStyles.getPropertyValue('--status-available-text').trim();
     
+    // Override dataset colors for universal look
+    if (data.datasets && data.datasets.length >= 2) {
+        data.datasets[0].backgroundColor = carColor;
+        data.datasets[1].backgroundColor = motoColor;
+    }
+
     // Cleanup if exists
     if (trafficChart) {
         trafficChart.destroy();
@@ -739,7 +717,9 @@ function initChart(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#0f172a',
+                    backgroundColor: brandColor,
+                    titleColor: surfaceColor,
+                    bodyColor: surfaceColor,
                     titleFont: { family: 'Inter', weight: 'bold', size: 12 },
                     bodyFont: { family: 'Inter', size: 11 },
                     padding: 12,
@@ -752,21 +732,31 @@ function initChart(data) {
                 x: {
                     stacked: true,
                     grid: { display: false },
+                    border: {
+                        display: true,
+                        color: secondaryColor,
+                        width: 1
+                    },
                     ticks: {
                         font: { family: 'Inter', size: 10, weight: '500' },
-                        color: '#353134'
+                        color: secondaryColor
                     }
                 },
                 y: {
                     stacked: true,
                     beginAtZero: true,
                     max: 60,
-                    grid: { color: '#CAC7D1' },
+                    grid: { 
+                        color: borderColor,
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    },
                     border: { display: false },
                     ticks: {
                         font: { family: 'Inter', size: 10 },
-                        color: '#353134',
-                        stepSize: 10
+                        color: secondaryColor,
+                        stepSize: 10,
+                        padding: 8
                     }
                 }
             },
@@ -777,6 +767,17 @@ function initChart(data) {
         }
     });
 }
+
+// Global listener for theme toggle to refresh charts
+document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    // Small timeout to allow CSS variables to update in the DOM
+    setTimeout(() => {
+        if (trafficChart) {
+            updateChart('today'); // Re-fetch or just re-init if possible
+        }
+        initStatusDoughnut();
+    }, 50);
+});
 
 function updateChart(range) {
     // Fetch Data
@@ -803,27 +804,20 @@ function switchCam(type) {
     const btnEntry = document.getElementById('btn-cam-entry');
     const btnExit = document.getElementById('btn-cam-exit');
 
-    // Fade out effect
     img.style.opacity = '0.3';
 
     setTimeout(() => {
         if (type === 'entry') {
             img.src = 'assets/img/entry_gate.jpg';
             label.textContent = 'CAM_01_ENTRY';
-            
-            // Active Styles
-            btnEntry.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
-            btnExit.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
+            btnEntry.classList.add('active');
+            btnExit.classList.remove('active');
         } else {
             img.src = 'assets/img/exit_gate.jpg';
             label.textContent = 'CAM_02_EXIT';
-            
-            // Active Styles
-            btnExit.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
-            btnEntry.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
+            btnExit.classList.add('active');
+            btnEntry.classList.remove('active');
         }
-        
-        // Fade in effect
         img.style.opacity = '0.6';
     }, 200);
 }
