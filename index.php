@@ -156,22 +156,23 @@ include 'includes/header.php';
     /* 2. Standardized Card System */
     .bento-card {
         background-color: #FFFFFF !important;
-        border: 1px solid rgba(202, 199, 209, 0.4) !important;
-        box-shadow: 0 10px 30px -5px rgba(53, 49, 52, 0.03) !important;
+        border: 2px solid rgba(202, 199, 209, 0.2) !important;
+        box-shadow: 0 15px 35px -5px rgba(53, 49, 52, 0.04) !important;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         border-radius: 1.5rem !important; /* 24px */
     }
 
     .bento-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px -10px rgba(53, 49, 52, 0.08) !important;
-        border-color: #CAC7D1 !important;
+        transform: none !important;
+        box-shadow: 0 0 70px -10px rgba(53, 49, 52, 0.25) !important;
+        border-color: #353134 !important;
     }
 
     /* 3. Dark Mode Card (Revenue) */
     .bento-card-dark {
         background: #0f172a !important;
         border: none !important;
+    }
     .bg-slate-900\/5.rounded-2xl {
         background-color: rgba(202, 199, 209, 0.15) !important;
         border: 1px solid #CAC7D1 !important;
@@ -208,7 +209,7 @@ include 'includes/header.php';
         <div class="grid grid-cols-12 gap-6 items-stretch">
 
             <div class="col-span-12 lg:col-span-4">
-                <div class="bento-card p-4 h-[200px] flex flex-col justify-between relative overflow-hidden">
+                <div class="bento-card p-4 h-full flex flex-col justify-between relative overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -242,40 +243,40 @@ include 'includes/header.php';
             </div>
 
             <div class="col-span-12 lg:col-span-4">
-                <div class="bento-card bento-card-dark p-4 h-[200px] flex flex-col justify-between relative overflow-hidden group">
-                    <!-- Premium Background Accent -->
-                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all"></div>
+                <div class="bento-card p-4 h-full flex flex-col justify-between relative overflow-hidden group">
+                    <!-- Premium Background Accent (Subtle) -->
+                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-slate-900/5 rounded-full blur-3xl group-hover:bg-slate-900/10 transition-all"></div>
                     
                     <div class="flex items-center gap-4 relative z-10 mb-4">
-                        <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white group-hover:text-slate-900 transition-all shrink-0">
-                            <i class="fa-solid fa-wallet text-white/30 text-lg group-hover:text-inherit transition-all"></i>
+                        <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-wallet text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="card-title text-white leading-tight">Today Revenue</h3>
+                            <h3 class="card-title leading-tight">Today Revenue</h3>
                         </div>
                     </div>
 
                     <div class="relative z-10">
-                        <div class="font-manrope font-semibold text-3xl text-white leading-none tracking-tight mb-3">
+                        <div class="font-manrope font-semibold text-4xl text-slate-900 leading-none tracking-tight mb-3">
                             <?= fmt_idr((float)$today_rev) ?>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-1 <?= $is_rev_up_7d ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20' : 'bg-red-500/20 text-red-400 border-red-500/20' ?> text-[10px] font-bold rounded-lg border flex items-center gap-1.5 shadow-sm backdrop-blur-md">
+                            <span class="px-2.5 py-1 <?= $is_rev_up_7d ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100' ?> text-[10px] font-bold rounded-lg border flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid <?= $is_rev_up_7d ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
                                 <?= number_format(abs($rev_pct_7d), 1) ?>%
                             </span>
-                            <span class="text-white/40 text-[10px] font-medium uppercase tracking-wider">Vs 7d Average</span>
+                            <span class="text-slate-900/40 text-[10px] font-medium uppercase tracking-wider">Vs 7d Average</span>
                         </div>
                     </div>
 
-                    <div class="relative z-10 flex items-center justify-between border-t border-white/5 pt-4">
-                        <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Projected</span>
-                        <span class="text-[10px] font-extrabold text-white"><?= fmt_idr((float)$today_rev * 1.2) ?></span>
+                    <div class="relative z-10 flex items-center justify-between border-t border-slate-900/5 pt-4">
+                        <span class="text-[10px] font-extrabold text-slate-900/40 uppercase tracking-widest">Projected</span>
+                        <span class="text-[10px] font-extrabold text-slate-900"><?= fmt_idr((float)$today_rev * 1.2) ?></span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6 h-[200px]">
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
                 <!-- Car Slots -->
                 <div class="bento-card p-4 flex items-center gap-4 flex-1">
                     <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -559,7 +560,7 @@ include 'includes/header.php';
                     $display_staff = $active_staff;
                 ?>
                 <div class="bento-card p-4 flex flex-col h-[230px] transition-all duration-300">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-user-shield text-lg"></i>
@@ -574,7 +575,7 @@ include 'includes/header.php';
                         </div>
                     </div>
 
-                    <div class="space-y-3 flex-grow overflow-y-auto custom-scrollbar pr-1">
+                    <div class="space-y-2 flex-grow overflow-y-auto custom-scrollbar pr-1">
                         <?php if (empty($display_staff)): ?>
                             <div class="flex flex-col items-center justify-center py-10 text-slate-400">
                                 <i class="fa-solid fa-user-slash text-3xl mb-3 opacity-20"></i>
@@ -582,13 +583,13 @@ include 'includes/header.php';
                             </div>
                         <?php else: ?>
                             <?php foreach ($display_staff as $st): ?>
-                            <div class="flex items-center justify-between p-3 bg-slate-900/5 rounded-2xl border border-slate-900/5 group transition-all">
+                            <div class="flex items-center justify-between p-2.5 bg-slate-900/5 rounded-2xl border border-slate-900/5 group transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="relative">
-                                        <div class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white text-xs font-bold font-manrope">
+                                        <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold font-manrope">
                                             <?= strtoupper(substr($st['full_name'], 0, 1)) ?>
                                         </div>
-                                        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-50 border-2 border-white rounded-full"></div>
+                                        <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-50 border-2 border-white rounded-full"></div>
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-[11px] font-extrabold text-slate-900 truncate"><?= htmlspecialchars($st['full_name']) ?></p>
