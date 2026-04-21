@@ -147,113 +147,31 @@ include 'includes/header.php';
 ?>
 
 <style id="dashboard-custom-theme">
-    /* 1. Dashboard Content Background */
+    /* 1. Base Layout & Background */
     main.pl-64 {
-        background-color: #F5F4F6 !important;
+        background: radial-gradient(circle at top right, #FFFFFF, #F5F4F6) !important;
+        min-height: 100vh;
     }
 
-    /* 2. Top Bar Sticky Header Override */
-    header.sticky {
-        background-color: rgba(245, 244, 246, 0.9) !important;
-        border-bottom: 1px solid #CAC7D1 !important;
-        backdrop-filter: blur(12px);
-    }
-
-    /* 3. Card Elements Styling */
-    .bg-white {
+    /* 2. Standardized Card System */
+    .bento-card {
         background-color: #FFFFFF !important;
-        border: 1px solid #CAC7D1 !important;
-        box-shadow: 0 4px 20px -2px rgba(53, 49, 52, 0.05) !important;
+        border: 1px solid rgba(202, 199, 209, 0.4) !important;
+        box-shadow: 0 10px 30px -5px rgba(53, 49, 52, 0.03) !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 1.5rem !important; /* 24px */
     }
 
-    /* Remove the default Tailwind ring shadows that might clash */
-    .ring-1, .ring-slate-900\/5 {
-        box-shadow: none !important;
-        border: 1px solid #CAC7D1 !important;
-    }
-
-    /* 4. Text and Primary Dark Overrides */
-    .text-slate-900, 
-    .font-manrope.text-slate-900,
-    .font-inter.text-slate-900 {
-        color: #353134 !important;
-    }
-
-    /* Muted and Secondary Text */
-    .text-slate-900\/40, 
-    .text-slate-900\/30, 
-    .text-slate-900\/60,
-    .text-slate-900\/70 {
-        color: #353134 !important;
-        opacity: 0.55 !important;
-    }
-
-    /* 5. Icon Backgrounds and Accents */
-    .bg-slate-900\/5, 
-    .bg-slate-100 {
-        background-color: rgba(202, 199, 209, 0.25) !important;
+    .bento-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px -10px rgba(53, 49, 52, 0.08) !important;
         border-color: #CAC7D1 !important;
     }
 
-    /* Icon Colors */
-    .fa-car-side, .fa-car, .fa-motorcycle, .fa-fire, .fa-clock, .fa-user-shield, .fa-magnifying-glass, .fa-file-export, .fa-circle-question, .fa-bell {
-        color: #353134 !important;
-    }
-
-    /* 6. Special Handling for Dark Today Revenue Card */
-    /* Using the exact black (#0f172a) from Today Revenue for highlighted components */
-    .bg-slate-900 {
-        background-color: #0f172a !important;
+    /* 3. Dark Mode Card (Revenue) */
+    .bento-card-dark {
+        background: #0f172a !important;
         border: none !important;
-    }
-    
-    .bg-slate-900 .text-white {
-        color: #FFFFFF !important;
-        opacity: 1 !important;
-    }
-    
-    .bg-slate-900 .text-white\/30, 
-    .bg-slate-900 .text-white\/40 {
-        color: #FFFFFF !important;
-        opacity: 0.4 !important;
-    }
-
-    /* 7. Progress Bars and Charts */
-    .bg-slate-900\/5.rounded-full {
-        background-color: #CAC7D1 !important;
-    }
-    .h-full.bg-slate-900 {
-        background-color: #353134 !important; /* Progress fill uses the theme's charcoal */
-    }
-
-    /* 8. Table Overrides */
-    thead tr.text-slate-900\/40 {
-        border-bottom-color: #CAC7D1 !important;
-        color: #353134 !important;
-        opacity: 0.7 !important;
-    }
-    
-    tbody tr.group:hover {
-        background-color: rgba(202, 199, 209, 0.1) !important;
-    }
-    
-    tbody.divide-y > tr {
-        border-top-color: #CAC7D1 !important;
-    }
-
-    /* 9. Top Bar Input & Buttons */
-    header.sticky input {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CAC7D1 !important;
-        color: #353134 !important;
-    }
-    header.sticky button {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CAC7D1 !important;
-        color: #353134 !important;
-    }
-    
-    /* 10. List Items Hover */
     .bg-slate-900\/5.rounded-2xl {
         background-color: rgba(202, 199, 209, 0.15) !important;
         border: 1px solid #CAC7D1 !important;
@@ -264,20 +182,24 @@ include 'includes/header.php';
 
         <!-- Alerts -->
         <?php if ($car_pct <= 20 && $car_total > 0): ?>
-        <div class="flex items-center gap-4 bg-red-50/10 border border-red-500/20 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+        <div class="flex items-center gap-4 bg-white border border-red-100 rounded-2xl px-6 py-4 mb-6 shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
             <div>
-                <p class="font-inter font-semibold text-red-700 text-sm">Car Capacity Almost Full!</p>
-                <p class="font-inter text-red-500 text-xs">Only <?= $car_avail ?> of <?= $car_total ?> slots available.</p>
+                <p class="font-manrope font-extrabold text-slate-900 text-sm">Car Capacity Warning</p>
+                <p class="font-inter text-slate-400 text-xs">Only <?= $car_avail ?> of <?= $car_total ?> slots remaining.</p>
             </div>
         </div>
         <?php endif; ?>
         <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
-        <div class="flex items-center gap-4 bg-amber-50/10 border border-amber-500/20 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+        <div class="flex items-center gap-4 bg-white border border-amber-100 rounded-2xl px-6 py-4 mb-6 shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
             <div>
-                <p class="font-inter font-semibold text-amber-700 text-sm">Motorcycle Capacity Almost Full!</p>
-                <p class="font-inter text-amber-500 text-xs">Only <?= $moto_avail ?> of <?= $moto_total ?> slots available.</p>
+                <p class="font-manrope font-extrabold text-slate-900 text-sm">Motorcycle Capacity Warning</p>
+                <p class="font-inter text-slate-400 text-xs">Only <?= $moto_avail ?> of <?= $moto_total ?> slots remaining.</p>
             </div>
         </div>
         <?php endif; ?>
@@ -285,16 +207,15 @@ include 'includes/header.php';
         <!-- Bento Grid -->
         <div class="grid grid-cols-12 gap-6 items-stretch">
 
-            <!-- 1: Active Vehicles (Condensed for Symmetry) -->
             <div class="col-span-12 lg:col-span-4">
-                <div class="bg-white rounded-3xl p-4 ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 group h-[190px] flex flex-col justify-between shadow-[0_8px_30px_rgba(15,23,42,0.04)] relative overflow-hidden">
+                <div class="bento-card p-4 h-[200px] flex flex-col justify-between relative overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                                <i class="fa-solid fa-car-side text-slate-900/30 text-lg group-hover:text-white transition-all"></i>
+                            <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-car-side text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-manrope font-semibold text-base text-slate-900 leading-tight">Active Vehicles</h3>
+                                <h3 class="card-title leading-tight">Active Vehicles</h3>
                             </div>
                         </div>
                     </div>
@@ -312,26 +233,25 @@ include 'includes/header.php';
 
                     <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
                         <div class="flex items-center justify-between text-[10px] font-extrabold tracking-widest uppercase">
-                            <span class="text-slate-900/40">Reserved: <span class="text-slate-900"><?= $res_count ?></span></span>
+                            <span class="text-secondary">Reserved: <span class="text-primary"><?= $res_count ?></span></span>
                             <span class="text-emerald-600/70 px-4 border-x border-slate-100">Free: <span class="text-emerald-600"><?= $car_avail + $moto_avail ?></span></span>
-                            <span class="text-amber-600/70">Maintenance: <span class="text-amber-600"><?= $mnt_count ?></span></span>
+                            <span class="text-amber-600/70">Maint: <span class="text-amber-600"><?= $mnt_count ?></span></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2: Total Revenue (Condensed for Symmetry) -->
             <div class="col-span-12 lg:col-span-4">
-                <div class="bg-slate-900 rounded-3xl p-4 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 shadow-xl shadow-slate-900/20 h-[190px] flex flex-col justify-between">
+                <div class="bento-card bento-card-dark p-4 h-[200px] flex flex-col justify-between relative overflow-hidden group">
                     <!-- Premium Background Accent -->
-                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-violet-600/10 rounded-full blur-3xl group-hover:bg-violet-600/20 transition-all"></div>
+                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all"></div>
                     
                     <div class="flex items-center gap-4 relative z-10 mb-4">
                         <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white group-hover:text-slate-900 transition-all shrink-0">
                             <i class="fa-solid fa-wallet text-white/30 text-lg group-hover:text-inherit transition-all"></i>
                         </div>
                         <div>
-                            <h3 class="font-manrope font-extrabold text-lg text-white leading-tight">Today Revenue</h3>
+                            <h3 class="card-title text-white leading-tight">Today Revenue</h3>
                         </div>
                     </div>
 
@@ -355,35 +275,34 @@ include 'includes/header.php';
                 </div>
             </div>
 
-            <!-- 3: Right Column Stack (Car & Moto) -->
-            <div class="col-span-12 lg:col-span-4 flex flex-col gap-4 h-[190px]">
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6 h-[200px]">
                 <!-- Car Slots -->
-                <div class="bg-white rounded-3xl p-4 flex items-center gap-4 transition-all duration-300 ring-1 ring-slate-900/5 group hover:-translate-y-1 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex-1">
-                    <div class="w-12 h-12 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                        <i class="fa-solid fa-car text-slate-900/30 text-lg group-hover:text-white transition-all"></i>
+                <div class="bento-card p-4 flex items-center gap-4 flex-1">
+                    <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-car text-lg"></i>
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
-                        <span class="text-2xl font-manrope font-semibold text-slate-900 leading-none mb-1"><?= $car_avail ?></span>
-                        <span class="text-[11px] font-medium text-slate-900/40 font-inter truncate">Car Slots Available</span>
+                        <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $car_avail ?></span>
+                        <span class="text-[11px] font-medium text-secondary truncate">Car Slots Available</span>
                         <div class="mt-3">
-                            <div class="w-full h-2 bg-slate-900/5 rounded-full overflow-hidden">
-                                <div class="h-full bg-slate-900 rounded-full" style="width: <?= $car_pct ?>%"></div>
+                            <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                                <div class="h-full progress-fill rounded-full" style="width: <?= $car_pct ?>%"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Motorcycle Slots -->
-                <div class="bg-white rounded-3xl p-4 flex items-center gap-4 transition-all duration-300 ring-1 ring-slate-900/5 group hover:-translate-y-1 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex-1">
-                    <div class="w-12 h-12 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                        <i class="fa-solid fa-motorcycle text-slate-900/30 text-lg group-hover:text-white transition-all"></i>
+                <div class="bento-card p-4 flex items-center gap-4 flex-1">
+                    <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-motorcycle text-lg"></i>
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
-                        <span class="text-2xl font-manrope font-semibold text-slate-900 leading-none mb-1"><?= $moto_avail ?></span>
-                        <span class="text-[11px] font-medium text-slate-900/40 font-inter truncate">Motorcycle Slots Available</span>
+                        <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $moto_avail ?></span>
+                        <span class="text-[11px] font-medium text-secondary truncate">Motorcycle Slots Available</span>
                         <div class="mt-3">
-                            <div class="w-full h-2 bg-slate-900/5 rounded-full overflow-hidden">
-                                <div class="h-full bg-slate-900 rounded-full" style="width: <?= $moto_pct ?>%"></div>
+                            <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                                <div class="h-full progress-fill rounded-full" style="width: <?= $moto_pct ?>%"></div>
                             </div>
                         </div>
                     </div>
@@ -391,40 +310,40 @@ include 'includes/header.php';
             </div>
 
             <!-- Analytics Column -->
-            <div class="col-span-12 lg:col-span-4 flex flex-col gap-3 h-full">
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6 h-full">
                 <!-- 1: Peak Time Analytics -->
-                <div class="bg-white p-4 rounded-3xl ring-1 ring-slate-900/5 flex flex-col flex-1 transition-all duration-300 group hover:-translate-y-1 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                <div class="bento-card p-4 flex flex-col flex-1">
                     <div class="flex items-center gap-4 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                            <i class="fa-solid fa-fire text-slate-900/40 text-lg group-hover:text-white transition-all"></i>
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-fire text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">Today Peak Trend</h3>
+                            <h3 class="card-title leading-tight">Today Peak Trend</h3>
                         </div>
                     </div>
 
                     <div class="flex-grow flex flex-col justify-center">
                         <div class="flex items-end gap-3 mb-4">
-                            <span class="font-manrope font-semibold text-2xl text-slate-900 leading-none tracking-tight"><?= $peak_time ?></span>
-                            <span class="text-slate-900/40 text-[11px] font-medium tracking-wider pb-0.5">Peak Time</span>
+                            <span class="font-manrope font-semibold text-2xl text-primary leading-none tracking-tight"><?= $peak_time ?></span>
+                            <span class="text-secondary text-[11px] font-medium tracking-wider pb-0.5">Peak Time</span>
                         </div>
 
                         <div class="flex items-center gap-6 mt-2 pt-4 border-t border-slate-900/5 text-[10px] font-extrabold tracking-widest uppercase">
-                            <span class="text-slate-900/40 whitespace-nowrap">Max Volume: <span class="text-slate-900"><?= $peak_vol ?> Vehicles</span></span>
-                            <span class="text-slate-900/40 whitespace-nowrap border-l border-slate-100 pl-6">Dominant: <span class="text-slate-900"><?= $peak_dom ?></span></span>
+                            <span class="text-secondary whitespace-nowrap">Max Volume: <span class="text-primary"><?= $peak_vol ?> Vehicles</span></span>
+                            <span class="text-secondary whitespace-nowrap border-l border-slate-100 pl-6">Dominant: <span class="text-primary"><?= $peak_dom ?></span></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2: IoT System Health Monitor (Swapped to Row 2) -->
-                <div class="bg-white rounded-3xl p-4 ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex flex-col flex-1 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/40">
+                <div class="bento-card p-4 flex flex-col flex-1">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                                <i class="fa-solid fa-video text-slate-900/40 text-lg group-hover:text-white transition-all"></i>
+                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-video text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">CCTV Check</h3>
+                                <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50/50 text-emerald-600 border border-emerald-100 rounded-full">
@@ -464,13 +383,13 @@ include 'includes/header.php';
 
             <!-- 2: Parking Intensity Chart (Swapped to Row 2) -->
             <div class="col-span-12 lg:col-span-8">
-                <div class="bg-white rounded-3xl p-4 ring-1 ring-slate-200/50 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex flex-col h-full overflow-hidden group/card transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/40">
+                <div class="bento-card p-4 flex flex-col h-full overflow-hidden transition-all duration-300">
                     <div class="flex items-center gap-4 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                            <i class="fa-solid fa-chart-line text-slate-900/40 text-lg group-hover:text-white transition-all"></i>
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-chart-line text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">Parking Intensity</h3>
+                            <h3 class="card-title leading-tight">Parking Intensity</h3>
                         </div>
                     </div>
  
@@ -541,17 +460,17 @@ include 'includes/header.php';
                     LIMIT 7
                 ")->fetchAll();
             ?>
-            <div class="col-span-12 lg:col-span-8 bg-white rounded-3xl p-4 ring-1 ring-slate-200/50 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex flex-col self-start transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/40">
+            <div class="col-span-12 lg:col-span-8 bento-card p-4 flex flex-col self-start transition-all duration-300">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                            <i class="fa-solid fa-clock-rotate-left text-slate-900/40 text-lg group-hover:text-white transition-all"></i>
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">Recent Activity Log</h3>
+                            <h3 class="card-title leading-tight">Recent Activity Log</h3>
                         </div>
                     </div>
-                    <a href="modules/operations/scan_log.php" class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors font-inter">VIEW ALL</a>
+                    <a href="modules/operations/scan_log.php" class="text-[11px] font-extrabold uppercase tracking-widest text-secondary hover:text-primary transition-colors font-inter">VIEW ALL</a>
                 </div>
 
                 <?php if (empty($recent_logs)): ?>
@@ -561,9 +480,9 @@ include 'includes/header.php';
                     </div>
                 <?php else: ?>
                     <div class="overflow-x-auto">
-                        <table class="w-full font-inter border-collapse table-fixed">
+                        <table class="w-full font-inter border-collapse table-fixed activity-table">
                             <thead>
-                                <tr class="text-[11px] font-extrabold uppercase tracking-widest text-slate-900/40 border-b border-slate-900/5">
+                                <tr class="border-b border-slate-900/5">
                                     <th class="py-2 w-[10%] text-left">Vehicle</th>
                                     <th class="py-2 w-[15%] text-center">Plate</th>
                                     <th class="py-2 w-[15%] text-center">In</th>
@@ -602,7 +521,7 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
                                             <span class="text-[11px] text-slate-900 font-extrabold uppercase tracking-widest">
-                                                <?= $log['exit_time'] ? date('H:i', strtotime($log['exit_time'])) : '--:--' ?>
+                                                <?= ($log['log_type'] === 'reservation') ? '--:--' : ($log['exit_time'] ? date('H:i', strtotime($log['exit_time'])) : '--:--') ?>
                                             </span>
                                         </div>
                                     </td>
@@ -639,14 +558,14 @@ include 'includes/header.php';
                     $active_staff = get_active_attendance($pdo);
                     $display_staff = $active_staff;
                 ?>
-                <div class="bg-white rounded-3xl p-4 ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] flex flex-col h-[230px] transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/40">
+                <div class="bento-card p-4 flex flex-col h-[230px] transition-all duration-300">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 group-hover:bg-slate-50 transition-all">
-                                <i class="fa-solid fa-user-shield text-slate-900/40 text-lg"></i>
+                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-user-shield text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">Active Duty</h3>
+                                <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg shadow-sm">
@@ -688,20 +607,20 @@ include 'includes/header.php';
                 </div>
 
                 <!-- 2: Average Duration Card (Swapped to Row 3) -->
-                <div class="bg-white p-4 rounded-3xl ring-1 ring-slate-900/5 flex flex-col flex-1 transition-all duration-300 group hover:-translate-y-1 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                <div class="bento-card p-4 flex flex-col flex-1 transition-all duration-300">
                     <div class="flex items-center gap-4 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center border border-slate-900/10 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
-                            <i class="fa-solid fa-clock text-slate-900/40 text-lg group-hover:text-white transition-all"></i>
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center">
+                            <i class="fa-solid fa-clock text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-manrope font-extrabold text-lg text-slate-900 leading-tight">Average Duration</h3>
+                            <h3 class="card-title leading-tight">Average Duration</h3>
                         </div>
                     </div>
 
                     <div class="flex-grow flex flex-col justify-center">
                         <div class="flex items-end gap-3 mb-4">
-                            <span class="font-manrope font-semibold text-4xl text-slate-900 leading-none tracking-tight"><?= $avg_duration_str ?></span>
-                            <span class="text-slate-900/40 text-[11px] font-medium tracking-wider pb-1">Per Session</span>
+                            <span class="font-manrope font-semibold text-4xl text-primary leading-none tracking-tight"><?= $avg_duration_str ?></span>
+                            <span class="text-secondary text-[11px] font-medium tracking-wider pb-1 uppercase">Per Session</span>
                         </div>
 
                         <div class="flex items-center gap-3">
@@ -709,11 +628,9 @@ include 'includes/header.php';
                                 <i class="fa-solid <?= $duration_trend <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up' ?>"></i>
                                 <?= abs(round($duration_trend, 1)) ?>%
                             </div>
-                            <p class="text-[11px] font-medium text-slate-900/40 uppercase tracking-wider">Vs Last Month</p>
+                            <p class="text-[11px] font-medium text-secondary uppercase tracking-wider">Vs Last Month</p>
                         </div>
                     </div>
-
-
                 </div>
             </div>
 
@@ -721,33 +638,38 @@ include 'includes/header.php';
 
     </div>
 
-<!-- Attendance Modal (Tailwind) -->
+<!-- Attendance Modal -->
 <?php if (!$on_duty): ?>
-<div id="attendanceOverlay" class="fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4">
-        <div class="text-center mb-6">
-            <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-user-check text-white text-2xl"></i>
+<div id="attendanceOverlay" class="fixed inset-0 z-[100] backdrop-blur-xl bg-slate-900/20 flex items-center justify-center">
+    <div class="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-sm mx-4 border border-slate-100 animate-in fade-in zoom-in duration-300">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/20">
+                <i class="fa-solid fa-user-check text-white text-3xl"></i>
             </div>
-            <h2 class="font-manrope font-extrabold text-xl text-slate-900 mb-1">Attendance Confirmation</h2>
-            <p class="text-slate-400 text-sm font-inter">Hello <span class="font-bold text-slate-700"><?= strtoupper($role) ?></span>, select your personnel identity.</p>
+            <h2 class="font-manrope font-extrabold text-2xl text-slate-900 mb-2">Duty Check-in</h2>
+            <p class="text-slate-400 text-sm font-inter">Identify yourself to access the console.</p>
         </div>
 
-        <form id="attendanceForm" class="space-y-4">
+        <form id="attendanceForm" class="space-y-6">
             <?= csrf_field() ?>
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Select Personnel Name</label>
-                <select name="staff_id" required
-                        class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all font-inter font-semibold">
-                    <option value="">-- Select Your Name --</option>
-                    <?php foreach ($staff_list as $s): ?>
-                        <option value="<?= $s['operator_id'] ?>"><?= htmlspecialchars($s['full_name']) ?> (<?= $s['shift'] ?>)</option>
-                    <?php endforeach; ?>
-                </select>
+                <label class="block text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-900/30 font-inter mb-3">Personnel Profile</label>
+                <div class="relative">
+                    <select name="staff_id" required
+                            class="w-full bg-slate-50 border-2 border-transparent rounded-xl px-5 py-4 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white transition-all font-inter font-bold appearance-none">
+                        <option value="">Select Profile</option>
+                        <?php foreach ($staff_list as $s): ?>
+                            <option value="<?= $s['operator_id'] ?>"><?= htmlspecialchars($s['full_name']) ?> — <?= $s['shift'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
             </div>
             <button type="submit" id="attendBtn"
-                    class="w-full bg-slate-900 hover:bg-slate-900/90 text-white font-bold font-inter rounded-lg uppercase tracking-widest text-xs py-3.5 transition-all">
-                Start Duty →
+                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black font-inter rounded-xl uppercase tracking-widest text-[11px] py-5 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                Establish Connection
             </button>
         </form>
 
@@ -911,15 +833,15 @@ function switchCam(type) {
             label.textContent = 'CAM_01_ENTRY';
             
             // Active Styles
-            btnEntry.className = 'flex-1 py-2 text-[11px] font-extrabold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
-            btnExit.className = 'flex-1 py-2 text-[11px] font-extrabold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
+            btnEntry.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
+            btnExit.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
         } else {
             img.src = 'assets/img/exit_gate.jpg';
             label.textContent = 'CAM_02_EXIT';
             
             // Active Styles
-            btnExit.className = 'flex-1 py-2 text-[11px] font-extrabold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
-            btnEntry.className = 'flex-1 py-2 text-[11px] font-extrabold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
+            btnExit.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg bg-slate-900 text-white transition-all shadow-sm';
+            btnEntry.className = 'flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg text-slate-900/40 hover:text-slate-900 transition-all';
         }
         
         // Fade in effect

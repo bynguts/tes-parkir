@@ -19,12 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $owner      = trim($_POST['owner_name'] ?? 'Guest');
         $phone      = trim($_POST['owner_phone'] ?? '');
         $date_from  = $_POST['reserved_from'] ?? '';
-        $date_until = $_POST['reserved_until'] ?? '';
+        // Set a default indefinite end time (e.g., 30 days buffer) to avoid constraining the user's return
+        $date_until = $date_from ? date('Y-m-d H:i:s', strtotime($date_from . ' + 30 days')) : '';
 
-        if (!$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from || !$date_until) {
+        if (!$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from) {
             $error = 'All fields are required.';
-        } elseif (strtotime($date_until) <= strtotime($date_from)) {
-            $error = 'End time must be after start time.';
         } elseif (strtotime($date_from) < time() - 300) {
             $error = 'Start time cannot be in the past.';
         } else {
@@ -290,15 +289,10 @@ include '../../includes/header.php';
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Start Time <span class="text-red-500">*</span></label>
-                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Choose time..."
-                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">End Time <span class="text-red-500">*</span></label>
-                                <input type="text" name="reserved_until" id="until_dt" required placeholder="Choose time..."
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Reservation Start Time <span class="text-red-500">*</span></label>
+                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Choose date & time..."
                                        class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
                             </div>
                         </div>
@@ -358,11 +352,7 @@ include '../../includes/header.php';
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-1.5 text-slate-900/60 text-xs font-inter">
                                         <i class="fa-solid fa-clock text-blue-400 text-[10px]"></i>
-                                        <?= date('d M H:i', strtotime($r['reserved_from'])) ?>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 text-slate-900/40 text-xs font-inter mt-0.5">
-                                        <i class="fa-solid fa-arrow-right text-slate-900/20 text-[10px]"></i>
-                                        until <?= date('H:i', strtotime($r['reserved_until'])) ?>
+                                        Starts: <?= date('d M Y, H:i', strtotime($r['reserved_from'])) ?>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
@@ -511,26 +501,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var minDate = new Date("<?= date('Y-m-d\TH:i', strtotime('+5 minutes')) ?>");
 
-    var untilPicker = flatpickr("#until_dt", {
-        enableTime: true, dateFormat: "Y-m-d\\TH:i",
-        minDate: minDate, time_24hr: true, minuteIncrement: 15,
-        onReady: onReady
-    });
-
     var fromPicker = flatpickr("#from_dt", {
         enableTime: true, dateFormat: "Y-m-d\\TH:i",
         minDate: minDate, time_24hr: true, minuteIncrement: 15,
-        onReady: onReady,
-        onChange: function(selectedDates) {
-            if (selectedDates[0]) {
-                var m = new Date(selectedDates[0]);
-                m.setHours(m.getHours() + 1);
-                untilPicker.set('minDate', m);
-                if (!untilPicker.selectedDates.length || untilPicker.selectedDates[0] < m) {
-                    untilPicker.setDate(m);
-                }
-            }
-        }
+        onReady: onReady
     });
 });
 </script>
