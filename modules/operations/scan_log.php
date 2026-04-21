@@ -5,10 +5,10 @@ require_once '../../config/connection.php';
 $logs = $pdo->query("
     SELECT
         e.ticket_code,
-        e.scan_time        AS waktu_masuk,
-        x.scan_time        AS waktu_keluar,
-        TIMESTAMPDIFF(MINUTE, e.scan_time, IFNULL(x.scan_time, NOW())) AS durasi_menit,
-        CASE WHEN x.scan_id IS NOT NULL THEN 'keluar' ELSE 'parkir' END AS status_parkir,
+        e.scan_time        AS time_in,
+        x.scan_time        AS time_out,
+        TIMESTAMPDIFF(MINUTE, e.scan_time, IFNULL(x.scan_time, NOW())) AS duration_mins,
+        CASE WHEN x.scan_id IS NOT NULL THEN 'exited' ELSE 'parked' END AS parking_status,
         COALESCE(t.total_fee, 
             LEAST(
                 pr.first_hour_rate + (GREATEST(0, CEIL(TIMESTAMPDIFF(MINUTE, e.scan_time, NOW()) / 60) - 1) * pr.next_hour_rate),
@@ -36,7 +36,7 @@ $page_actions = '
                oninput="filterLog(this.value)"
                class="bg-slate-900/5 border-none rounded-lg pl-10 pr-5 py-2.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all w-56">
     </div>
-    <button onclick="document.getElementById(\'modalHapus\').classList.remove(\'hidden\')"
+    <button onclick="document.getElementById(\'modalDelete\').classList.remove(\'hidden\')"
             class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold font-inter uppercase tracking-widest px-5 py-2.5 rounded-lg transition-all">
         <i class="fa-solid fa-broom text-base"></i>
         Purge History
@@ -70,11 +70,11 @@ include '../../includes/header.php';
                             </td>
                         </tr>
                         <?php else: $no = 1; foreach ($logs as $row):
-                            $menit = (int)$row['durasi_menit'];
-                            $jam   = floor($menit / 60);
-                            $sisa  = $menit % 60;
-                            $dur   = $jam > 0 ? "{$jam}h {$sisa}m" : "{$sisa}m";
-                            $is_aktif = $row['status_parkir'] === 'parkir';
+                            $minutes = (int)$row['duration_mins'];
+                            $hours   = floor($minutes / 60);
+                            $rem_min = $minutes % 60;
+                            $dur   = $hours > 0 ? "{$hours}h {$rem_min}m" : "{$rem_min}m";
+                            $is_active = $row['parking_status'] === 'parked';
                         ?>
                         <tr class="hover:bg-slate-900/[0.02] transition-colors">
                             <td class="px-6 py-4 text-slate-900/40 text-sm font-inter"><?= $no++ ?></td>
@@ -84,21 +84,21 @@ include '../../includes/header.php';
                             <td class="px-4 py-4 text-slate-900/60 text-sm font-inter">
                                 <div class="flex items-center gap-1.5">
                                     <i class="fa-solid fa-right-to-bracket text-blue-400 text-sm"></i>
-                                    <?= date('H:i:s, d M y', strtotime($row['waktu_masuk'])) ?>
+                                    <?= date('H:i:s, d M y', strtotime($row['time_in'])) ?>
                                 </div>
                             </td>
                             <td class="px-4 py-4 text-slate-900/60 text-sm font-inter">
-                                <?php if ($is_aktif): ?>
+                                <?php if ($is_active): ?>
                                     <span class="text-slate-900/40">—</span>
                                 <?php else: ?>
                                     <div class="flex items-center gap-1.5">
                                         <i class="fa-solid fa-right-from-bracket text-emerald-400 text-sm"></i>
-                                        <?= date('H:i:s, d M y', strtotime($row['waktu_keluar'])) ?>
+                                        <?= date('H:i:s, d M y', strtotime($row['time_out'])) ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-4">
-                                <?php if ($is_aktif): ?>
+                                <?php if ($is_active): ?>
                                     <span class="text-amber-600 text-sm font-bold font-inter"><?= $dur ?></span>
                                 <?php else: ?>
                                     <span class="text-slate-900/60 text-sm font-inter"><?= $dur ?></span>
@@ -108,7 +108,7 @@ include '../../includes/header.php';
                                 <span class="text-slate-900 text-sm font-bold font-inter"><?= $row['total_fee'] ? fmt_idr((float)$row['total_fee']) : 'Rp 0' ?></span>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <?php if ($is_aktif): ?>
+                                <?php if ($is_active): ?>
                                     <span class="inline-flex items-center gap-2 bg-amber-500/10 text-amber-700 text-[10px] font-extrabold font-inter uppercase tracking-widest px-3 py-1.5 rounded-lg border border-amber-500/10 shadow-sm">
                                         <span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
                                         Active
@@ -128,14 +128,14 @@ include '../../includes/header.php';
         </div>
     </div>
 
-<div id="modalHapus" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
+<div id="modalDelete" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
     <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_30px_60px_-12px_rgba(15,23,42,0.15)] w-full max-w-md mx-4">
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-900/10">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-trash-can text-red-500 text-lg"></i>
                 <h2 class="font-manrope font-bold text-lg text-slate-900">Danger Zone: Purge History</h2>
             </div>
-            <button onclick="document.getElementById('modalHapus').classList.add('hidden')" class="text-slate-900/40 hover:text-slate-900">
+            <button onclick="document.getElementById('modalDelete').classList.add('hidden')" class="text-slate-900/40 hover:text-slate-900">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
@@ -156,8 +156,8 @@ include '../../includes/header.php';
             </div>
 
             <div id="tabDate">
-                <div id="daftarTanggal" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-900/[0.03] p-2 mb-4 space-y-1"></div>
-                <button id="btnHapusTanggal" disabled onclick="hapusLog('by_date')"
+                <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-900/[0.03] p-2 mb-4 space-y-1"></div>
+                <button id="btnDeleteDate" disabled onclick="deleteLog('by_date')"
                         class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-lg disabled:opacity-40 transition-all">
                     Delete Selected Date
                 </button>
@@ -169,13 +169,13 @@ include '../../includes/header.php';
                     <p class="text-red-700 font-bold text-sm font-inter">SYSTEM WIPE WARNING</p>
                     <p class="text-slate-900/50 text-xs font-inter mt-1">This action will destroy ALL recorded operational history.</p>
                 </div>
-                <button onclick="hapusLog('all')"
+                <button onclick="deleteLog('all')"
                         class="w-full bg-red-600 text-white text-xs font-bold font-inter uppercase tracking-widest py-3 rounded-lg transition-all">
                     Execute Total Format
                 </button>
             </div>
 
-            <div id="hapusResult" class="mt-4 hidden text-sm font-inter"></div>
+            <div id="deleteResult" class="mt-4 hidden text-sm font-inter"></div>
         </div>
     </div>
 </div>
@@ -191,21 +191,21 @@ function switchTab(tab) {
     document.getElementById('tabBtnAll').className  = `flex-1 text-xs font-bold font-inter uppercase tracking-widest py-2 rounded-lg transition-all ${tab==='all'  ? 'bg-red-600 text-white' : 'bg-slate-900/5 text-red-600'}`;
 }
 
-document.getElementById('modalHapus').addEventListener('click', function(e) {
+document.getElementById('modalDelete').addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
 });
 
 // Load dates when modal opens
 const observer = new MutationObserver(() => {
-    if (!document.getElementById('modalHapus').classList.contains('hidden')) loadDates();
+    if (!document.getElementById('modalDelete').classList.contains('hidden')) loadDates();
 });
-observer.observe(document.getElementById('modalHapus'), { attributes: true, attributeFilter: ['class'] });
+observer.observe(document.getElementById('modalDelete'), { attributes: true, attributeFilter: ['class'] });
 
 function loadDates() {
-    const c = document.getElementById('daftarTanggal');
+    const c = document.getElementById('dateList');
     c.innerHTML = '<div class="text-center py-4 text-slate-900/40 text-sm animate-pulse">Scanning index...</div>';
     selectedDate = null;
-    document.getElementById('btnHapusTanggal').disabled = true;
+    document.getElementById('btnDeleteDate').disabled = true;
 
     fetch('get_log_dates.php')
         .then(r => r.json())
@@ -235,18 +235,18 @@ function selectDate(el, date) {
     });
     el.classList.add('bg-red-50', 'ring-2', 'ring-red-400');
     selectedDate = date;
-    document.getElementById('btnHapusTanggal').disabled = false;
+    document.getElementById('btnDeleteDate').disabled = false;
 }
 
-function hapusLog(mode) {
-    const box = document.getElementById('hapusResult');
+function deleteLog(mode) {
+    const box = document.getElementById('deleteResult');
     box.classList.add('hidden');
     if (mode === 'by_date' && !selectedDate) return;
 
-    const konfirm = mode === 'by_date'
+    const confirmMsg = mode === 'by_date'
         ? `Are you sure you want to delete logs for ${selectedDate}?`
         : `Are you sure you want to WIPE ALL operational logs?`;
-    if (!confirm(konfirm)) return;
+    if (!confirm(confirmMsg)) return;
 
     const body = mode === 'by_date'
         ? `mode=by_date&date=${selectedDate}&csrf_token=${encodeURIComponent(CSRF)}`

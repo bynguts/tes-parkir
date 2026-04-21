@@ -104,6 +104,20 @@ function is_active(string $target): string {
             </ul>
         </div>
 
+        <!-- ANALYTICS -->
+        <div>
+            <div class="px-3 mb-2 text-[9px] font-normal uppercase tracking-widest text-slate-900/40 font-inter">Intelligence & Analytics</div>
+            <ul class="space-y-0.5">
+                <li>
+                    <a href="<?= BASE_URL ?>modules/reports/analytics.php"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-900/60 hover:bg-slate-900/5 hover:text-slate-900 transition-all <?= strpos($_SERVER['PHP_SELF'], 'analytics.php') !== false ? 'nav-active' : '' ?>">
+                        <i class="fa-solid fa-chart-pie text-slate-900/40 text-[13px] w-4"></i>
+                        Intelligence Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+
         <!-- ADMINISTRATION -->
         <?php if (in_array($role, ['superadmin', 'admin'])): ?>
         <div>

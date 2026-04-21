@@ -1,4 +1,4 @@
-<!-- Archive AI: Floating Assistant UI -->
+<!-- Cereza: Floating Assistant UI -->
 <!-- Marked.js for Markdown → HTML rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 
@@ -11,16 +11,17 @@
         <div class="bg-slate-900 px-5 py-4 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
-                    <i class="fa-solid fa-wand-magic-sparkles text-white text-base"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                    </svg>
                 </div>
                 <div>
-                    <h3 class="font-manrope font-extrabold text-white text-sm leading-tight">Archive AI</h3>
+                    <h3 class="font-manrope font-extrabold text-white text-sm leading-tight">Cereza</h3>
                     <p class="text-slate-400 text-[9px] uppercase tracking-widest font-inter">Live Enterprise Support</p>
                 </div>
             </div>
-            <button onclick="toggleAIChat()" class="text-slate-400 hover:text-white transition-colors">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
         </div>
 
         <!-- Message Area -->
@@ -28,7 +29,7 @@
             <!-- Bot Greeting -->
             <div class="flex flex-col items-start gap-1">
                 <div class="ai-bubble-bot">
-                    Halo, saya <strong>Archive AI</strong>. Ada yang bisa saya bantu terkait operasional SmartParking hari ini? Saya bisa menganalisis data pendapatan, slot, atau memberikan saran strategis.
+                    Hello, I'm <strong>Cereza</strong>. How can I assist you with SmartParking operations today? I can analyze revenue data, slot availability, or provide strategic advice.
                 </div>
                 <span class="ai-timestamp">System • Now</span>
             </div>
@@ -38,7 +39,7 @@
         <div class="p-3 bg-slate-50 border-t border-slate-100 flex-shrink-0">
             <form id="ai-chat-form" class="relative group flex items-center gap-2">
                 <input type="text" id="ai-user-input" 
-                       placeholder="Tanyakan sesuatu tentang parkir..." 
+                       placeholder="Ask something about parking..." 
                        class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-inter text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
                        autocomplete="off">
                 <button type="submit" class="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 transition-all flex-shrink-0">
@@ -49,8 +50,17 @@
     </div>
 
     <!-- FAB Button -->
-    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 border border-slate-700 rounded-full shadow-[0_8px_32px_rgba(15,23,42,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group ai-breathing">
-        <i class="fa-solid fa-wand-magic-sparkles text-white text-xl transition-transform group-hover:rotate-12"></i>
+    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-slate-800 hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-slate-900/20 active:scale-95 flex items-center justify-center">
+        <!-- State: Idle (Stars) -->
+        <svg id="ai-fab-stars" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 transition-all duration-300">
+            <path class="star-path star-1" stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            <path class="star-path star-2" stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+            <path class="star-path star-3" stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        </svg>
+        <!-- State: Open (Down Arrow) -->
+        <svg id="ai-fab-close" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6 hidden transition-all duration-300">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
     </button>
 </div>
 
@@ -66,16 +76,21 @@ let aiChatVisible = false;
 
 function toggleAIChat() {
     const win = document.getElementById('ai-chat-window');
-    const fab = document.getElementById('ai-fab');
+    const fabStars = document.getElementById('ai-fab-stars');
+    const fabClose = document.getElementById('ai-fab-close');
+
     if (aiChatVisible) {
         win.classList.add('scale-95', 'opacity-0');
         setTimeout(() => win.classList.add('hidden'), 280);
-        fab.querySelector('i').style.transform = '';
+        fabStars.classList.remove('hidden');
+        fabClose.classList.add('hidden');
     } else {
         win.classList.remove('hidden');
         requestAnimationFrame(() => {
             requestAnimationFrame(() => win.classList.remove('scale-95', 'opacity-0'));
         });
+        fabStars.classList.add('hidden');
+        fabClose.classList.remove('hidden');
     }
     aiChatVisible = !aiChatVisible;
 }
@@ -106,7 +121,7 @@ document.getElementById('ai-chat-form').addEventListener('submit', async functio
         appendMessage('bot', data.response);
     } catch (err) {
         removeTyping(loadingId);
-        appendMessage('bot', '⚠️ **Terjadi kesalahan:**\n\n' + err.message);
+        appendMessage('bot', '⚠️ **An error occurred:**\n\n' + err.message);
     }
 });
 
@@ -137,7 +152,7 @@ function appendMessage(role, text) {
 
     const ts = document.createElement('span');
     ts.className = 'ai-timestamp';
-    ts.textContent = (role === 'user' ? 'Anda' : 'Archive AI') + ' • Just now';
+    ts.textContent = (role === 'user' ? 'You' : 'Cereza') + ' • Just now';
 
     wrapper.appendChild(bubble);
     wrapper.appendChild(ts);
@@ -309,12 +324,18 @@ function removeTyping(id) {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── AI Breathing Animation ────────────────── */
-.ai-breathing {
-    animation: aiBreathing 3s ease-in-out infinite;
+/* ── Gemini AI Idle "Breathing" Animation ────── */
+@keyframes gemini-idle {
+    0%, 100% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
 }
-@keyframes aiBreathing {
-    0%, 100% { box-shadow: 0 8px 32px rgba(15, 23, 42, 0.3); transform: scale(1); }
-    50% { box-shadow: 0 8px 48px rgba(34,197,94,0.25); transform: scale(1.04); }
+
+.star-path {
+    transform-origin: center;
+    transform-box: fill-box;
 }
+
+.star-1 { animation: gemini-idle 2.5s ease-in-out infinite; }
+.star-2 { animation: gemini-idle 2.5s ease-in-out infinite 0.8s; }
+.star-3 { animation: gemini-idle 2.5s ease-in-out infinite 1.6s; }
 </style>

@@ -97,7 +97,6 @@ include '../../includes/header.php';
             ?>
             <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-900/[0.03] ring-1 ring-slate-900/5 group hover:shadow-2xl transition-all duration-500">
                 <div class="flex items-center justify-between mb-6 -mt-2">
-                    <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Live Capacity — <?= $lbl ?></p>
                     <div class="w-12 h-12 rounded-xl <?= $t === 'car' ? 'bg-blue-500/10 text-blue-600' : 'bg-emerald-500/10 text-emerald-600' ?> flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
                         <i class="fa-solid fa-<?= $icon ?> text-xl"></i>
                     </div>

@@ -36,10 +36,10 @@ function rSp($h=8): string { return "<Row ss:Height=\"$h\"/>\n"; }
 $totals = $pdo->query("
     SELECT COUNT(*) AS grand_total,
            SUM(v.vehicle_type='car') AS total_cars,
-           SUM(v.vehicle_type='motorcycle') AS total_motorcycles,
+           SUM(v.vehicle_type='motorcycle') AS total_motos,
            SUM(t.total_fee) AS grand_revenue,
            SUM(CASE WHEN v.vehicle_type='car' THEN t.total_fee ELSE 0 END) AS rev_car,
-           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN t.total_fee ELSE 0 END) AS rev_motorcycle,
+           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN t.total_fee ELSE 0 END) AS rev_moto,
            AVG(t.duration_hours) AS avg_duration, AVG(t.total_fee) AS avg_fee,
            MAX(t.total_fee) AS max_fee,
            SUM(CASE WHEN t.payment_method='cash' THEN 1 ELSE 0 END) AS pay_cash,
@@ -52,8 +52,8 @@ $totals = $pdo->query("
 $daily = $pdo->query("
     SELECT CAST(t.check_out_time AS DATE) AS trx_date,
            DAYNAME(t.check_out_time) AS day_name,
-           SUM(v.vehicle_type='car') AS cars, SUM(v.vehicle_type='motorcycle') AS motorcycles,
-           COUNT(*) AS total_vehicles,
+           SUM(v.vehicle_type='car') AS cars, SUM(v.vehicle_type='motorcycle') AS motos,
+           COUNT(*) AS total_count,
            SUM(CASE WHEN v.vehicle_type='car' THEN t.total_fee ELSE 0 END) AS rev_car,
            SUM(CASE WHEN v.vehicle_type='motorcycle' THEN t.total_fee ELSE 0 END) AS rev_moto,
            SUM(t.total_fee) AS total_revenue, AVG(t.total_fee) AS avg_fee, MAX(t.total_fee) AS max_fee
@@ -317,7 +317,7 @@ echo rH(16,
 // KPI Block 1 — Row values
 echo rH(38,
     cS(number_format($totals['grand_total']??0).' Transactions', 'sKV'), cE('sKV'), cE(),
-    cS(number_format(($totals['total_cars']??0)+($totals['total_motorcycles']??0)).' Units', 'sKVg'), cE('sKVg'), cE(),
+    cS(number_format(($totals['total_cars']??0)+($totals['total_motos']??0)).' Units', 'sKVg'), cE('sKVg'), cE(),
     cS(idr((float)($totals['grand_revenue']??0)), 'sKVa'), cE('sKVa'), cE(),
     cS(idr($avgDaily), 'sKVb'), cE('sKVb')
 );
@@ -331,12 +331,12 @@ echo rH(16,
 );
 // KPI Block 2 — Row values
 $carPct = pct((float)($totals['total_cars']??0),(float)max($totals['grand_total']??1,1));
-$motPct = pct((float)($totals['total_motorcycles']??0),(float)max($totals['grand_total']??1,1));
+$motPct = pct((float)($totals['total_motos']??0),(float)max($totals['grand_total']??1,1));
 echo rH(38,
     cS(number_format($totals['total_cars']??0).' Units ('.$carPct.')', 'sKVb'), cE('sKVb'), cE(),
-    cS(number_format($totals['total_motorcycles']??0).' Units ('.$motPct.')', 'sKVg'), cE('sKVg'), cE(),
+    cS(number_format($totals['total_motos']??0).' Units ('.$motPct.')', 'sKVg'), cE('sKVg'), cE(),
     cS(idr((float)($totals['rev_car']??0)), 'sKVa'), cE('sKVa'), cE(),
-    cS(idr((float)($totals['rev_motorcycle']??0)), 'sKV'), cE('sKV')
+    cS(idr((float)($totals['rev_moto']??0)), 'sKV'), cE('sKV')
 );
 echo rSp(14);
 // KPI Block 3
@@ -366,9 +366,9 @@ if ($bestDay) {
     echo rD(
         cS(date('d F Y', strtotime($bestDay['trx_date'])), 'sDb'),
         cS($bestDay['day_name'], 'sD'),
-        cS(number_format($bestDay['total_vehicles']), 'sDcb'),
+        cS(number_format($bestDay['total_count']), 'sDcb'),
         cS(number_format($bestDay['cars']), 'sBcar'),
-        cS(number_format($bestDay['motorcycles']), 'sBmot'),
+        cS(number_format($bestDay['motos']), 'sBmot'),
         cS(idr((float)$bestDay['rev_car']), 'sM'),
         cS(idr((float)$bestDay['rev_moto']), 'sM'),
         cS(idr((float)$bestDay['total_revenue']), 'sMg'),
@@ -424,7 +424,7 @@ foreach ($daily as $i => $row) {
     echo rD(
         cS($i+1,'sDca'), cS(date('d F Y',strtotime($row['trx_date'])),$da),
         cS($row['day_name'],$d), cS(number_format($row['cars']),$bc),
-        cS(number_format($row['motorcycles']),$bm), cS(number_format($row['total_vehicles']),'sDcb'),
+        cS(number_format($row['motos']),$bm), cS(number_format($row['total_count']),'sDcb'),
         cS(idr((float)$row['rev_car']),$m), cS(idr((float)$row['rev_moto']),$m),
         cS(idr((float)$row['total_revenue']),$mg),
         cS(idr((float)$row['avg_fee']),$m), cS(idr((float)$row['max_fee']),$m)
@@ -433,9 +433,9 @@ foreach ($daily as $i => $row) {
 // Grand total footer
 echo rH(28,
     cS('','sTot'), cS('CUMULATIVE TOTAL','sTot'), cS('','sTot'),
-    cS(number_format($totals['total_cars']??0),'sTotC'), cS(number_format($totals['total_motorcycles']??0),'sTotC'),
+    cS(number_format($totals['total_cars']??0),'sTotC'), cS(number_format($totals['total_motos']??0),'sTotC'),
     cS(number_format($totals['grand_total']??0),'sTotC'),
-    cS(idr((float)($totals['rev_car']??0)),'sTotM'), cS(idr((float)($totals['rev_motorcycle']??0)),'sTotM'),
+    cS(idr((float)($totals['rev_car']??0)),'sTotM'), cS(idr((float)($totals['rev_moto']??0)),'sTotM'),
     cS(idr((float)($totals['grand_revenue']??0)),'sTotM'),
     cS(idr((float)($totals['avg_fee']??0)),'sTotM'), cS('—','sTot')
 );

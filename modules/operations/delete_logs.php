@@ -11,16 +11,16 @@ $mode = $_POST['mode'] ?? '';
 $date = $_POST['date'] ?? '';
 
 if (!in_array($mode, ['by_date', 'all'])) {
-    echo json_encode(['success' => false, 'message' => 'Mode tidak valid.']); exit;
+    echo json_encode(['success' => false, 'message' => 'Invalid mode.']); exit;
 }
 
 if ($mode === 'by_date') {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        echo json_encode(['success' => false, 'message' => 'Format tanggal tidak valid.']); exit;
+        echo json_encode(['success' => false, 'message' => 'Invalid date format.']); exit;
     }
     $date_label = $date;
 } else {
-    $date_label = 'semua';
+    $date_label = 'all';
 }
 
 $pdo->beginTransaction();
@@ -74,7 +74,7 @@ try {
 
     echo json_encode([
         'success'       => true,
-        'message'       => "Berhasil menghapus log: {$date_label}",
+        'message'       => "Successfully deleted logs for: {$date_label}",
         'deleted_scans' => $deleted_scans,
         'deleted_trx'   => $deleted_trx,
     ]);
@@ -82,5 +82,5 @@ try {
 } catch (Exception $e) {
     $pdo->rollBack();
     error_log("delete_logs error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem.']);
+    echo json_encode(['success' => false, 'message' => 'A system error occurred.']);
 }

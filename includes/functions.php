@@ -105,7 +105,7 @@ function get_slot_summary(PDO $pdo): array {
     // 2. Add upcoming confirmed reservations for today that aren't yet marked 'reserved' in the slot table
     // This ensures availability decreases and "Reserved" count increases as soon as a reservation is made for today.
     $upcoming = $pdo->query("
-        SELECT ps.slot_type, COUNT(*) as count
+        SELECT ps.slot_type, COUNT(DISTINCT r.slot_id) as count
         FROM reservation r
         JOIN parking_slot ps ON r.slot_id = ps.slot_id
         WHERE r.status = 'confirmed' 
@@ -131,14 +131,21 @@ function get_slot_summary(PDO $pdo): array {
  * Ensures parking_slot statuses are in sync with active transactions and reservations.
  */
 function sync_slot_statuses(PDO $pdo): void {
+    // Auto-expire reservations that are past reserved_until
+    $pdo->exec("UPDATE reservation SET status='expired' WHERE status IN ('pending','confirmed') AND reserved_until < NOW()");
+    
+    // Reset all slots to available first (only those that are occupied or reserved)
     $pdo->exec("UPDATE parking_slot SET status = 'available' WHERE status IN ('occupied', 'reserved')");
+    
+    // Mark as Occupied based on active transactions
     $pdo->exec("
         UPDATE parking_slot s
         JOIN `transaction` t ON s.slot_id = t.slot_id
         SET s.status = 'occupied'
         WHERE t.payment_status = 'unpaid'
     ");
-    // Sync Reserved (with 15-minute buffer)
+
+    // Sync Reserved (with 15-minute buffer for immediate status)
     $pdo->exec("
         UPDATE parking_slot s
         JOIN reservation r ON s.slot_id = r.slot_id
@@ -148,7 +155,6 @@ function sync_slot_statuses(PDO $pdo): void {
           AND r.reserved_until >= NOW()
           AND s.status = 'available'
     ");
-
 }
 
 
@@ -185,16 +191,41 @@ function get_active_attendance(PDO $pdo, ?string $filter_type = null): array {
 }
 
 // ── AI Context Helper — Full Database Aggregator ───────────────────────────
-function get_ai_context_data(PDO $pdo): array {
+function get_ai_context_data(PDO $pdo, ?string $start_date = null, ?string $end_date = null): array {
+    $date_cond = "";
+    $params = [];
 
-    // ── 1. TODAY'S SUMMARY ────────────────────────────────────────────────
-    $today_rev   = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
-    $today_trx   = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE DATE(check_in_time)=CURDATE()")->fetchColumn();
+    if ($start_date && $end_date) {
+        $date_cond = " AND DATE(check_out_time) BETWEEN ? AND ?";
+        $params = [$start_date, $end_date];
+    } elseif ($start_date) {
+        $date_cond = " AND DATE(check_out_time) >= ?";
+        $params = [$start_date];
+    }
+
+    // ── 1. SUMMARY (Using filters if provided, otherwise defaults to all-time or today where appropriate) ──
+    // For "Today's Summary" section, we use the filter if it's narrower than all-time
+    $summary_cond = $date_cond ?: " AND DATE(check_out_time)=CURDATE()";
+    $summary_params = $params ?: [];
+
+    $rev_total   = $pdo->prepare("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' $date_cond");
+    $rev_total->execute($params);
+    $total_rev = $rev_total->fetchColumn();
+
+    $trx_total   = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE payment_status='paid' $date_cond");
+    $trx_total->execute($params);
+    $total_trx = $trx_total->fetchColumn();
+
+    $entry_cond = $date_cond ? str_replace('check_out_time', 'check_in_time', $date_cond) : " AND DATE(check_in_time)=CURDATE()";
+    $entry_total = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE 1=1 $entry_cond");
+    $entry_total->execute($params);
+    $total_entries = $entry_total->fetchColumn();
+
     $active_v    = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE payment_status='unpaid'")->fetchColumn();
-    $total_trx   = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE payment_status='paid'")->fetchColumn();
-    $total_rev   = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid'")->fetchColumn();
+    $avail_s     = $pdo->query("SELECT COUNT(*) FROM parking_slot WHERE status='available'")->fetchColumn();
+    $total_res   = $pdo->query("SELECT COUNT(*) FROM reservation WHERE status IN ('pending','confirmed')")->fetchColumn();
 
-    // ── 2. SLOT STATUS (Per Floor & Type) ────────────────────────────────
+    // ── 2. SLOT STATUS (Current state, not filtered by time) ─────────────────
     $slots = $pdo->query("
         SELECT f.floor_name, ps.slot_type,
                COUNT(*) AS total,
@@ -208,126 +239,110 @@ function get_ai_context_data(PDO $pdo): array {
         ORDER BY f.floor_id, ps.slot_type
     ")->fetchAll();
 
-    // ── 3. DAILY REVENUE TREND (Last 30 Days) ─────────────────────────────
-    $daily_trend = $pdo->query("
+    // ── 3. DAILY REVENUE TREND ─────────────────────────────────────────────
+    $trend_limit = $date_cond ?: " AND check_out_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+    $trend_params = $params ?: [];
+    
+    $daily_trend = $pdo->prepare("
         SELECT DATE(check_out_time) AS date,
                COUNT(*) AS volume,
                SUM(total_fee) AS revenue,
                SUM(vehicle_type='car') AS cars,
-               SUM(vehicle_type='motorcycle') AS motorcycles
+               SUM(vehicle_type='motorcycle') AS motos
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        WHERE payment_status='paid' AND check_out_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        WHERE payment_status='paid' $trend_limit
         GROUP BY DATE(check_out_time)
         ORDER BY date DESC
-    ")->fetchAll();
+    ");
+    $daily_trend->execute($trend_params);
+    $daily_trend = $daily_trend->fetchAll();
 
-    // ── 4. HOURLY DISTRIBUTION (Last 7 Days) ──────────────────────────────
-    $hourly = $pdo->query("
+    // ── 4. HOURLY DISTRIBUTION (Traffic Peaks - uses check_in_time) ─────────
+    $hourly_cond = $date_cond ? str_replace('check_out_time', 'check_in_time', $date_cond) : " AND check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    
+    $hourly = $pdo->prepare("
         SELECT HOUR(check_in_time) AS hour,
                COUNT(*) AS total_entries,
                SUM(vehicle_type='car') AS cars,
-               SUM(vehicle_type='motorcycle') AS motorcycles
+               SUM(vehicle_type='motorcycle') AS motos
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        WHERE check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        WHERE check_in_time IS NOT NULL $hourly_cond
         GROUP BY HOUR(check_in_time)
         ORDER BY hour ASC
-    ")->fetchAll();
+    ");
+    $hourly->execute($params);
+    $hourly = $hourly->fetchAll();
 
     // ── 5. VEHICLE BREAKDOWN ──────────────────────────────────────────────
-    $vehicle_stats = $pdo->query("
+    $vehicle_stats = $pdo->prepare("
         SELECT v.vehicle_type,
                COUNT(DISTINCT v.vehicle_id) AS total_registered,
-               COUNT(t.transaction_id)      AS total_transactions,
+               COUNT(t.transaction_id)      AS total_count,
                COALESCE(SUM(t.total_fee),0) AS total_revenue
         FROM vehicle v
-        LEFT JOIN `transaction` t ON v.vehicle_id = t.vehicle_id AND t.payment_status='paid'
+        LEFT JOIN `transaction` t ON v.vehicle_id = t.vehicle_id AND t.payment_status='paid' $date_cond
         GROUP BY v.vehicle_type
-    ")->fetchAll();
+    ");
+    $vehicle_stats->execute($params);
+    $vehicle_stats = $vehicle_stats->fetchAll();
 
     // ── 6. OPERATOR PERFORMANCE ───────────────────────────────────────────
-    $operator_perf = $pdo->query("
+    $operator_perf = $pdo->prepare("
         SELECT o.full_name, o.shift,
                COUNT(t.transaction_id)      AS total_transactions,
                COALESCE(SUM(t.total_fee),0) AS total_revenue_handled,
                COALESCE(AVG(t.duration_hours),0) AS avg_duration_hours
         FROM operator o
-        LEFT JOIN `transaction` t ON o.operator_id = t.operator_id AND t.payment_status='paid'
+        LEFT JOIN `transaction` t ON o.operator_id = t.operator_id AND t.payment_status='paid' $date_cond
         GROUP BY o.operator_id
         ORDER BY total_transactions DESC
-    ")->fetchAll();
+    ");
+    $operator_perf->execute($params);
+    $operator_perf = $operator_perf->fetchAll();
 
-    // ── 7. RESERVATION STATUS ─────────────────────────────────────────────
-    $reservation_summary = $pdo->query("
-        SELECT status, COUNT(*) AS count
-        FROM reservation
-        GROUP BY status
-    ")->fetchAll();
-
-    $active_reservations = $pdo->query("
-        SELECT r.reservation_code, v.plate_number, v.vehicle_type,
-               ps.slot_number, f.floor_name,
-               r.reserved_from, r.reserved_until, r.status
-        FROM reservation r
-        JOIN vehicle v ON r.vehicle_id = v.vehicle_id
-        JOIN parking_slot ps ON r.slot_id = ps.slot_id
-        JOIN floor f ON ps.floor_id = f.floor_id
-        WHERE r.status IN ('pending','confirmed')
-        ORDER BY r.reserved_from ASC
-        LIMIT 20
-    ")->fetchAll();
-
-    // ── 8. RECENT TRANSACTIONS (Last 10) ─────────────────────────────────
-    $recent_transactions = $pdo->query("
-        SELECT t.ticket_code, v.plate_number, v.vehicle_type,
-               ps.slot_number, f.floor_name,
-               t.check_in_time, t.check_out_time,
-               t.duration_hours, t.total_fee, t.payment_status,
-               t.payment_method, o.full_name AS operator
-        FROM `transaction` t
-        JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        JOIN parking_slot ps ON t.slot_id = ps.slot_id
-        JOIN floor f ON ps.floor_id = f.floor_id
-        JOIN operator o ON t.operator_id = o.operator_id
-        ORDER BY t.check_in_time DESC
-        LIMIT 10
-    ")->fetchAll();
+    // ── 7. RESERVATION STATUS (Current state, usually not filtered by historic range but by intent) ──
+    $reservation_summary = $pdo->query("SELECT status, COUNT(*) AS count FROM reservation GROUP BY status")->fetchAll();
 
     // ── 9. PAYMENT METHOD BREAKDOWN ───────────────────────────────────────
-    $payment_methods = $pdo->query("
+    $payment_methods = $pdo->prepare("
         SELECT payment_method, COUNT(*) AS count, SUM(total_fee) AS revenue
-        FROM `transaction` WHERE payment_status='paid'
+        FROM `transaction` WHERE payment_status='paid' $date_cond
         GROUP BY payment_method
-    ")->fetchAll();
+    ");
+    $payment_methods->execute($params);
+    $payment_methods = $payment_methods->fetchAll();
 
-    // ── 10. GATE SCAN LOG SUMMARY (Last 24 Hours) ─────────────────────────
-    $gate_log = $pdo->query("
-        SELECT scan_type,
-               COUNT(*) AS total_scans,
-               SUM(matched=1) AS matched,
-               SUM(gate_action='open') AS opened,
-               SUM(gate_action='reject') AS rejected
+    // ── 10. GATE SCAN LOG SUMMARY ─────────────────────────────────────────
+    $gate_limit = $date_cond ? str_replace('check_out_time', 'scan_time', $date_cond) : " AND scan_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+    $gate_log = $pdo->prepare("
+        SELECT scan_type, gate_action, COUNT(*) AS count
         FROM plate_scan_log
-        WHERE scan_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-        GROUP BY scan_type
-    ")->fetchAll();
+        WHERE scan_time IS NOT NULL $gate_limit
+        GROUP BY scan_type, gate_action
+    ");
+    $gate_log->execute($params);
+    $gate_log = $gate_log->fetchAll();
 
-    // ── 11. PARKING RATES ─────────────────────────────────────────────────
+    // ── 11. ADDITIONAL CONTEXT (Defining missing variables for return) ────
+    $active_reservations = $pdo->query("SELECT r.*, v.plate_number FROM reservation r JOIN vehicle v ON r.vehicle_id = v.vehicle_id WHERE r.status IN ('pending', 'confirmed') ORDER BY r.created_at DESC LIMIT 10")->fetchAll();
+    $recent_transactions = $pdo->query("SELECT t.*, v.plate_number, v.vehicle_type FROM `transaction` t JOIN vehicle v ON t.vehicle_id = v.vehicle_id ORDER BY check_in_time DESC LIMIT 10")->fetchAll();
     $rates = $pdo->query("SELECT * FROM parking_rate")->fetchAll();
-
-    // ── 12. FLOOR CAPACITY OVERVIEW ───────────────────────────────────────
     $floors = $pdo->query("SELECT * FROM floor ORDER BY floor_id")->fetchAll();
 
     return [
         'system_name'         => 'SmartParking Enterprise v2',
         'generated_at'        => date('Y-m-d H:i:s'),
         'summary'             => [
-            'revenue_today'     => $today_rev,
-            'transactions_today'=> $today_trx,
+            'revenue_today'     => $total_rev,
+            'transactions_today'=> $total_trx,
             'active_vehicles'   => $active_v,
             'all_time_revenue'  => $total_rev,
             'all_time_paid_trx' => $total_trx,
+            'available_slots'   => $avail_s,
+            'total_reservations'=> $total_res,
+            'total_entries_today' => $total_entries,
         ],
         'slots'               => $slots,
         'daily_trend'         => $daily_trend,
@@ -338,7 +353,7 @@ function get_ai_context_data(PDO $pdo): array {
         'active_reservations' => $active_reservations,
         'recent_transactions' => $recent_transactions,
         'payment_methods'     => $payment_methods,
-        'gate_log_24h'        => $gate_log,
+        'gate_log'            => $gate_log,
         'rates'               => $rates,
         'floors'              => $floors,
     ];

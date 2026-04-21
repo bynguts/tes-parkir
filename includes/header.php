@@ -100,6 +100,7 @@ $page_title = $page_title ?? 'Parking System';
             height: 100vh;
             overflow-y: auto;
             overflow-x: hidden;
+            scrollbar-gutter: stable;
             scrollbar-width: none;      /* Firefox */
             -ms-overflow-style: none;   /* IE/Edge */
         }
@@ -151,43 +152,36 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 
     <!-- Global Top Bar (Sticky) -->
     <?php if (!isset($hide_header) || !$hide_header): ?>
-    <header class="flex justify-between items-center px-6 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-900/10">
-        <div class="flex flex-col">
-            <h1 class="font-manrope font-extrabold text-2xl text-slate-900"><?= $page_title ?></h1>
-            <?php if (isset($page_subtitle) && $page_subtitle): ?>
-                <span class="text-slate-900/40 text-[11px] font-inter font-medium uppercase tracking-wider -mt-1">
-                    <?= $page_subtitle ?>
-                </span>
-            <?php endif; ?>
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-900/10">
+        <!-- Search Bar (Left Aligned) -->
+        <div class="relative group">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-900/30 group-focus-within:text-slate-900 transition-colors"></i>
+            <input type="text" 
+                   placeholder="Search anything about website..." 
+                   class="w-[320px] bg-slate-900/5 border border-slate-900/5 px-11 py-2.5 rounded-2xl text-sm font-inter placeholder:text-slate-900/30 focus:outline-none focus:bg-white focus:border-slate-900/10 focus:ring-4 focus:ring-slate-900/[0.02] transition-all"
+            >
         </div>
 
-        <div class="flex items-center gap-6">
-            <!-- Universal Export Button (Only on Dashboard) -->
-            <?php if (isset($page_title) && $page_title === 'Dashboard'): ?>
-                <?php
-                // Build a root-relative path to the export script.
-                // Works regardless of which module depth the page is included from.
-                $scriptDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
-                // Walk up to find root (where login.php lives)
-                $depth = substr_count(str_replace('\\','/',$scriptDir), '/') -
-                         substr_count(str_replace('\\','/',rtrim(parse_url(BASE_URL,PHP_URL_PATH),'/\\')), '/');
-                $prefix = str_repeat('../', max(0,$depth));
-                $exportUrl = $prefix . 'modules/reports/export_excel.php';
-                ?>
-                <a href="<?= htmlspecialchars($exportUrl) ?>" target="_blank"
-                   class="bg-white border border-slate-900/10 text-slate-900 px-5 py-2.5 rounded-2xl font-semibold text-sm font-manrope transition-all hover:bg-slate-900/5 flex items-center gap-2 shadow-sm"
-                   title="Export all SmartParking data to Excel">
-                    <i class="fa-solid fa-share-from-square text-lg opacity-75"></i>
-                    Export
-                </a>
-            <?php endif; ?>
+        <div class="flex items-center gap-3 ml-auto">
+            <!-- Universal Export -->
+            <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">
+                <i class="fa-solid fa-file-export text-slate-900/60"></i>
+                <span>Export</span>
+            </button>
 
-            <!-- Page specific actions -->
-            <?php if (isset($page_actions)) echo $page_actions; ?>
+            <!-- How to use -->
+            <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">
+                <i class="fa-solid fa-circle-question text-slate-900/60"></i>
+                <span>How to use</span>
+            </button>
 
-            <!-- Settings / Notifications Placeholder -->
-            <button class="w-10 h-10 rounded-full bg-slate-900/5 flex items-center justify-center text-slate-900/40 hover:bg-slate-900/10 transition-colors">
-                <i class="fa-solid fa-bell"></i>
+            <!-- Divider -->
+            <div class="w-px h-6 bg-slate-900/10 mx-1"></div>
+
+            <!-- Notifications -->
+            <button class="w-11 h-11 rounded-2xl bg-white border border-slate-900/10 flex items-center justify-center text-slate-900 hover:bg-slate-900/5 transition-all shadow-sm relative">
+                <i class="fa-solid fa-bell text-slate-900/60"></i>
+                <span class="absolute top-3 right-3.5 w-2 h-2 bg-slate-900 rounded-full border-2 border-white"></span>
             </button>
         </div>
     </header>

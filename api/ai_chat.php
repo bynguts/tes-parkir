@@ -59,7 +59,7 @@ if (empty($c['daily_trend'])) {
     $ctxString .= "- No data recorded.\n";
 } else {
     foreach ($c['daily_trend'] as $d) {
-        $ctxString .= "- " . $d['date'] . ": Rp " . number_format($d['revenue'], 0, ',', '.') . " ({$d['volume']}/trx | Car:{$d['cars']}, Moto:{$d['motorcycles']})\n";
+        $ctxString .= "- " . $d['date'] . ": Rp " . number_format($d['revenue'], 0, ',', '.') . " ({$d['volume']}/trx | Car:{$d['cars']}, Moto:{$d['motos']})\n";
     }
 }
 $ctxString .= "\n";
@@ -71,7 +71,7 @@ if (empty($c['hourly_distribution'])) {
 } else {
     foreach ($c['hourly_distribution'] as $h) {
         $bar = str_repeat("█", min(20, (int)($h['total_entries'] / max(1, $c['summary']['all_time_paid_trx']) * 100)));
-        $ctxString .= "- Hour " . str_pad($h['hour'], 2, "0", STR_PAD_LEFT) . ":00 -> {$h['total_entries']} vehicles (Car:{$h['cars']} Moto:{$h['motorcycles']})\n";
+        $ctxString .= "- Hour " . str_pad($h['hour'], 2, "0", STR_PAD_LEFT) . ":00 -> {$h['total_entries']} vehicles (Car:{$h['cars']} Moto:{$h['motos']})\n";
     }
 }
 $ctxString .= "\n";
@@ -79,7 +79,7 @@ $ctxString .= "\n";
 // [E] VEHICLE STATISTICS
 $ctxString .= "[E] VEHICLE STATISTICS:\n";
 foreach ($c['vehicle_stats'] as $v) {
-    $ctxString .= "- {$v['vehicle_type']}: {$v['total_registered']} registered | {$v['total_transactions']} trx | Revenue: Rp " . number_format($v['total_revenue'], 0, ',', '.') . "\n";
+    $ctxString .= "- {$v['vehicle_type']}: {$v['total_registered']} registered | {$v['total_count']} trx | Revenue: Rp " . number_format($v['total_revenue'], 0, ',', '.') . "\n";
 }
 $ctxString .= "\n";
 
@@ -116,12 +116,12 @@ foreach ($c['payment_methods'] as $pm) {
 $ctxString .= "\n";
 
 // [J] GATE SCAN LOG (24 Hours)
-$ctxString .= "[J] GATE SCANNER ACTIVITY (LAST 24 HOURS):\n";
-if (empty($c['gate_log_24h'])) {
+$ctxString .= "[J] GATE SCANNER ACTIVITY:\n";
+if (empty($c['gate_log'])) {
     $ctxString .= "- No scan activity.\n";
 } else {
-    foreach ($c['gate_log_24h'] as $g) {
-        $ctxString .= "- Gate {$g['scan_type']}: {$g['total_scans']} scans | Matched:{$g['matched']} | Opened:{$g['opened']} | Rejected:{$g['rejected']}\n";
+    foreach ($c['gate_log'] as $g) {
+        $ctxString .= "- Gate {$g['scan_type']} ({$g['gate_action']}): {$g['count']} scans\n";
     }
 }
 $ctxString .= "\n";
@@ -147,7 +147,7 @@ $apiKey  = getenv('OPENROUTER_API_KEY') ?: '';
 $modelId = getenv('OPENROUTER_MODEL') ?: "google/gemini-2.0-flash-001"; // Default model if not set
 
 $systemPrompt = "
-You are 'Archive AI', an exclusive intelligent assistant for SmartParking Enterprise.
+You are 'Cereza', an exclusive intelligent assistant for SmartParking Enterprise.
 
 ## OUTPUT FORMAT RULES (MANDATORY):
 - Use **Markdown** for all responses.

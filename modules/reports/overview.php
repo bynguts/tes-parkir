@@ -61,7 +61,6 @@ function vite_widget_tags(string $entry): string {
             <div class="absolute -right-20 -top-20 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-700"></div>
             
             <div class="flex items-center justify-between relative z-10">
-                <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40 font-inter">Live Revenue Flow</p>
                 <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white/20 transition-all">
                     <i class="fa-solid fa-money-bill-trend-up text-white text-lg"></i>
                 </div>
@@ -84,10 +83,12 @@ function vite_widget_tags(string $entry): string {
 
         <!-- Active Vehicles -->
         <div class="col-span-6 lg:col-span-3 bg-white rounded-3xl p-8 flex flex-col justify-between ring-1 ring-slate-900/5 shadow-xl shadow-slate-900/[0.03] hover:shadow-2xl transition-all duration-500 group">
-            <div class="flex items-center justify-between mb-6 -mt-2">
-                <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/30 font-inter">Current Load</p>
-                <div class="w-10 h-10 rounded-xl bg-blue-50/10 flex items-center justify-center border border-blue-500/20 group-hover:bg-slate-50 transition-all duration-500">
-                    <i class="fa-solid fa-gauge-high text-blue-600 text-lg"></i>
+            <div class="flex items-center gap-4 mb-8 -mt-2">
+                <div class="w-11 h-11 rounded-xl bg-blue-50/10 flex items-center justify-center border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                    <i class="fa-solid fa-gauge-high text-blue-600 text-lg group-hover:text-white"></i>
+                </div>
+                <div>
+                    <h3 class="font-manrope font-bold text-base text-slate-900">Active Duty</h3>
                 </div>
             </div>
             <div class="flex items-baseline gap-2">
@@ -101,12 +102,12 @@ function vite_widget_tags(string $entry): string {
         <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
             <!-- Car Slots -->
             <div class="bg-white rounded-3xl p-6 ring-1 ring-slate-900/5 shadow-xl shadow-slate-900/[0.03] group flex-1">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-indigo-50/10 flex items-center justify-center text-indigo-600">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50/10 flex items-center justify-center text-indigo-600 border border-indigo-500/10">
                             <i class="fa-solid fa-car text-sm"></i>
                         </div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.15em] text-slate-900/40 font-inter">Car Network</p>
+                        <h3 class="font-manrope font-bold text-sm text-slate-900">Car Zone</h3>
                     </div>
                     <span class="text-[13px] font-extrabold text-slate-900"><?= $car_avail ?> <span class="text-slate-900/40 text-[10px] uppercase font-bold tracking-tighter">/ <?= $car_total ?></span></span>
                 </div>
@@ -120,12 +121,12 @@ function vite_widget_tags(string $entry): string {
 
             <!-- Motorcycle Slots -->
             <div class="bg-white rounded-3xl p-6 ring-1 ring-slate-900/5 shadow-xl shadow-slate-900/[0.03] group flex-1">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-emerald-50/10 flex items-center justify-center text-emerald-600">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50/10 flex items-center justify-center text-emerald-600 border border-emerald-500/10">
                             <i class="fa-solid fa-motorcycle text-sm"></i>
                         </div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.15em] text-slate-900/40 font-inter">Moto Network</p>
+                        <h3 class="font-manrope font-bold text-sm text-slate-900">Moto Zone</h3>
                     </div>
                     <span class="text-[13px] font-extrabold text-slate-900"><?= $moto_avail ?> <span class="text-slate-900/40 text-[10px] uppercase font-bold tracking-tighter">/ <?= $moto_total ?></span></span>
                 </div>
