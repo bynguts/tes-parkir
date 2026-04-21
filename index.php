@@ -148,11 +148,6 @@ include 'includes/header.php';
 
 <link rel="stylesheet" href="assets/css/theme.css" id="dashboard-custom-theme">
 
-<script>
-    // Force dark mode specifically for dashboard auditing
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('theme', 'dark');
-</script>
 
     <div class="px-10 py-10">
 
@@ -189,7 +184,7 @@ include 'includes/header.php';
                 <div class="bento-card p-4 h-full flex flex-col justify-between relative overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-car-side text-lg"></i>
                             </div>
                             <div>
@@ -201,19 +196,25 @@ include 'includes/header.php';
                     <div class="flex items-end justify-between">
                         <div class="flex flex-col">
                             <span class="font-manrope font-semibold text-5xl text-slate-900 tracking-tighter leading-none"><?= $total_used ?></span>
-                            <span class="text-slate-900/40 text-[11px] font-medium mt-1 uppercase tracking-wider">Vehicles Parked</span>
+                            <span class="text-tertiary text-xs font-inter mt-1">Vehicles Parked</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-2xl font-manrope font-bold text-slate-900 leading-none"><?= $occ_pct ?>%</span>
-                            <p class="text-[10px] font-medium text-slate-900/40 uppercase tracking-widest mt-1">Occupancy</p>
+                            <span class="text-2xl font-manrope font-bold text-primary leading-none"><?= $occ_pct ?>%</span>
+                            <p class="text-tertiary text-xs font-inter mt-1">Occupancy</p>
                         </div>
                     </div>
 
                     <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
-                        <div class="flex items-center justify-between text-[10px] font-extrabold tracking-widest uppercase">
-                            <span class="status-text-reserved opacity-70">Reserved: <span class="status-text-reserved opacity-100"><?= $res_count ?></span></span>
-                            <span class="status-text-available opacity-70 px-4 border-x border-slate-100">Free: <span class="status-text-available opacity-100"><?= $car_avail + $moto_avail ?></span></span>
-                            <span class="status-text-maintenance opacity-70">Maint: <span class="status-text-maintenance opacity-100"><?= $mnt_count ?></span></span>
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-1 rounded-lg status-badge-reserved text-[10px] font-semibold tracking-wider uppercase">
+                                Reserved: <?= $res_count ?>
+                            </span>
+                            <span class="px-2 py-1 rounded-lg status-badge-available text-[10px] font-semibold tracking-wider uppercase">
+                                Available: <?= $car_avail + $moto_avail ?>
+                            </span>
+                            <span class="px-2 py-1 rounded-lg status-badge-maintenance text-[10px] font-semibold tracking-wider uppercase">
+                                Maintenance: <?= $mnt_count ?>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -225,7 +226,7 @@ include 'includes/header.php';
                     <div class="absolute -right-16 -top-16 w-32 h-32 bg-slate-900/5 rounded-full blur-3xl group-hover:bg-slate-900/10 transition-all"></div>
                     
                     <div class="flex items-center gap-4 relative z-10 mb-4">
-                        <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-wallet text-lg"></i>
                         </div>
                         <div>
@@ -234,21 +235,21 @@ include 'includes/header.php';
                     </div>
 
                     <div class="relative z-10">
-                        <div class="font-manrope font-semibold text-4xl text-slate-900 leading-none tracking-tight mb-3">
+                        <div class="font-manrope font-semibold text-4xl text-primary leading-none tracking-tight mb-3">
                             <?= fmt_idr((float)$today_rev) ?>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-1 <?= $is_rev_up_7d ? 'status-badge-available' : 'status-badge-over' ?> text-[10px] font-bold rounded-lg flex items-center gap-1.5 shadow-sm">
+                            <span class="flex items-center gap-1.5 text-xs font-bold <?= $is_rev_up_7d ? 'status-text-available' : 'status-text-over' ?>">
                                 <i class="fa-solid <?= $is_rev_up_7d ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
                                 <?= number_format(abs($rev_pct_7d), 1) ?>%
                             </span>
-                            <span class="text-slate-900/40 text-[10px] font-medium uppercase tracking-wider">Vs 7d Average</span>
+                            <span class="text-tertiary text-xs font-inter">Vs 7d Average</span>
                         </div>
                     </div>
 
                     <div class="relative z-10 flex items-center justify-between border-t border-slate-900/5 pt-4">
-                        <span class="text-[10px] font-extrabold text-slate-900/40 uppercase tracking-widest">Projected</span>
-                        <span class="text-[10px] font-extrabold text-slate-900"><?= fmt_idr((float)$today_rev * 1.2) ?></span>
+                        <span class="text-tertiary text-xs font-inter">Projected</span>
+                        <span class="text-xs font-inter font-medium text-primary"><?= fmt_idr((float)$today_rev * 1.2) ?></span>
                     </div>
                 </div>
             </div>
@@ -256,12 +257,12 @@ include 'includes/header.php';
             <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
                 <!-- Car Slots -->
                 <div class="bento-card p-4 flex items-center gap-4 flex-1">
-                    <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-car text-lg"></i>
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $car_avail ?></span>
-                        <span class="text-[11px] font-medium text-secondary truncate">Car Slots Available</span>
+                        <span class="text-[13px] font-inter text-tertiary truncate">Car Slots Available</span>
                         <div class="mt-3">
                             <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill rounded-full" style="width: <?= $car_pct ?>%"></div>
@@ -272,12 +273,12 @@ include 'includes/header.php';
 
                 <!-- Motorcycle Slots -->
                 <div class="bento-card p-4 flex items-center gap-4 flex-1">
-                    <div class="w-12 h-12 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-motorcycle text-lg"></i>
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $moto_avail ?></span>
-                        <span class="text-[11px] font-medium text-secondary truncate">Motorcycle Slots Available</span>
+                        <span class="text-[13px] font-inter text-tertiary truncate">Motorcycle Slots Available</span>
                         <div class="mt-3">
                             <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill rounded-full" style="width: <?= $moto_pct ?>%"></div>
@@ -303,12 +304,12 @@ include 'includes/header.php';
                     <div class="flex-grow flex flex-col justify-center">
                         <div class="flex items-end gap-3 mb-4">
                             <span class="font-manrope font-semibold text-2xl text-primary leading-none tracking-tight"><?= $peak_time ?></span>
-                            <span class="text-secondary text-[11px] font-medium tracking-wider pb-0.5">Peak Time</span>
+                            <span class="text-tertiary text-xs font-inter pb-0.5">Peak Time</span>
                         </div>
 
-                        <div class="flex items-center gap-6 mt-2 pt-4 border-t border-slate-900/5 text-[10px] font-extrabold tracking-widest uppercase">
-                            <span class="text-secondary whitespace-nowrap">Max Volume: <span class="text-primary"><?= $peak_vol ?> Vehicles</span></span>
-                            <span class="text-secondary whitespace-nowrap border-l border-slate-100 pl-6">Dominant: <span class="text-primary"><?= $peak_dom ?></span></span>
+                        <div class="flex items-center gap-6 mt-2 pt-4 border-t border-slate-900/5 text-xs font-inter text-tertiary">
+                            <span class="whitespace-nowrap">Max Volume: <span class="text-primary font-medium"><?= $peak_vol ?> Vehicles</span></span>
+                            <span class="whitespace-nowrap border-l border-slate-100/10 pl-6">Dominant: <span class="text-primary font-medium"><?= $peak_dom ?></span></span>
                         </div>
                     </div>
                 </div>
@@ -379,11 +380,11 @@ include 'includes/header.php';
                         <div class="flex gap-8">
                             <div class="flex items-center gap-3 group/legend cursor-default">
                                 <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
-                                <span class="text-[10px] font-bold uppercase text-slate-900/40 tracking-widest">Cars</span>
+                                <span class="text-xs font-inter text-tertiary">Cars</span>
                             </div>
                             <div class="flex items-center gap-3 group/legend cursor-default">
                                 <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                                <span class="text-[10px] font-bold uppercase text-slate-900/40 tracking-widest">Motos</span>
+                                <span class="text-xs font-inter text-tertiary">Motos</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50/50 rounded-lg border border-slate-100/50 group/monitor">
@@ -391,7 +392,7 @@ include 'includes/header.php';
                                 <span class="absolute inset-0 bg-slate-400 rounded-full animate-ping opacity-25"></span>
                                 <span class="relative block w-2 h-2 bg-slate-500 rounded-full"></span>
                             </div>
-                            <p class="text-[11px] font-extrabold text-slate-600/60 uppercase tracking-[0.2em] font-inter">Live Monitor</p>
+                            <p class="text-xs font-inter text-secondary">Live Monitor</p>
                         </div>
                     </div>
                 </div>
@@ -448,7 +449,7 @@ include 'includes/header.php';
                             <h3 class="card-title leading-tight">Recent Activity Log</h3>
                         </div>
                     </div>
-                    <a href="modules/operations/scan_log.php" class="text-[11px] font-extrabold uppercase tracking-widest text-secondary hover:text-primary transition-colors font-inter">VIEW ALL</a>
+                    <a href="modules/operations/scan_log.php" class="text-xs font-inter text-tertiary hover:text-primary transition-colors">View All</a>
                 </div>
 
                 <?php if (empty($recent_logs)): ?>
@@ -474,38 +475,38 @@ include 'includes/header.php';
                                 <tr class="group hover:bg-slate-50/50 transition-colors">
                                     <td class="py-2 text-left align-middle">
                                         <div class="flex items-center">
-                                            <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-900 border-slate-200 flex items-center justify-center shrink-0 shadow-sm border group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                            <div class="w-9 h-9 rounded-lg icon-container flex items-center justify-center shrink-0 transition-all">
                                                 <i class="fa-solid <?= $log['vehicle_type'] === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="py-2 text-center align-middle">
                                         <div class="flex flex-col items-center justify-center">
-                                            <span class="text-[11px] font-extrabold text-slate-900 uppercase tracking-widest leading-none mb-1">
+                                            <span class="text-sm font-semibold text-primary leading-none mb-1">
                                                 <?= $log['plate_number'] ?: '------' ?>
                                             </span>
-                                            <span class="text-[11px] font-code text-slate-900/40 font-extrabold leading-none">
+                                            <span class="text-xs font-code text-tertiary leading-none">
                                                 <?= $log['code'] ?: 'PENDING' ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-[11px] text-slate-900 font-extrabold uppercase tracking-widest">
+                                            <span class="text-sm font-medium text-primary">
                                                 <?= date('H:i', strtotime($log['entry_time'])) ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-[11px] text-slate-900 font-extrabold uppercase tracking-widest">
+                                            <span class="text-sm font-medium text-primary">
                                                 <?= ($log['log_type'] === 'reservation') ? '--:--' : ($log['exit_time'] ? date('H:i', strtotime($log['exit_time'])) : '--:--') ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-[11px] font-manrope font-extrabold text-slate-900 uppercase tracking-widest">
+                                            <span class="text-sm font-manrope font-medium text-primary">
                                                 <?= $log['total_fee'] !== null ? fmt_idr((float)$log['total_fee']) : 'Rp 0' ?>
                                             </span>
                                         </div>
@@ -513,11 +514,11 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-reserved">Reserved</span>
+                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-reserved">Reserved</span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-parked">Parked</span>
+                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-parked">Parked</span>
                                             <?php else: ?>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest status-badge-departed">Departed</span>
+                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-departed">Departed</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -548,7 +549,7 @@ include 'includes/header.php';
                         </div>
                         <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg shadow-sm">
                             <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider"><?= count($active_staff) ?> Active</span>
+                            <span class="text-xs font-semibold"><?= count($active_staff) ?> Active</span>
                         </div>
                     </div>
 
@@ -569,12 +570,12 @@ include 'includes/header.php';
                                         <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 status-dot-available border-2 border-white rounded-full"></div>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="text-[11px] font-extrabold text-slate-900 truncate"><?= htmlspecialchars($st['full_name']) ?></p>
-                                        <p class="text-[11px] text-slate-900/40 uppercase tracking-wider font-extrabold"><?= htmlspecialchars($st['shift'] ?? 'Duty') ?> Shift</p>
+                                        <p class="text-sm font-medium text-primary truncate"><?= htmlspecialchars($st['full_name']) ?></p>
+                                        <p class="text-xs font-inter text-tertiary"><?= htmlspecialchars($st['shift'] ?? 'Duty') ?> Shift</p>
                                     </div>
                                 </div>
                                 <div class="text-right whitespace-nowrap">
-                                    <p class="text-[11px] font-extrabold text-slate-900/70 uppercase tracking-wider">IN: <?= date('H:i', strtotime($st['check_in_time'])) ?></p>
+                                    <p class="text-xs font-inter text-secondary">IN: <?= date('H:i', strtotime($st['check_in_time'])) ?></p>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -598,15 +599,15 @@ include 'includes/header.php';
                     <div class="flex-grow flex flex-col justify-center">
                         <div class="flex items-end gap-3 mb-4">
                             <span class="font-manrope font-semibold text-4xl text-primary leading-none tracking-tight"><?= $avg_duration_str ?></span>
-                            <span class="text-secondary text-[11px] font-medium tracking-wider pb-1 uppercase">Per Session</span>
+                            <span class="text-tertiary text-xs font-inter pb-1">Per Session</span>
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full <?= $duration_trend <= 0 ? 'status-badge-available' : 'status-badge-over' ?> text-[11px] font-bold">
+                            <div class="flex items-center gap-1.5 text-xs font-bold <?= $duration_trend <= 0 ? 'status-text-available' : 'status-text-over' ?>">
                                 <i class="fa-solid <?= $duration_trend <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up' ?>"></i>
                                 <?= abs(round($duration_trend, 1)) ?>%
                             </div>
-                            <p class="text-[11px] font-medium text-secondary uppercase tracking-wider">Vs Last Month</p>
+                            <p class="text-xs font-inter text-tertiary">Vs Last Month</p>
                         </div>
                     </div>
                 </div>
@@ -631,7 +632,7 @@ include 'includes/header.php';
         <form id="attendanceForm" class="space-y-6">
             <?= csrf_field() ?>
             <div>
-                <label class="block text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-900/30 font-inter mb-3">Personnel Profile</label>
+                <label class="block text-xs font-semibold text-tertiary font-inter mb-3">Personnel Profile</label>
                 <div class="relative">
                     <select name="staff_id" required
                             class="w-full bg-slate-50 border-2 border-transparent rounded-xl px-5 py-4 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white transition-all font-inter font-bold appearance-none">
@@ -646,7 +647,7 @@ include 'includes/header.php';
                 </div>
             </div>
             <button type="submit" id="attendBtn"
-                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black font-inter rounded-xl uppercase tracking-widest text-[11px] py-5 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold font-inter rounded-xl text-sm py-4 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
                 Establish Connection
             </button>
         </form>

@@ -86,26 +86,46 @@ main.pl-64 {
 .progress-fill { background-color: var(--brand); transition: width 1s ease-out; }
 
 /* 4. Universal Status Classes */
-.status-badge-available { background-color: transparent !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-text) !important; }
+.status-badge-available { background-color: transparent !important; color: var(--status-available-text) !important; border: 2px solid var(--status-available-text) !important; }
 .status-dot-available { background-color: var(--status-available-text) !important; }
 .status-text-available { color: var(--status-available-text) !important; }
 
-.status-badge-parked { background-color: transparent !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-text) !important; }
+.status-badge-parked { background-color: transparent !important; color: var(--status-parked-text) !important; border: 2px solid var(--status-parked-text) !important; }
 .status-dot-parked { background-color: var(--status-parked-text) !important; }
 .status-text-parked { color: var(--status-parked-text) !important; }
 
-.status-badge-reserved { background-color: transparent !important; color: var(--status-reserved-text) !important; border: 1px solid var(--status-reserved-text) !important; }
+.status-badge-reserved { background-color: transparent !important; color: var(--status-reserved-text) !important; border: 2px solid var(--status-reserved-text) !important; }
 .status-dot-reserved { background-color: var(--status-reserved-text) !important; }
 .status-text-reserved { color: var(--status-reserved-text) !important; }
 
-.status-badge-maintenance { background-color: transparent !important; color: var(--status-maintenance-text) !important; border: 1px solid var(--status-maintenance-text) !important; }
+.status-badge-maintenance { background-color: transparent !important; color: var(--status-maintenance-text) !important; border: 2px solid var(--status-maintenance-text) !important; }
 .status-dot-maintenance { background-color: var(--status-maintenance-text) !important; }
 .status-text-maintenance { color: var(--status-maintenance-text) !important; }
 
-.status-badge-departed { background-color: transparent !important; color: var(--status-departed-text) !important; border: 1px solid var(--status-departed-text) !important; }
+.status-badge-departed { background-color: transparent !important; color: var(--status-departed-text) !important; border: 2px solid var(--status-departed-text) !important; }
 .status-dot-departed { background-color: var(--status-departed-text) !important; }
 .status-text-departed { color: var(--status-departed-text) !important; }
 
-.status-badge-over { background-color: transparent !important; color: var(--status-over-text) !important; border: 1px solid var(--status-over-text) !important; }
+.status-badge-over { background-color: transparent !important; color: var(--status-over-text) !important; border: 2px solid var(--status-over-text) !important; }
 .status-dot-over { background-color: var(--status-over-text) !important; }
 .status-text-over { color: var(--status-over-text) !important; }
+
+/* 5. Typography & Icons */
+.card-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.text-tertiary {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.icon-container {
+    background-color: var(--surface-alt);
+    color: var(--brand);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px var(--shadow-color);
+}
