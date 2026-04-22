@@ -195,7 +195,7 @@ include 'includes/header.php';
 
                     <div class="flex items-end justify-between">
                         <div class="flex flex-col">
-                            <span class="font-manrope font-semibold text-5xl text-slate-900 tracking-tighter leading-none"><?= $total_used ?></span>
+                            <span class="font-manrope font-semibold text-4xl text-slate-900 tracking-tighter leading-none"><?= $total_used ?></span>
                             <span class="text-tertiary text-xs font-inter mt-1">Vehicles Parked</span>
                         </div>
                         <div class="text-right">
@@ -205,14 +205,14 @@ include 'includes/header.php';
                     </div>
 
                     <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
-                        <div class="flex items-center justify-between">
-                            <span class="px-2 py-1 rounded-lg status-badge-reserved text-[10px] font-semibold tracking-wider uppercase">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
                                 Reserved: <?= $res_count ?>
                             </span>
-                            <span class="px-2 py-1 rounded-lg status-badge-available text-[10px] font-semibold tracking-wider uppercase">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-available text-[11px] font-medium font-inter">
                                 Available: <?= $car_avail + $moto_avail ?>
                             </span>
-                            <span class="px-2 py-1 rounded-lg status-badge-maintenance text-[10px] font-semibold tracking-wider uppercase">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-maintenance text-[11px] font-medium font-inter">
                                 Maintenance: <?= $mnt_count ?>
                             </span>
                         </div>
@@ -325,7 +325,7 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg">
+                        <div class="flex items-center gap-1.5 px-3 py-1.5 status-badge-available rounded-full">
                             <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
                             <span class="text-[11px] font-inter font-medium">Live</span>
                         </div>
@@ -347,7 +347,7 @@ include 'includes/header.php';
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">
                                 <span id="cctv-label" class="text-[8px] font-mono text-white/80 bg-slate-900/40 px-1.5 py-0.5 rounded leading-none uppercase tracking-widest">CAM_01_ENTRY</span>
-                                <div class="flex items-center gap-1.5 status-badge-over px-2.5 py-1 rounded-lg">
+                                <div class="flex items-center gap-1.5 status-badge-over px-2.5 py-1 rounded-full">
                                     <span class="w-1.5 h-1.5 rounded-full status-dot-over animate-pulse"></span>
                                     <span class="text-[11px] font-inter font-medium">REC</span>
                                 </div>
@@ -506,11 +506,17 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-reserved">Reserved</span>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-reserved">
+                                                    Reserved
+                                                </span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-parked">Parked</span>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-parked">
+                                                    Parked
+                                                </span>
                                             <?php else: ?>
-                                                <span class="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest status-badge-departed">Departed</span>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-departed">
+                                                    Departed
+                                                </span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -539,9 +545,9 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1 status-badge-available rounded-lg">
+                        <div class="flex items-center gap-1.5 px-3 py-1.5 status-badge-available rounded-full">
                             <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
-                            <span class="text-xs font-semibold"><?= count($active_staff) ?> Active</span>
+                            <span class="text-[11px] font-inter font-medium"><?= count($active_staff) ?> Active</span>
                         </div>
                     </div>
 

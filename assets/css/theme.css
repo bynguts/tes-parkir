@@ -12,24 +12,30 @@
     --hover-border: #6366f1;
     --shadow-color: rgba(99, 102, 241, 0.08);
 
-    /* Universal Status Colors (Constant in all themes) */
-    --status-available-bg: #064e3b;
-    --status-available-text: #34d399;
+    /* Universal Status Colors (Light Theme) */
+    --status-available-bg: #dcfce7;
+    --status-available-border: #bbf7d0;
+    --status-available-text: #166534;
     
-    --status-parked-bg: #1e3a8a;
-    --status-parked-text: #60a5fa;
+    --status-parked-bg: #dbeafe;
+    --status-parked-border: #bfdbfe;
+    --status-parked-text: #1e40af;
     
-    --status-reserved-bg: #4c1d95;
-    --status-reserved-text: #a78bfa;
+    --status-reserved-bg: #f3e8ff;
+    --status-reserved-border: #e9d5ff;
+    --status-reserved-text: #6b21a8;
     
-    --status-maintenance-bg: #78350f;
-    --status-maintenance-text: #fbbf24;
+    --status-maintenance-bg: #fef3c7;
+    --status-maintenance-border: #fde68a;
+    --status-maintenance-text: #92400e;
     
-    --status-departed-bg: #0f172a;
-    --status-departed-text: #94a3b8;
+    --status-departed-bg: #f1f5f9;
+    --status-departed-border: #e2e8f0;
+    --status-departed-text: #334155;
     
-    --status-over-bg: #450a0a;
-    --status-over-text: #f87171;
+    --status-over-bg: #fee2e2;
+    --status-over-border: #fecaca;
+    --status-over-text: #991b1b;
 }
 
 [data-theme="dark"] {
@@ -44,6 +50,31 @@
     --border-color: rgba(255, 255, 255, 0.05);
     --hover-border: #818cf8;
     --shadow-color: rgba(0, 0, 0, 0.4);
+
+    /* Universal Status Colors (Dark Theme) */
+    --status-available-bg: rgba(52, 211, 153, 0.1);
+    --status-available-border: rgba(52, 211, 153, 0.2);
+    --status-available-text: #34d399;
+    
+    --status-parked-bg: rgba(96, 165, 250, 0.1);
+    --status-parked-border: rgba(96, 165, 250, 0.2);
+    --status-parked-text: #60a5fa;
+    
+    --status-reserved-bg: rgba(167, 139, 250, 0.1);
+    --status-reserved-border: rgba(167, 139, 250, 0.2);
+    --status-reserved-text: #a78bfa;
+    
+    --status-maintenance-bg: rgba(251, 191, 36, 0.1);
+    --status-maintenance-border: rgba(251, 191, 36, 0.2);
+    --status-maintenance-text: #fbbf24;
+    
+    --status-departed-bg: rgba(148, 163, 184, 0.1);
+    --status-departed-border: rgba(148, 163, 184, 0.2);
+    --status-departed-text: #94a3b8;
+    
+    --status-over-bg: rgba(248, 113, 113, 0.1);
+    --status-over-border: rgba(248, 113, 113, 0.2);
+    --status-over-text: #f87171;
 }
 
 /* 2. Base Layout & Background */
@@ -86,27 +117,27 @@ main.pl-64 {
 .progress-fill { background-color: var(--brand); transition: width 1s ease-out; }
 
 /* 4. Universal Status Classes */
-.status-badge-available { background-color: transparent !important; color: var(--status-available-text) !important; border: 2px solid var(--status-available-text) !important; }
+.status-badge-available { background-color: var(--status-available-bg) !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-border) !important; }
 .status-dot-available { background-color: var(--status-available-text) !important; }
 .status-text-available { color: var(--status-available-text) !important; }
 
-.status-badge-parked { background-color: transparent !important; color: var(--status-parked-text) !important; border: 2px solid var(--status-parked-text) !important; }
+.status-badge-parked { background-color: var(--status-parked-bg) !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-border) !important; }
 .status-dot-parked { background-color: var(--status-parked-text) !important; }
 .status-text-parked { color: var(--status-parked-text) !important; }
 
-.status-badge-reserved { background-color: transparent !important; color: var(--status-reserved-text) !important; border: 2px solid var(--status-reserved-text) !important; }
+.status-badge-reserved { background-color: var(--status-reserved-bg) !important; color: var(--status-reserved-text) !important; border: 1px solid var(--status-reserved-border) !important; }
 .status-dot-reserved { background-color: var(--status-reserved-text) !important; }
 .status-text-reserved { color: var(--status-reserved-text) !important; }
 
-.status-badge-maintenance { background-color: transparent !important; color: var(--status-maintenance-text) !important; border: 2px solid var(--status-maintenance-text) !important; }
+.status-badge-maintenance { background-color: var(--status-maintenance-bg) !important; color: var(--status-maintenance-text) !important; border: 1px solid var(--status-maintenance-border) !important; }
 .status-dot-maintenance { background-color: var(--status-maintenance-text) !important; }
 .status-text-maintenance { color: var(--status-maintenance-text) !important; }
 
-.status-badge-departed { background-color: transparent !important; color: var(--status-departed-text) !important; border: 2px solid var(--status-departed-text) !important; }
+.status-badge-departed { background-color: var(--status-departed-bg) !important; color: var(--status-departed-text) !important; border: 1px solid var(--status-departed-border) !important; }
 .status-dot-departed { background-color: var(--status-departed-text) !important; }
 .status-text-departed { color: var(--status-departed-text) !important; }
 
-.status-badge-over { background-color: transparent !important; color: var(--status-over-text) !important; border: 2px solid var(--status-over-text) !important; }
+.status-badge-over { background-color: var(--status-over-bg) !important; color: var(--status-over-text) !important; border: 1px solid var(--status-over-border) !important; }
 .status-dot-over { background-color: var(--status-over-text) !important; }
 .status-text-over { color: var(--status-over-text) !important; }
 
