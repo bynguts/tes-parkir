@@ -186,9 +186,10 @@ main.pl-64 {
 }
 
 .toggle-btn.active {
-    background-color: var(--brand) !important;
-    color: var(--surface) !important;
-    box-shadow: 0 2px 8px var(--shadow-color) !important;
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px var(--shadow-color) !important;
 }
 
 .status-dot-ring {
@@ -200,3 +201,29 @@ main.pl-64 {
     background-color: var(--border-color);
 }
 
+/* 7. Modal & Action Buttons */
+.modal-surface {
+    background-color: var(--surface) !important;
+    border-color: var(--border-color) !important;
+}
+
+.modal-input {
+    background-color: var(--surface-alt) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-input:focus {
+    border-color: var(--brand) !important;
+    background-color: var(--surface) !important;
+}
+
+.btn-primary {
+    background-color: var(--brand) !important;
+    color: var(--surface) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--hover-border) !important;
+    box-shadow: 0 4px 15px var(--shadow-color) !important;
+}

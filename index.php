@@ -206,13 +206,13 @@ include 'includes/header.php';
 
                     <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
                                 Reserved: <?= $res_count ?>
                             </span>
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-available text-[11px] font-medium font-inter">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-available text-[11px] font-medium font-inter">
                                 Available: <?= $car_avail + $moto_avail ?>
                             </span>
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full status-badge-maintenance text-[11px] font-medium font-inter">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-maintenance text-[11px] font-medium font-inter">
                                 Maintenance: <?= $mnt_count ?>
                             </span>
                         </div>
@@ -307,9 +307,9 @@ include 'includes/header.php';
                             <span class="text-tertiary text-xs font-inter pb-0.5">Peak Time</span>
                         </div>
 
-                        <div class="flex items-center gap-6 mt-2 pt-4 border-t border-slate-900/5 text-xs font-inter text-tertiary">
+                        <div class="flex items-center justify-between mt-2 pt-4 border-t border-slate-900/5 text-xs font-inter text-tertiary">
                             <span class="whitespace-nowrap">Max Volume: <span class="text-primary font-medium"><?= $peak_vol ?> Vehicles</span></span>
-                            <span class="whitespace-nowrap border-l border-slate-100/10 pl-6">Dominant: <span class="text-primary font-medium"><?= $peak_dom ?></span></span>
+                            <span class="whitespace-nowrap text-right">Dominant: <span class="text-primary font-medium"><?= $peak_dom ?></span></span>
                         </div>
                     </div>
                 </div>
@@ -325,8 +325,7 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-3 py-1.5 status-badge-available rounded-full">
-                            <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
+                        <div class="flex items-center px-2 py-0.5 status-badge-available rounded-full">
                             <span class="text-[11px] font-inter font-medium">Live</span>
                         </div>
                     </div>
@@ -347,8 +346,7 @@ include 'includes/header.php';
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">
                                 <span id="cctv-label" class="text-[8px] font-mono text-white/80 bg-slate-900/40 px-1.5 py-0.5 rounded leading-none uppercase tracking-widest">CAM_01_ENTRY</span>
-                                <div class="flex items-center gap-1.5 status-badge-over px-2.5 py-1 rounded-full">
-                                    <span class="w-1.5 h-1.5 rounded-full status-dot-over animate-pulse"></span>
+                                <div class="flex items-center status-badge-over px-2 py-0.5 rounded-full">
                                     <span class="text-[11px] font-inter font-medium">REC</span>
                                 </div>
                             </div>
@@ -506,15 +504,15 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-reserved">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-reserved">
                                                     Reserved
                                                 </span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-parked">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-parked">
                                                     Parked
                                                 </span>
                                             <?php else: ?>
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium font-inter status-badge-departed">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-departed">
                                                     Departed
                                                 </span>
                                             <?php endif; ?>
@@ -545,8 +543,7 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 px-3 py-1.5 status-badge-available rounded-full">
-                            <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
+                        <div class="flex items-center px-2 py-0.5 status-badge-available rounded-full">
                             <span class="text-[11px] font-inter font-medium"><?= count($active_staff) ?> Active</span>
                         </div>
                     </div>
@@ -618,10 +615,10 @@ include 'includes/header.php';
 <!-- Attendance Modal -->
 <?php if (!$on_duty): ?>
 <div id="attendanceOverlay" class="fixed inset-0 z-[100] backdrop-blur-xl bg-slate-900/20 flex items-center justify-center">
-    <div class="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-sm mx-4 border border-slate-100 animate-in fade-in zoom-in duration-300">
+    <div class="modal-surface rounded-3xl shadow-2xl p-10 w-full max-w-sm mx-4 border animate-in fade-in zoom-in duration-300">
         <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/20">
-                <i class="fa-solid fa-user-check text-white text-3xl"></i>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl" style="background-color: var(--brand); color: var(--surface); box-shadow: 0 10px 25px var(--shadow-color);">
+                <i class="fa-solid fa-user-check text-3xl"></i>
             </div>
             <h2 class="font-manrope font-extrabold text-2xl text-slate-900 mb-2">Duty Check-in</h2>
             <p class="text-slate-400 text-sm font-inter">Identify yourself to access the console.</p>
@@ -633,7 +630,7 @@ include 'includes/header.php';
                 <label class="block text-xs font-semibold text-tertiary font-inter mb-3">Personnel Profile</label>
                 <div class="relative">
                     <select name="staff_id" required
-                            class="w-full bg-slate-50 border-2 border-transparent rounded-xl px-5 py-4 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white transition-all font-inter font-bold appearance-none">
+                            class="w-full modal-input border-2 rounded-xl px-5 py-4 text-sm focus:outline-none transition-all font-inter font-bold appearance-none">
                         <option value="">Select Profile</option>
                         <?php foreach ($staff_list as $s): ?>
                             <option value="<?= $s['operator_id'] ?>"><?= htmlspecialchars($s['full_name']) ?> — <?= $s['shift'] ?></option>
@@ -645,7 +642,7 @@ include 'includes/header.php';
                 </div>
             </div>
             <button type="submit" id="attendBtn"
-                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold font-inter rounded-xl text-sm py-4 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    class="w-full btn-primary font-semibold font-inter rounded-xl text-sm py-4 transition-all hover:-translate-y-0.5 active:translate-y-0">
                 Establish Connection
             </button>
         </form>
@@ -740,7 +737,7 @@ function initChart(data) {
                     grid: { display: false },
                     border: {
                         display: true,
-                        color: secondaryColor,
+                        color: borderColor,
                         width: 1
                     },
                     ticks: {
