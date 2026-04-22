@@ -32,11 +32,13 @@ $page_title = $page_title ?? 'Parking System';
                     'inter': ['Inter', 'sans-serif'],
                 },
                 colors: {
-                    'surface': '#f8fafc',
-                    'surface-bright': '#ffffff',
-                    'on-surface': '#0f172a',
-                    'primary-fixed': '#0f172a',
-                    'secondary-fixed': 'rgba(15, 23, 42, 0.4)',
+                    'brand': 'var(--brand)',
+                    'surface': 'var(--surface)',
+                    'surface-alt': 'var(--surface-alt)',
+                    'bg-page': 'var(--bg-page)',
+                    'primary': 'var(--text-primary)',
+                    'secondary': 'var(--text-secondary)',
+                    'border-color': 'var(--border-color)',
                 },
             }
         }
@@ -140,7 +142,7 @@ $page_title = $page_title ?? 'Parking System';
         .progress-bar-fill { transition: width 0.8s ease; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-hidden">
+<body class="bg-page text-primary overflow-hidden">
 <?php
 if (!isset($hide_sidebar) || !$hide_sidebar) {
     include 'sidebar.php';
@@ -148,74 +150,72 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 ?>
 
 <!-- Main Content Wrapper & Scroll Container -->
-<main class="pl-64 min-h-screen bg-slate-50 text-on-surface">
+<main class="pl-64 min-h-screen bg-page text-primary">
 
     <!-- Global Top Bar (Sticky) -->
     <?php if (!isset($hide_header) || !$hide_header): ?>
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-900/10">
+    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-page border-b border-color">
         <!-- Search Bar (Left Aligned) -->
-        <div class="relative group">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-900/30 group-focus-within:text-slate-900 transition-colors"></i>
+        <div class="group h-11 bento-card flex items-center px-4 gap-3 transition-all">
+            <i class="fa-solid fa-magnifying-glass text-brand transition-all pointer-events-none"></i>
             <input type="text" 
                    placeholder="Search anything about website..." 
-                   class="w-[320px] bg-slate-900/5 border border-slate-900/5 px-11 py-2.5 rounded-2xl text-sm font-inter placeholder:text-slate-900/30 focus:outline-none focus:bg-white focus:border-slate-900/10 focus:ring-4 focus:ring-slate-900/[0.02] transition-all"
+                   class="w-[340px] h-full bg-transparent text-[13px] font-inter font-medium text-primary placeholder:text-primary transition-colors focus:outline-none"
             >
         </div>
 
         <div class="flex items-center gap-3 ml-auto">
-            <!-- Theme Toggle -->
-            <button id="theme-toggle" class="w-11 h-11 rounded-2xl bg-white border border-slate-900/10 flex items-center justify-center text-slate-900 hover:bg-slate-900/5 transition-all shadow-sm">
-                <i class="fa-solid fa-moon text-slate-900/60 transition-all duration-300" id="theme-icon"></i>
-            </button>
+            <!-- Theme Toggle Switch -->
+            <div class="flex items-center gap-3 h-11 bento-card px-4 flex items-center transition-all">
+                <span id="theme-label" class="text-[13px] font-inter font-medium text-primary">Light</span>
+                <div id="theme-toggle" class="w-10 h-5 bg-slate-200 dark:bg-brand/30 rounded-full p-1 cursor-pointer transition-all relative flex items-center">
+                    <div id="theme-thumb" class="w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0 shadow-sm"></div>
+                </div>
+            </div>
 
             <!-- Universal Export -->
-            <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">
-                <i class="fa-solid fa-file-export text-slate-900/60"></i>
+            <button class="flex items-center gap-3 h-11 bento-card px-4 font-inter font-medium text-[13px] text-primary transition-all group">
+                <i class="fa-solid fa-file-export text-brand text-lg transition-colors"></i>
                 <span>Export</span>
             </button>
 
             <script>
             const themeToggle = document.getElementById('theme-toggle');
-            const themeIcon = document.getElementById('theme-icon');
+            const themeThumb = document.getElementById('theme-thumb');
+            const themeLabel = document.getElementById('theme-label');
             const root = document.documentElement;
 
-            // Check for saved theme
-            if (localStorage.getItem('theme') === 'dark') {
-                root.setAttribute('data-theme', 'dark');
-                themeIcon.classList.replace('fa-moon', 'fa-sun');
-            } else {
-                root.setAttribute('data-theme', 'light');
+            function updateToggleUI(isDark) {
+                if (isDark) {
+                    themeToggle.classList.replace('bg-slate-200', 'bg-brand');
+                    themeThumb.style.transform = 'translateX(20px)';
+                    themeLabel.textContent = 'Dark';
+                } else {
+                    themeToggle.classList.replace('bg-brand', 'bg-slate-200');
+                    themeThumb.style.transform = 'translateX(0)';
+                    themeLabel.textContent = 'Light';
+                }
             }
 
+            // Init
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            root.setAttribute('data-theme', savedTheme);
+            updateToggleUI(savedTheme === 'dark');
+
             themeToggle.addEventListener('click', () => {
-                const isDark = root.getAttribute('data-theme') === 'dark';
-                const newTheme = isDark ? 'light' : 'dark';
+                const currentTheme = root.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 
                 root.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
                 
-                if (newTheme === 'dark') {
-                    themeIcon.classList.replace('fa-moon', 'fa-sun');
-                } else {
-                    themeIcon.classList.replace('fa-sun', 'fa-moon');
-                }
+                // Cookie for PHP
+                document.cookie = "theme=" + newTheme + "; path=/; max-age=" + (30*24*60*60);
+                
+                updateToggleUI(newTheme === 'dark');
             });
             </script>
 
-            <!-- How to use -->
-            <button class="flex items-center gap-2 bg-white border border-slate-900/10 text-slate-900 px-4 py-2.5 rounded-2xl font-inter font-semibold text-sm transition-all hover:bg-slate-900/5 hover:border-slate-900/20 shadow-sm">
-                <i class="fa-solid fa-circle-question text-slate-900/60"></i>
-                <span>How to use</span>
-            </button>
-
-            <!-- Divider -->
-            <div class="w-px h-6 bg-slate-900/10 mx-1"></div>
-
-            <!-- Notifications -->
-            <button class="w-11 h-11 rounded-2xl bg-white border border-slate-900/10 flex items-center justify-center text-slate-900 hover:bg-slate-900/5 transition-all shadow-sm relative">
-                <i class="fa-solid fa-bell text-slate-900/60"></i>
-                <span class="absolute top-3 right-3.5 w-2 h-2 bg-slate-900 rounded-full border-2 border-white"></span>
-            </button>
         </div>
     </header>
     <?php endif; ?>

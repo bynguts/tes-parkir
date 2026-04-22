@@ -40,7 +40,7 @@ $page_title = 'Parking Slot Map';
 $page_subtitle = 'Real-time visualization of vehicle slot mapping per floor.';
 $page_actions = '
 <div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 text-[11px] font-extrabold font-inter uppercase tracking-[0.2em] px-4 py-2 rounded-lg border border-emerald-500/20">
-    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span class="w-2 h-2 rounded-full bg-status-online animate-pulse"></span>
     <span id="lastRefresh">Live Sync</span>
 </div>';
 
@@ -90,7 +90,7 @@ include '../../includes/header.php';
         <div class="bg-white rounded-2xl px-6 py-4 mb-6 flex flex-wrap items-center gap-6 ring-1 ring-slate-900/5 shadow-sm">
             <span class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter">Legend:</span>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
-                <i class="fa-solid fa-circle text-emerald-500 text-[10px]"></i> Available
+                <i class="fa-solid fa-circle text-status-online text-[10px]"></i> Available
             </div>
             <div class="flex items-center gap-2 text-sm font-inter text-slate-900/60 font-semibold">
                 <i class="fa-solid fa-circle text-red-500 text-[10px]"></i> Occupied

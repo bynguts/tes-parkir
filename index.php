@@ -34,22 +34,9 @@ $last_year_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transactio
 
 $all_time_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid'")->fetchColumn();
 
-// Today vs Last 7 Days Average Logic
-$avg_7d_rev = $pdo->query("
-    SELECT COALESCE(SUM(total_fee)/7, 0) 
-    FROM `transaction` 
-    WHERE payment_status='paid' 
-    AND DATE(check_out_time) BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND DATE_SUB(CURDATE(), INTERVAL 1 DAY)
-")->fetchColumn();
-
-$rev_diff_7d = $today_rev - $avg_7d_rev;
-$rev_pct_7d = 0;
-if ($avg_7d_rev > 0) {
-    $rev_pct_7d = ($rev_diff_7d / $avg_7d_rev) * 100;
-} elseif ($today_rev > 0) {
-    $rev_pct_7d = 100;
-}
-$is_rev_up_7d = ($today_rev >= $avg_7d_rev) && ($today_rev > 0);
+// Today vs Yesterday Revenue Logic
+$rev_pct_today = calc_trend($today_rev, $yesterday_rev);
+$is_rev_up = ($today_rev >= $yesterday_rev) && ($today_rev > 0);
 
 // Peak Occupancy Logic
 $peak = $pdo->query("
@@ -115,20 +102,31 @@ $avg_duration_min = $pdo->query("
     WHERE payment_status='paid' AND check_out_time IS NOT NULL
 ")->fetchColumn();
 
+// This Month Average for trend
+$this_month_avg_duration = $pdo->query("
+    SELECT COALESCE(AVG(TIMESTAMPDIFF(MINUTE, check_in_time, check_out_time)), 0) 
+    FROM `transaction` 
+    WHERE payment_status='paid' 
+    AND check_out_time IS NOT NULL
+    AND MONTH(check_out_time) = MONTH(CURDATE())
+    AND YEAR(check_out_time) = YEAR(CURDATE())
+")->fetchColumn();
+
 $avg_duration_h = floor($avg_duration_min / 60);
 $avg_duration_m = round($avg_duration_min % 60);
 $avg_duration_str = ($avg_duration_h > 0 ? $avg_duration_h . "h " : "") . $avg_duration_m . "m";
 
-// Previous Month for comparison (simplified)
+// Previous Month for comparison
 $prev_avg_duration = $pdo->query("
     SELECT COALESCE(AVG(TIMESTAMPDIFF(MINUTE, check_in_time, check_out_time)), 0) 
     FROM `transaction` 
     WHERE payment_status='paid' 
     AND check_out_time IS NOT NULL
     AND MONTH(check_out_time) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+    AND YEAR(check_out_time) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 ")->fetchColumn();
 
-$duration_trend = calc_trend($avg_duration_min, $prev_avg_duration);
+$duration_trend = calc_trend($this_month_avg_duration, $prev_avg_duration);
 
 $page_title = 'Dashboard';
 $page_subtitle = date('l, d F Y');
@@ -152,27 +150,51 @@ include 'includes/header.php';
     <div class="px-10 py-10">
 
         <!-- Alerts -->
-        <?php if ($car_pct <= 20 && $car_total > 0): ?>
-        <div class="flex items-center gap-4 bento-card px-6 py-4 mb-6 relative overflow-hidden">
-            <div class="absolute inset-0 status-badge-over opacity-10 pointer-events-none"></div>
-            <div class="w-10 h-10 rounded-full status-badge-over flex items-center justify-center shrink-0 shadow-sm relative z-10">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <div>
-                <p class="font-manrope font-extrabold text-slate-900 text-sm">Car Capacity Warning</p>
-                <p class="font-inter text-slate-400 text-xs">Only <?= $car_avail ?> of <?= $car_total ?> slots remaining.</p>
-            </div>
-        </div>
-        <?php endif; ?>
-        <?php if ($moto_pct <= 20 && $moto_total > 0): ?>
-        <div class="flex items-center gap-4 bento-card px-6 py-4 mb-6 relative overflow-hidden">
-            <div class="absolute inset-0 status-badge-maintenance opacity-10 pointer-events-none"></div>
-            <div class="w-10 h-10 rounded-full status-badge-maintenance flex items-center justify-center shrink-0 shadow-sm relative z-10">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <div>
-                <p class="font-manrope font-extrabold text-slate-900 text-sm">Motorcycle Capacity Warning</p>
-                <p class="font-inter text-slate-400 text-xs">Only <?= $moto_avail ?> of <?= $moto_total ?> slots remaining.</p>
+        <?php 
+        $show_car_warn = ($car_pct <= 20 && $car_total > 0);
+        $show_moto_warn = ($moto_pct <= 20 && $moto_total > 0);
+        if ($show_car_warn || $show_moto_warn): 
+        ?>
+        <div class="bento-card p-4 mb-6 relative overflow-hidden group">
+            <div class="absolute -right-12 -top-12 w-24 h-24 bg-accent-glow rounded-full blur-2xl group-hover:bg-accent-glow transition-all"></div>
+            <div class="flex items-center justify-between relative z-10">
+                <!-- Warning Identity -->
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl status-badge-over flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation text-lg trend-down"></i>
+                    </div>
+                    <div>
+                        <p class="font-manrope font-extrabold text-primary text-sm leading-tight">Capacity Warning</p>
+                        <p class="font-inter text-tertiary text-[11px] mt-0.5">Sectors approaching full occupancy</p>
+                    </div>
+                </div>
+
+                <!-- Sector Details -->
+                <div class="flex items-center gap-10">
+                    <?php if ($show_car_warn): ?>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-car text-lg"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-manrope font-extrabold text-primary text-sm leading-none"><?= $car_avail ?> Slots</span>
+                            <span class="text-[11px] font-inter text-tertiary mt-0.5">Car Sector</span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($show_moto_warn): ?>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-motorcycle text-lg"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-manrope font-extrabold text-primary text-sm leading-none"><?= $moto_avail ?> Slots</span>
+                            <span class="text-[11px] font-inter text-tertiary mt-0.5">Motorcycle Sector</span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
         <?php endif; ?>
@@ -195,7 +217,7 @@ include 'includes/header.php';
 
                     <div class="flex items-end justify-between">
                         <div class="flex flex-col">
-                            <span class="font-manrope font-semibold text-4xl text-slate-900 tracking-tighter leading-none"><?= $total_used ?></span>
+                            <span class="font-manrope font-semibold text-5xl text-primary tracking-tighter leading-none"><?= $total_used ?></span>
                             <span class="text-tertiary text-xs font-inter mt-1">Vehicles Parked</span>
                         </div>
                         <div class="text-right">
@@ -204,16 +226,13 @@ include 'includes/header.php';
                         </div>
                     </div>
 
-                    <div class="w-full mt-auto pt-4 border-t border-slate-900/5">
+                    <div class="w-full mt-auto pt-4">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
-                                Reserved: <?= $res_count ?>
-                            </span>
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-available text-[11px] font-medium font-inter">
                                 Available: <?= $car_avail + $moto_avail ?>
                             </span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-maintenance text-[11px] font-medium font-inter">
-                                Maintenance: <?= $mnt_count ?>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
+                                Reserved: <?= $res_count ?>
                             </span>
                         </div>
                     </div>
@@ -221,9 +240,9 @@ include 'includes/header.php';
             </div>
 
             <div class="col-span-12 lg:col-span-4">
-                <div class="bento-card p-4 h-full flex flex-col justify-between relative overflow-hidden group">
+                <div class="bento-card p-4 h-full flex flex-col relative overflow-hidden group">
                     <!-- Premium Background Accent (Subtle) -->
-                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-slate-900/5 rounded-full blur-3xl group-hover:bg-slate-900/10 transition-all"></div>
+                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-accent-glow rounded-full blur-3xl group-hover-bg-accent-glow transition-all"></div>
                     
                     <div class="flex items-center gap-4 relative z-10 mb-4">
                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -234,26 +253,22 @@ include 'includes/header.php';
                         </div>
                     </div>
 
-                    <div class="relative z-10">
-                        <div class="font-manrope font-semibold text-4xl text-primary leading-none tracking-tight mb-3">
-                            <?= fmt_idr((float)$today_rev) ?>
+                    <div class="flex-grow flex flex-col justify-end relative z-10">
+                        <div class="flex items-end gap-3 mb-4">
+                            <span class="font-manrope font-semibold text-5xl text-primary leading-none tracking-tight">
+                                <?= fmt_idr((float)$today_rev) ?>
+                            </span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="flex items-center gap-1.5 text-xs font-bold <?= $is_rev_up_7d ? 'status-text-available' : 'status-text-over' ?>">
-                                <i class="fa-solid <?= $is_rev_up_7d ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
-                                <?= number_format(abs($rev_pct_7d), 1) ?>%
+                            <span class="flex items-center gap-1.5 text-xs font-bold <?= $rev_pct_today >= 0 ? 'trend-up' : 'trend-down' ?>">
+                                <i class="fa-solid <?= $rev_pct_today >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
+                                <?= number_format(abs($rev_pct_today), 1) ?>%
                             </span>
-                            <span class="text-tertiary text-xs font-inter">Vs 7d Average</span>
+                            <span class="text-tertiary text-xs font-inter">Vs Yesterday</span>
                         </div>
-                    </div>
-
-                    <div class="relative z-10 flex items-center justify-between border-t border-slate-900/5 pt-4">
-                        <span class="text-tertiary text-xs font-inter">Projected</span>
-                        <span class="text-xs font-inter font-medium text-primary"><?= fmt_idr((float)$today_rev * 1.2) ?></span>
                     </div>
                 </div>
             </div>
-
             <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
                 <!-- Car Slots -->
                 <div class="bento-card p-4 flex items-center gap-4 flex-1">
@@ -307,8 +322,8 @@ include 'includes/header.php';
                             <span class="text-tertiary text-xs font-inter pb-0.5">Peak Time</span>
                         </div>
 
-                        <div class="flex items-center justify-between mt-2 pt-4 border-t border-slate-900/5 text-xs font-inter text-tertiary">
-                            <span class="whitespace-nowrap">Max Volume: <span class="text-primary font-medium"><?= $peak_vol ?> Vehicles</span></span>
+                        <div class="flex items-center justify-between mt-2 pt-2 text-xs font-inter text-tertiary">
+                            <span class="whitespace-nowrap">Volume: <span class="text-primary font-medium"><?= $peak_vol ?> Vehicles</span></span>
                             <span class="whitespace-nowrap text-right">Dominant: <span class="text-primary font-medium"><?= $peak_dom ?></span></span>
                         </div>
                     </div>
@@ -325,30 +340,28 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center px-2 py-0.5 status-badge-available rounded-full">
+                        <div class="flex items-center px-2 py-0.5 status-badge-over rounded-full">
                             <span class="text-[11px] font-inter font-medium">Live</span>
                         </div>
                     </div>
 
-                    <!-- Camera Selection -->
-                    <div class="toggle-container mb-4">
-                        <button onclick="switchCam('entry')" id="btn-cam-entry" class="toggle-btn active">
+                    <!-- Camera Selection Toggle -->
+                    <div class="segmented-toggle mb-4">
+                        <div id="cam-slider" class="segmented-toggle-slider pointer-events-none"></div>
+                        <button onclick="switchCam('entry')" id="btn-cam-entry" class="segmented-toggle-btn text-white">
                             Entry
                         </button>
-                        <button onclick="switchCam('exit')" id="btn-cam-exit" class="toggle-btn">
+                        <button onclick="switchCam('exit')" id="btn-cam-exit" class="segmented-toggle-btn text-secondary">
                             Exit
                         </button>
                     </div>
 
                     <!-- Fake CCTV Stream -->
-                    <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-900 group/cctv shadow-inner border border-slate-100">
+                    <div class="relative w-full aspect-video rounded-3xl overflow-hidden bg-slate-900 group/cctv shadow-inner border-2 border-color">
                         <img id="cctv-img" src="assets/img/entry_gate.jpg" class="w-full h-full object-cover opacity-60 grayscale-[20%] transition-opacity duration-500">
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">
                                 <span id="cctv-label" class="text-[8px] font-mono text-white/80 bg-slate-900/40 px-1.5 py-0.5 rounded leading-none uppercase tracking-widest">CAM_01_ENTRY</span>
-                                <div class="flex items-center status-badge-over px-2 py-0.5 rounded-full">
-                                    <span class="text-[11px] font-inter font-medium">REC</span>
-                                </div>
                             </div>
                         </div>
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-4 w-full animate-scan pointer-events-none opacity-20"></div>
@@ -372,14 +385,14 @@ include 'includes/header.php';
                         <canvas id="trafficChart" class="w-full h-full"></canvas>
                     </div>
  
-                    <div class="mt-auto pt-6 border-t border-slate-900/5 flex items-center justify-between">
+                    <div class="mt-auto pt-4 flex items-center justify-between">
                         <div class="flex gap-8">
                             <div class="flex items-center gap-3 group/legend cursor-default">
-                                <div class="w-2.5 h-2.5 rounded-full status-dot-parked"></div>
+                                <div class="w-3 h-3 rounded-full traffic-dot-car"></div>
                                 <span class="text-xs font-inter text-tertiary">Cars</span>
                             </div>
                             <div class="flex items-center gap-3 group/legend cursor-default">
-                                <div class="w-2.5 h-2.5 rounded-full status-dot-available"></div>
+                                <div class="w-3 h-3 rounded-full traffic-dot-moto"></div>
                                 <span class="text-xs font-inter text-tertiary">Motorcycles</span>
                             </div>
                         </div>
@@ -451,7 +464,7 @@ include 'includes/header.php';
                     <div class="overflow-x-auto">
                         <table class="w-full font-inter border-collapse table-fixed activity-table">
                             <thead>
-                                <tr class="border-b border-slate-900/5">
+                                <tr class="border-b border-color">
                                     <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">In</th>
@@ -460,9 +473,9 @@ include 'includes/header.php';
                                     <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-900/5">
+                            <tbody class="divide-y divide-color">
                                 <?php foreach ($recent_logs as $log): ?>
-                                <tr class="group hover:bg-slate-50/50 transition-colors">
+                                <tr class="group hover:bg-surface-alt/50 transition-colors">
                                     <td class="py-2 text-left align-middle">
                                         <div class="flex items-center">
                                             <div class="w-9 h-9 rounded-lg icon-container flex items-center justify-center shrink-0 transition-all">
@@ -550,16 +563,16 @@ include 'includes/header.php';
 
                     <div class="space-y-2 flex-grow overflow-y-auto custom-scrollbar pr-1">
                         <?php if (empty($display_staff)): ?>
-                            <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+                            <div class="flex flex-col items-center justify-center py-10 text-tertiary">
                                 <i class="fa-solid fa-user-slash text-3xl mb-3 opacity-20"></i>
                                 <p class="text-xs font-inter">No personnel on duty.</p>
                             </div>
                         <?php else: ?>
                             <?php foreach ($display_staff as $st): ?>
-                            <div class="flex items-center justify-between p-2.5 bg-slate-900/5 rounded-2xl border border-slate-900/5 group transition-all">
+                            <div class="flex items-center justify-between p-2.5 bg-page rounded-2xl border-2 border-color group transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="relative">
-                                        <div class="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold font-manrope">
+                                        <div class="w-9 h-9 rounded-full bg-brand flex items-center justify-center text-white text-[10px] font-bold font-manrope">
                                             <?= strtoupper(substr($st['full_name'], 0, 1)) ?>
                                         </div>
                                         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 status-dot-available status-dot-ring rounded-full translate-x-[-0.5px] translate-y-[-0.5px]"></div>
@@ -591,15 +604,15 @@ include 'includes/header.php';
                         </div>
                     </div>
 
-                    <div class="flex-grow flex flex-col justify-center">
+                    <div class="flex-grow flex flex-col justify-end">
                         <div class="flex items-end gap-3 mb-4">
-                            <span class="font-manrope font-semibold text-4xl text-primary leading-none tracking-tight"><?= $avg_duration_str ?></span>
+                            <span class="font-manrope font-semibold text-5xl text-primary leading-none tracking-tight"><?= $avg_duration_str ?></span>
                             <span class="text-tertiary text-xs font-inter pb-1">Per Session</span>
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 text-xs font-bold <?= $duration_trend <= 0 ? 'status-text-available' : 'status-text-over' ?>">
-                                <i class="fa-solid <?= $duration_trend <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up' ?>"></i>
+                            <div class="flex items-center gap-1.5 text-xs font-bold <?= $duration_trend >= 0 ? 'trend-up' : 'trend-down' ?>">
+                                <i class="fa-solid <?= $duration_trend >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
                                 <?= abs(round($duration_trend, 1)) ?>%
                             </div>
                             <p class="text-xs font-inter text-tertiary">Vs Last Month</p>
@@ -620,8 +633,8 @@ include 'includes/header.php';
             <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl" style="background-color: var(--brand); color: var(--surface); box-shadow: 0 10px 25px var(--shadow-color);">
                 <i class="fa-solid fa-user-check text-3xl"></i>
             </div>
-            <h2 class="font-manrope font-extrabold text-2xl text-slate-900 mb-2">Duty Check-in</h2>
-            <p class="text-slate-400 text-sm font-inter">Identify yourself to access the console.</p>
+            <h2 class="font-manrope font-extrabold text-2xl text-primary mb-2">Duty Check-in</h2>
+            <p class="text-tertiary text-sm font-inter">Identify yourself to access the console.</p>
         </div>
 
         <form id="attendanceForm" class="space-y-6">
@@ -693,15 +706,6 @@ function initChart(data) {
     const borderColor = rootStyles.getPropertyValue('--border-color').trim();
     const surfaceColor = rootStyles.getPropertyValue('--surface').trim();
     const brandColor = rootStyles.getPropertyValue('--brand').trim();
-    const carColor = rootStyles.getPropertyValue('--status-parked-text').trim();
-    const motoColor = rootStyles.getPropertyValue('--status-available-text').trim();
-    
-    // Override dataset colors for universal look
-    if (data.datasets && data.datasets.length >= 2) {
-        data.datasets[0].backgroundColor = carColor;
-        data.datasets[1].backgroundColor = motoColor;
-    }
-
     // Cleanup if exists
     if (trafficChart) {
         trafficChart.destroy();
@@ -719,17 +723,29 @@ function initChart(data) {
             },
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    backgroundColor: brandColor,
-                    titleColor: surfaceColor,
-                    bodyColor: surfaceColor,
-                    titleFont: { family: 'Inter', weight: 'bold', size: 12 },
-                    bodyFont: { family: 'Inter', size: 11 },
-                    padding: 12,
-                    cornerRadius: 8,
-                    displayColors: true,
-                    usePointStyle: true,
-                }
+                    tooltip: {
+                        backgroundColor: surfaceColor,
+                        titleColor: textColor,
+                        bodyColor: textColor,
+                        borderColor: borderColor,
+                        borderWidth: 1,
+                        titleFont: { family: 'Inter', weight: 'bold', size: 12 },
+                        bodyFont: { family: 'Inter', size: 11 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        usePointStyle: true,
+                        boxPadding: 8, // Wider space between circle and text
+                        callbacks: {
+                            labelColor: function(context) {
+                                return {
+                                    borderColor: surfaceColor, // Match legend ring
+                                    backgroundColor: context.dataset.backgroundColor,
+                                    borderWidth: 2
+                                };
+                            }
+                        }
+                    }
             },
             scales: {
                 x: {
@@ -771,16 +787,18 @@ function initChart(data) {
     });
 }
 
-// Global listener for theme toggle to refresh charts
-document.getElementById('theme-toggle')?.addEventListener('click', () => {
-    // Small timeout to allow CSS variables to update in the DOM
-    setTimeout(() => {
-        if (trafficChart) {
-            updateChart('today'); // Re-fetch or just re-init if possible
-        }
-        initStatusDoughnut();
-    }, 50);
-});
+    // Global listener for theme toggle to refresh charts
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+        // Small timeout to allow CSS variables to update in the DOM
+        setTimeout(() => {
+            if (trafficChart) {
+                trafficChart.destroy();
+                trafficChart = null;
+                updateChart('today');
+            }
+            initStatusDoughnut();
+        }, 100);
+    });
 
 function updateChart(range) {
     // Fetch Data
@@ -810,16 +828,22 @@ function switchCam(type) {
     img.style.opacity = '0.3';
 
     setTimeout(() => {
+        const slider = document.getElementById('cam-slider');
+        
         if (type === 'entry') {
             img.src = 'assets/img/entry_gate.jpg';
             label.textContent = 'CAM_01_ENTRY';
-            btnEntry.classList.add('active');
-            btnExit.classList.remove('active');
+            
+            slider.style.transform = 'translateX(0)';
+            btnEntry.classList.replace('text-secondary', 'text-white');
+            btnExit.classList.replace('text-white', 'text-secondary');
         } else {
             img.src = 'assets/img/exit_gate.jpg';
             label.textContent = 'CAM_02_EXIT';
-            btnExit.classList.add('active');
-            btnEntry.classList.remove('active');
+            
+            slider.style.transform = 'translateX(100%)';
+            btnExit.classList.replace('text-secondary', 'text-white');
+            btnEntry.classList.replace('text-white', 'text-secondary');
         }
         img.style.opacity = '0.6';
     }, 200);
@@ -850,6 +874,8 @@ function initStatusDoughnut() {
     const c_free = rootStyles.getPropertyValue('--status-available-bg').trim() || '#10b981';
     const c_maint = rootStyles.getPropertyValue('--status-maintenance-bg').trim() || '#f59e0b';
     const c_surface = rootStyles.getPropertyValue('--surface').trim() || '#ffffff';
+    const c_text = rootStyles.getPropertyValue('--text-primary').trim() || '#0f172a';
+    const c_border = rootStyles.getPropertyValue('--border-color').trim() || 'rgba(0,0,0,0.1)';
 
     const ctx = document.getElementById('activeStatusDoughnut').getContext('2d');
     new Chart(ctx, {
@@ -877,7 +903,11 @@ function initStatusDoughnut() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#0f172a',
+                    backgroundColor: c_surface,
+                    titleColor: c_text,
+                    bodyColor: c_text,
+                    borderColor: c_border,
+                    borderWidth: 1,
                     titleAlign: 'center',
                     bodyAlign: 'center',
                     titleFont: { size: 10, weight: 'bold' },

@@ -17,17 +17,17 @@
     --status-available-border: #bbf7d0;
     --status-available-text: #166534;
     
-    --status-parked-bg: #dbeafe;
-    --status-parked-border: #bfdbfe;
-    --status-parked-text: #1e40af;
+    --status-parked-bg: #fef3c7;
+    --status-parked-border: #fde68a;
+    --status-parked-text: #92400e;
     
     --status-reserved-bg: #f3e8ff;
     --status-reserved-border: #e9d5ff;
     --status-reserved-text: #6b21a8;
     
-    --status-maintenance-bg: #fef3c7;
-    --status-maintenance-border: #fde68a;
-    --status-maintenance-text: #92400e;
+    --status-maintenance-bg: #dbeafe;
+    --status-maintenance-border: #bfdbfe;
+    --status-maintenance-text: #1e40af;
     
     --status-departed-bg: #f1f5f9;
     --status-departed-border: #e2e8f0;
@@ -36,6 +36,32 @@
     --status-over-bg: #fee2e2;
     --status-over-border: #fecaca;
     --status-over-text: #991b1b;
+
+    /* Fixed Status Colors (Theme-independent) */
+    --status-online: #10b981;
+    --accent-glow: rgba(15, 23, 42, 0.05);
+    --accent-glow-hover: rgba(15, 23, 42, 0.1);
+    --trend-up: #10b981;    /* Vibrant Green */
+    --trend-down: #ef4444;  /* Vibrant Red (Merah Merona) */
+    --traffic-car: #1d4ed8;
+    --traffic-moto: #93c5fd;
+}
+
+.bg-status-online { background-color: var(--status-online) !important; }
+.text-status-online { color: var(--status-online) !important; }
+
+/* Trend Colors */
+.trend-up { color: var(--trend-up) !important; }
+.trend-down { color: var(--trend-down) !important; }
+
+/* Traffic Chart Legend Dots */
+.traffic-dot-car { 
+    background-color: var(--traffic-car) !important; 
+    border: 2px solid var(--surface);
+}
+.traffic-dot-moto { 
+    background-color: var(--traffic-moto) !important; 
+    border: 2px solid var(--surface);
 }
 
 [data-theme="dark"] {
@@ -56,17 +82,17 @@
     --status-available-border: rgba(52, 211, 153, 0.2);
     --status-available-text: #34d399;
     
-    --status-parked-bg: rgba(96, 165, 250, 0.1);
-    --status-parked-border: rgba(96, 165, 250, 0.2);
-    --status-parked-text: #60a5fa;
+    --status-parked-bg: rgba(251, 191, 36, 0.1);
+    --status-parked-border: rgba(251, 191, 36, 0.2);
+    --status-parked-text: #fbbf24;
     
     --status-reserved-bg: rgba(167, 139, 250, 0.1);
     --status-reserved-border: rgba(167, 139, 250, 0.2);
     --status-reserved-text: #a78bfa;
     
-    --status-maintenance-bg: rgba(251, 191, 36, 0.1);
-    --status-maintenance-border: rgba(251, 191, 36, 0.2);
-    --status-maintenance-text: #fbbf24;
+    --status-maintenance-bg: rgba(96, 165, 250, 0.1);
+    --status-maintenance-border: rgba(96, 165, 250, 0.2);
+    --status-maintenance-text: #60a5fa;
     
     --status-departed-bg: rgba(148, 163, 184, 0.1);
     --status-departed-border: rgba(148, 163, 184, 0.2);
@@ -75,6 +101,9 @@
     --status-over-bg: rgba(248, 113, 113, 0.1);
     --status-over-border: rgba(248, 113, 113, 0.2);
     --status-over-text: #f87171;
+
+    --accent-glow: rgba(255, 255, 255, 0.03);
+    --accent-glow-hover: rgba(255, 255, 255, 0.05);
 }
 
 /* 2. Base Layout & Background */
@@ -102,15 +131,24 @@ main.pl-64 {
     border-color: var(--hover-border) !important;
 }
 
-/* Override Tailwind text classes to use variables */
-.text-slate-900 { color: var(--text-primary) !important; }
-.text-slate-400, .text-slate-500 { color: var(--text-secondary) !important; }
+/* Universal Semantic Utilities */
+.bg-surface { background-color: var(--surface) !important; }
+.bg-surface-alt { background-color: var(--surface-alt) !important; }
+.bg-page { background-color: var(--bg-page) !important; }
+.border-color { border-color: var(--border-color) !important; }
+.divide-color > * + * { border-color: var(--border-color) !important; }
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary { color: var(--text-secondary); opacity: 0.7; }
+.text-brand { color: var(--brand) !important; }
+.bg-brand { background-color: var(--brand) !important; }
+.border-brand { border-color: var(--brand) !important; }
 
-/* Apply alt surface to nested items like personnel cards */
-.bg-slate-900\/5 {
-    background-color: var(--surface-alt) !important;
-    border-color: var(--border-color) !important;
-}
+/* Background Glow Utilities */
+.bg-accent-glow { background-color: var(--accent-glow) !important; }
+.group-hover-bg-accent-glow { transition: background-color 0.3s ease; }
+.group:hover .group-hover-bg-accent-glow { background-color: var(--accent-glow-hover) !important; }
+
 
 /* Progress Bars */
 .progress-track { background-color: var(--surface-alt); border: 1px solid var(--border-color); }
@@ -118,7 +156,7 @@ main.pl-64 {
 
 /* 4. Universal Status Classes */
 .status-badge-available { background-color: var(--status-available-bg) !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-border) !important; }
-.status-dot-available { background-color: var(--status-available-text) !important; }
+.status-dot-available { background-color: var(--status-online) !important; }
 .status-text-available { color: var(--status-available-text) !important; }
 
 .status-badge-parked { background-color: var(--status-parked-bg) !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-border) !important; }
@@ -226,4 +264,43 @@ main.pl-64 {
 .btn-primary:hover {
     background-color: var(--hover-border) !important;
     box-shadow: 0 4px 15px var(--shadow-color) !important;
+}
+
+/* Segmented Toggle Component */
+.segmented-toggle {
+    background-color: var(--bg-page);
+    border: 2px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 4px;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .segmented-toggle {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: var(--border-color);
+}
+
+.segmented-toggle-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    background-color: var(--brand);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+.segmented-toggle-btn {
+    flex: 1;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    z-index: 10;
+    transition: color 0.3s ease;
 }

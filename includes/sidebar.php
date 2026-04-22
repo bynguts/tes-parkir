@@ -167,7 +167,7 @@ function is_active(string $target): string {
                     <span class="text-white text-xs font-inter font-normal"><?= strtoupper(substr($username, 0, 1)) ?></span>
                 </div>
                 <!-- Status Indicator -->
-                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 status-dot-available status-dot-ring rounded-full"></div>
             </div>
             <div class="min-w-0">
                 <div class="text-sm font-inter font-normal text-slate-900 truncate"><?= $username ?></div>

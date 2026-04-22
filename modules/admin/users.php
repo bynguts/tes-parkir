@@ -176,7 +176,7 @@ include '../../includes/header.php';
                             <td class="px-4 py-5 text-center">
                                 <?php if ($u['is_active']): ?>
                                     <span class="inline-flex items-center gap-1.5 bg-emerald-50/10 text-emerald-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg font-inter border border-emerald-500/10">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                                        <span class="w-1.5 h-1.5 rounded-full bg-status-online"></span> Active
                                     </span>
                                 <?php else: ?>
                                     <span class="inline-flex items-center gap-1.5 bg-red-50/10 text-red-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg font-inter border border-red-500/10">

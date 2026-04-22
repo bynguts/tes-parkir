@@ -127,7 +127,7 @@ $now_fmt     = date('d M y H:i:s');
         <h1 class="font-manrope font-extrabold text-2xl text-slate-900 tracking-tight">Checkout Complete</h1>
         <p class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-widest mt-1">Ticket Validated — Gate Released</p>
         <span class="inline-flex items-center gap-2 bg-emerald-50/10 text-emerald-600 text-[10px] font-extrabold font-inter uppercase tracking-[0.15em] px-4 py-1.5 rounded-lg mt-3 border border-emerald-500/10 shadow-sm backdrop-blur-md">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-status-online animate-pulse"></span>
             LANE_EXIT_OPEN
         </span>
     </div>

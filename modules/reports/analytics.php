@@ -167,7 +167,7 @@ include '../../includes/header.php';
             </div>
             <div class="flex gap-4">
                 <div class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Data Live
+                    <span class="w-2 h-2 rounded-full bg-status-online animate-pulse"></span> Data Live
                 </div>
             </div>
         </div>
@@ -179,7 +179,7 @@ include '../../includes/header.php';
                     <div class="flex items-baseline gap-1">
                         <span class="text-4xl font-manrope font-extrabold text-white tracking-tighter"><?= fmt_idr($data['summary']['revenue_today']) ?></span>
                     </div>
-                    <p class="text-[10px] text-emerald-400 font-bold mt-6 uppercase tracking-widest flex items-center gap-2">
+                    <p class="text-[10px] trend-up font-bold mt-6 uppercase tracking-widest flex items-center gap-2">
                         <i class="fa-solid fa-arrow-trend-up"></i> Performance for this period
                     </p>
                 </div>
@@ -238,7 +238,7 @@ include '../../includes/header.php';
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Zone: <?= $floor['floor_code'] ?></span>
                     </div>
                     <div class="flex gap-4">
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-[10px] font-black text-slate-400 uppercase">FREE</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-status-online"></div><span class="text-[10px] font-black text-slate-400 uppercase">FREE</span></div>
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-slate-900"></div><span class="text-[10px] font-black text-slate-400 uppercase">FULL</span></div>
                     </div>
                 </div>

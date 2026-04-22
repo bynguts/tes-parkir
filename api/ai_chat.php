@@ -144,7 +144,7 @@ $apiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
 // [LEAD NOTE]: Credentials moved to .env for security.
 $apiKey  = getenv('OPENROUTER_API_KEY') ?: '';
-$modelId = getenv('OPENROUTER_MODEL') ?: "google/gemini-2.0-flash-001"; // Default model if not set
+$modelId = getenv('OPENROUTER_MODEL') ?: '';
 
 $systemPrompt = "
 You are 'Cereza', an exclusive intelligent assistant for SmartParking Enterprise.

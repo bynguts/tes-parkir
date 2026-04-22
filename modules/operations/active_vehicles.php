@@ -77,7 +77,7 @@ include '../../includes/header.php';
                         </td>
                         <td class="px-4 py-5 text-slate-900/60 text-sm font-inter">
                             <div class="flex items-center gap-2">
-                                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-status-online"></div>
                                 <span class="font-medium text-slate-900/80"><?= date('H:i', strtotime($row['check_in_time'])) ?></span>
                                 <span class="text-slate-900/40 font-extrabold text-[10px] uppercase ml-1"><?= date('d M', strtotime($row['check_in_time'])) ?></span>
                             </div>

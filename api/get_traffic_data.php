@@ -87,13 +87,13 @@ try {
             [
                 'label' => 'Cars',
                 'data' => $carData,
-                'backgroundColor' => '#3b82f6', // blue-500
+                'backgroundColor' => '#1d4ed8', // blue-700
                 'borderRadius' => 4,
             ],
             [
                 'label' => 'Motorcycles',
                 'data' => $motoData,
-                'backgroundColor' => '#10b981', // emerald-500
+                'backgroundColor' => '#93c5fd', // blue-300
                 'borderRadius' => 4,
             ]
         ]
