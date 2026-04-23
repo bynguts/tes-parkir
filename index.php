@@ -357,7 +357,7 @@ include 'includes/header.php';
                     </div>
 
                     <!-- Fake CCTV Stream -->
-                    <div class="relative w-full aspect-video rounded-3xl overflow-hidden bg-slate-900 group/cctv shadow-inner border-2 border-color">
+                    <div class="cctv-frame relative w-full aspect-video rounded-3xl overflow-hidden group/cctv">
                         <img id="cctv-img" src="assets/img/entry_gate.jpg" class="w-full h-full object-cover opacity-60 grayscale-[20%] transition-opacity duration-500">
                         <div class="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
                             <div class="flex justify-between items-start">

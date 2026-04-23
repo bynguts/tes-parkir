@@ -92,12 +92,18 @@ try {
 // ── 5. Display receipt ────────────────────────────────────────────────────
 $vtype_icon  = $trx['vehicle_type'] === 'car' ? 'directions_car' : 'two_wheeler';
 $fee_fmt     = fmt_idr($total_fee);
-$duration_label = $hours_total . ' h (' . (int)$trx['minutes_parked'] . ' m)';
+$minutes_parked = (int)$trx['minutes_parked'];
+$duration_label = intdiv($minutes_parked, 60) . 'j ' . ($minutes_parked % 60) . 'm';
+$display_code = preg_replace('/[^A-Za-z0-9-]/', '', $code);
 $slot_label  = htmlspecialchars($trx['slot_number'] . ' / Floor ' . $trx['floor']);
 $now_fmt     = date('d M y H:i:s');
+$theme = $_COOKIE['theme'] ?? 'light';
+if (!in_array($theme, ['light', 'dark'], true)) {
+    $theme = 'light';
+}
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="<?= htmlspecialchars($theme) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,6 +112,7 @@ $now_fmt     = date('d M y H:i:s');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/theme.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -113,68 +120,113 @@ $now_fmt     = date('d M y H:i:s');
         i.fa-solid { vertical-align: middle; }
         @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s cubic-bezier(.16,1,.3,1) forwards; }
+        .receipt-shell {
+            max-height: calc(100vh - 1.5rem);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        .receipt-primary-btn {
+            background-color: var(--brand) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px var(--shadow-color) !important;
+        }
+        .receipt-primary-btn:hover {
+            background-color: var(--hover-border) !important;
+        }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 flex items-center justify-center px-4 font-inter antialiased">
+<body class="h-screen overflow-hidden bg-page flex items-center justify-center px-4 py-3 font-inter antialiased">
 
-<div class="w-full max-w-sm fade-up">
+<div class="receipt-shell w-full max-w-sm fade-up">
 
-    <!-- Success badge -->
-    <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/10 border border-emerald-500/20">
-            <i class="fa-solid fa-circle-check text-emerald-600 text-3xl"></i>
+    <!-- Status Header -->
+    <div class="flex flex-col items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl icon-container flex items-center justify-center">
+            <i class="fa-solid fa-check text-lg text-brand"></i>
         </div>
-        <h1 class="font-manrope font-extrabold text-2xl text-slate-900 tracking-tight">Checkout Complete</h1>
-        <p class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-widest mt-1">Ticket Validated — Gate Released</p>
-        <span class="inline-flex items-center gap-2 bg-emerald-50/10 text-emerald-600 text-[10px] font-extrabold font-inter uppercase tracking-[0.15em] px-4 py-1.5 rounded-lg mt-3 border border-emerald-500/10 shadow-sm backdrop-blur-md">
-            <span class="w-1.5 h-1.5 rounded-full bg-status-online animate-pulse"></span>
-            LANE_EXIT_OPEN
-        </span>
+        <h1 class="text-[38px] font-manrope font-bold text-primary tracking-tight leading-none">Checkout Success</h1>
+        <div class="inline-flex items-center gap-2 px-3 py-1 status-badge-available text-[10px] font-bold uppercase tracking-widest rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full status-dot-available animate-pulse"></span>
+            Gate Clearance Issued
+        </div>
     </div>
 
-    <!-- Receipt card -->
-    <div class="bg-white rounded-3xl shadow-[0_20px_50px_rgba(15,23,42,0.04)] p-8 mb-5 ring-1 ring-slate-900/5 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-slate-900/[0.02] rounded-full -mr-16 -mt-16 blur-2xl"></div>
+    <!-- Main Receipt Card -->
+    <div class="bento-card p-5">
+        <!-- Card Header -->
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-receipt text-lg"></i>
+            </div>
+            <div>
+                <h3 class="card-title leading-tight">Payment Summary</h3>
+                <p class="text-[10px] font-inter text-tertiary uppercase tracking-wider"><?= $now_fmt ?></p>
+            </div>
+        </div>
 
-        <div class="space-y-4 mb-8 relative z-10">
+        <!-- Vehicle Info (Dashboard List Style) -->
+        <div class="bg-surface-alt rounded-2xl p-3.5 flex flex-col items-center justify-center mb-4 border border-color">
+            <div class="w-11 h-11 rounded-xl icon-container flex items-center justify-center mb-2">
+                <i class="fa-solid <?= $trx['vehicle_type'] === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
+            </div>
+            <span class="text-lg font-manrope font-bold text-primary leading-none mb-1"><?= $plate ?></span>
+            <span class="text-[11px] font-inter text-tertiary font-medium uppercase tracking-[0.2em]"><?= htmlspecialchars($display_code) ?></span>
+        </div>
+
+        <!-- Transaction Details -->
+        <div class="space-y-3 mb-5">
             <?php
             $rows = [
-                ['Vehicle',    '<i class="fa-solid fa-' . ($trx['vehicle_type'] === 'car' ? 'car' : 'motorcycle') . ' text-sm text-slate-900/30"></i> ' . ($trx['vehicle_type'] === 'car' ? 'Car' : 'Motorcycle')],
-                ['Slot',       $slot_label],
-                ['Ticket Code', '<code class="font-code text-[11px] font-bold bg-slate-900/5 px-2 py-0.5 rounded-lg text-slate-900">' . htmlspecialchars($code) . '</code>'],
-                ['Check-in',   date('d M H:i', strtotime($trx['check_in_time']))],
-                ['Check-out',  date('H:i')],
-                ['Duration',   $duration_label],
+                ['In',       date('H:i', strtotime($trx['check_in_time']))],
+                ['Out',      date('H:i')],
+                ['Duration', $duration_label],
+                ['Slot',     $trx['slot_number']],
             ];
             foreach ($rows as [$label, $value]):
             ?>
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-900/40 text-[11px] font-extrabold uppercase tracking-[0.2em] font-inter"><?= $label ?></span>
-                <span class="text-slate-900 text-[13px] font-bold font-inter text-right"><?= $value ?></span>
+            <div class="flex justify-between items-center">
+                <span class="text-tertiary text-[11px] font-bold uppercase tracking-wider"><?= $label ?></span>
+                <span class="text-primary text-sm font-semibold"><?= $value ?></span>
             </div>
             <?php endforeach; ?>
         </div>
 
-        <!-- Fee highlight -->
-        <div class="bg-slate-900 rounded-2xl px-5 py-6 text-center shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none"></div>
-            <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40 font-inter mb-1.5 relative z-10">Total Parking Fee</p>
-            <p class="font-manrope font-extrabold text-4xl text-white relative z-10 drop-shadow-md tracking-tighter"><?= $fee_fmt ?></p>
+        <!-- Total Fee (Integrated Style) -->
+        <div class="pt-4 border-t border-color">
+            <div class="flex justify-between items-end">
+                <div>
+                    <p class="text-tertiary text-[11px] font-bold uppercase tracking-wider mb-1">Grand Total</p>
+                    <p class="text-[44px] font-manrope font-extrabold text-primary tracking-tight leading-none"><?= $fee_fmt ?></p>
+                </div>
+                <div class="mb-1">
+                    <span class="px-3 py-1 bg-brand text-white text-[10px] font-bold uppercase tracking-widest rounded-lg">PAID</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Navigation -->
     <a href="gate_simulator.php"
-       class="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-slate-900 font-extrabold font-inter text-[11px] uppercase tracking-[0.15em] rounded-2xl py-4.5 transition-all shadow-sm ring-1 ring-slate-900/5 hover:shadow-lg active:scale-[0.98]">
-        <i class="fa-solid fa-arrow-left text-base text-slate-900/40"></i>
+         class="receipt-primary-btn flex items-center justify-center gap-2 w-full font-bold text-[11px] uppercase tracking-widest rounded-xl py-3 transition-all">
+        <i class="fa-solid fa-arrow-left"></i>
         Return to Simulator
     </a>
 
-    <p class="text-center text-slate-900/40 text-[10px] font-extrabold font-inter mt-6 uppercase tracking-[0.3em]">
-        Redirecting in <span id="cnt" class="text-slate-900">8</span>s
+    <p class="text-center text-tertiary text-[10px] font-bold mt-0 uppercase tracking-[0.2em]">
+        Auto-redirect in <span id="cnt" class="text-primary">8</span>s
     </p>
 </div>
 
 <script>
+(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+})();
+
 let s = 8;
 const c = document.getElementById('cnt');
 setInterval(() => { s--; if(c) c.textContent = s; if (s <= 0) window.location.href = 'gate_simulator.php'; }, 1000);

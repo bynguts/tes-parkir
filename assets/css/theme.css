@@ -200,6 +200,13 @@ main.pl-64 {
     box-shadow: 0 4px 10px var(--shadow-color);
 }
 
+.cctv-frame {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.24) !important;
+    color: #f8fafc;
+}
+
 /* 6. Custom Components */
 .toggle-container {
     background-color: var(--surface-alt) !important;
@@ -268,18 +275,14 @@ main.pl-64 {
 
 /* Segmented Toggle Component */
 .segmented-toggle {
-    background-color: var(--bg-page);
-    border: 2px solid var(--border-color);
-    border-radius: 1rem;
+    background-color: var(--surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
     padding: 4px;
     display: flex;
     position: relative;
     overflow: hidden;
-}
-
-[data-theme="dark"] .segmented-toggle {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-color: var(--border-color);
+    box-shadow: 0 4px 10px var(--shadow-color);
 }
 
 .segmented-toggle-slider {
@@ -289,7 +292,7 @@ main.pl-64 {
     left: 4px;
     width: calc(50% - 4px);
     background-color: var(--brand);
-    border-radius: 0.75rem;
+    border-radius: 9999px;
     box-shadow: 0 4px 12px var(--shadow-color);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 0;
@@ -303,4 +306,5 @@ main.pl-64 {
     text-align: center;
     z-index: 10;
     transition: color 0.3s ease;
+    border-radius: 9999px;
 }
