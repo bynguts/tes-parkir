@@ -1,0 +1,69 @@
+<?php
+require_once '../config/connection.php';
+require_once '../includes/functions.php';
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+    exit;
+}
+
+$ticket = $_POST['ticket'] ?? '';
+$plate = $_POST['plate'] ?? '';
+$is_lost = isset($_POST['is_lost']) && $_POST['is_lost'] === 'true';
+$fine = $is_lost ? 50000 : 0;
+
+try {
+    // Find transaction by ticket or plate
+    $stmt = $pdo->prepare("
+        SELECT t.transaction_id, t.slot_id, t.check_in_time, 
+               r.first_hour_rate, r.next_hour_rate, r.daily_max_rate,
+               TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) as minutes_parked
+        FROM `transaction` t
+        JOIN parking_rate r ON t.rate_id = r.rate_id
+        LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
+        LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+        WHERE (tk.ticket_code = ? OR v.plate_number = ? OR v.plate_number = ?)
+          AND t.payment_status = 'unpaid'
+        LIMIT 1
+    ");
+    $stmt->execute([$ticket, $plate, $ticket]);
+    $trx = $stmt->fetch();
+
+    if (!$trx) {
+        // Check if it's a reservation that hasn't checked in yet
+        $stmt = $pdo->prepare("UPDATE reservation SET status = 'cancelled' WHERE (reservation_code = ? OR reservation_id = ?)");
+        $stmt->execute([$ticket, $ticket]);
+        echo json_encode(['success' => true, 'message' => 'Reservation removed']);
+        exit;
+    }
+
+    $trx_id = $trx['transaction_id'];
+    $slot_id = $trx['slot_id'];
+    
+    // Calculate fee
+    $calc = calculate_fee($trx['minutes_parked'], $trx['first_hour_rate'], $trx['next_hour_rate'], $trx['daily_max_rate']);
+    $total_fee = $calc['total_fee'] + $fine;
+
+    $pdo->beginTransaction();
+    
+    // 1. Update Transaction
+    $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = NOW(), total_fee = ?, payment_status = 'paid' WHERE transaction_id = ?");
+    $stmt->execute([$total_fee, $trx_id]);
+
+    // 2. Update Slot
+    $stmt = $pdo->prepare("UPDATE parking_slot SET status = 'available' WHERE slot_id = ?");
+    $stmt->execute([$slot_id]);
+
+    // 3. Update Ticket
+    $stmt = $pdo->prepare("UPDATE ticket SET status = 'used' WHERE transaction_id = ?");
+    $stmt->execute([$trx_id]);
+
+    $pdo->commit();
+    echo json_encode(['success' => true]);
+
+} catch (Exception $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}

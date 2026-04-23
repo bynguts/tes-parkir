@@ -466,7 +466,7 @@ include 'includes/header.php';
                             <thead>
                                 <tr class="border-b border-color">
                                     <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
-                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate/Ticket</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">In</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Out</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Price</th>
