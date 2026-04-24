@@ -33,9 +33,19 @@
     --status-departed-border: #e2e8f0;
     --status-departed-text: #334155;
     
-    --status-over-bg: #fee2e2;
-    --status-over-border: #fecaca;
     --status-over-text: #991b1b;
+
+    --status-paid-bg: #dcfce7;
+    --status-paid-border: #bbf7d0;
+    --status-paid-text: #166534;
+
+    --status-lost-bg: #fee2e2;
+    --status-lost-border: #fecaca;
+    --status-lost-text: #991b1b;
+
+    --status-force-bg: #ffedd5;
+    --status-force-border: #fed7aa;
+    --status-force-text: #9a3412;
 
     /* Fixed Status Colors (Theme-independent) */
     --status-online: #10b981;
@@ -97,6 +107,18 @@
     --status-departed-bg: rgba(148, 163, 184, 0.1);
     --status-departed-border: rgba(148, 163, 184, 0.2);
     --status-departed-text: #94a3b8;
+    
+    --status-paid-bg: rgba(52, 211, 153, 0.1);
+    --status-paid-border: rgba(52, 211, 153, 0.2);
+    --status-paid-text: #34d399;
+
+    --status-lost-bg: rgba(248, 113, 113, 0.1);
+    --status-lost-border: rgba(248, 113, 113, 0.2);
+    --status-lost-text: #f87171;
+
+    --status-force-bg: rgba(251, 146, 60, 0.1);
+    --status-force-border: rgba(251, 146, 60, 0.2);
+    --status-force-text: #fb923c;
     
     --status-over-bg: rgba(248, 113, 113, 0.1);
     --status-over-border: rgba(248, 113, 113, 0.2);
@@ -178,6 +200,10 @@ main.pl-64 {
 .status-badge-over { background-color: var(--status-over-bg) !important; color: var(--status-over-text) !important; border: 1px solid var(--status-over-border) !important; }
 .status-dot-over { background-color: var(--status-over-text) !important; }
 .status-text-over { color: var(--status-over-text) !important; }
+
+.status-badge-paid { background-color: var(--status-paid-bg) !important; color: var(--status-paid-text) !important; border: 1px solid var(--status-paid-border) !important; }
+.status-badge-lost { background-color: var(--status-lost-bg) !important; color: var(--status-lost-text) !important; border: 1px solid var(--status-lost-border) !important; }
+.status-badge-force { background-color: var(--status-force-bg) !important; color: var(--status-force-text) !important; border: 1px solid var(--status-force-border) !important; }
 
 /* 5. Typography & Icons */
 .card-title {

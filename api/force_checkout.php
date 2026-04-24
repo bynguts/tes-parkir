@@ -49,8 +49,9 @@ try {
     $pdo->beginTransaction();
     
     // 1. Update Transaction
-    $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = NOW(), total_fee = ?, payment_status = 'paid' WHERE transaction_id = ?");
-    $stmt->execute([$total_fee, $trx_id]);
+    $is_force = !$is_lost; // If it's not a lost ticket, it's a force checkout
+    $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = NOW(), total_fee = ?, payment_status = 'paid', is_lost_ticket = ?, is_force_checkout = ? WHERE transaction_id = ?");
+    $stmt->execute([$total_fee, $is_lost ? 1 : 0, $is_force ? 1 : 0, $trx_id]);
 
     // 2. Update Slot
     $stmt = $pdo->prepare("UPDATE parking_slot SET status = 'available' WHERE slot_id = ?");
@@ -59,6 +60,10 @@ try {
     // 3. Update Ticket
     $stmt = $pdo->prepare("UPDATE ticket SET status = 'used' WHERE transaction_id = ?");
     $stmt->execute([$trx_id]);
+
+    // 4. Add Exit Scan Log (Sync with Scan Log module)
+    $stmt = $pdo->prepare("INSERT INTO plate_scan_log (plate_number, scan_type, ticket_code, matched, gate_action) VALUES (?, 'exit', ?, 1, 'open')");
+    $stmt->execute([$plate, $ticket]);
 
     $pdo->commit();
     echo json_encode(['success' => true]);

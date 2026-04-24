@@ -17,13 +17,14 @@ $active = $pdo->query("
         TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) as minutes_parked,
         r.first_hour_rate, 
         r.next_hour_rate, 
-        r.daily_max_rate
+        r.daily_max_rate,
+        t.payment_status
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id = v.vehicle_id
     JOIN parking_slot s ON t.slot_id = s.slot_id
     JOIN floor f ON s.floor_id = f.floor_id
     JOIN parking_rate r ON t.rate_id = r.rate_id
-    WHERE t.payment_status = 'unpaid')
+    WHERE NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = t.ticket_code AND psl.scan_type = 'exit'))
     
     UNION ALL
     
@@ -40,7 +41,8 @@ $active = $pdo->query("
         TIMESTAMPDIFF(MINUTE, res.reserved_from, NOW()) as minutes_parked,
         r.first_hour_rate, 
         r.next_hour_rate, 
-        r.daily_max_rate
+        r.daily_max_rate,
+        'unpaid' as payment_status
     FROM `reservation` res
     JOIN vehicle v ON res.vehicle_id = v.vehicle_id
     JOIN parking_slot s ON res.slot_id = s.slot_id
@@ -78,35 +80,74 @@ include '../../includes/header.php';
                     </div>
                 </div>
 
+                <!-- NEW: Integrated Search & Multi-Filters -->
+                <div class="flex items-center gap-3">
+                    <!-- Search Input -->
+                    <div class="relative group">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs transition-colors group-focus-within:text-brand"></i>
+                        <input type="text" id="logSearch" placeholder="Search ticket or plate..." 
+                               class="w-64 bg-surface border border-color rounded-2xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary placeholder:text-tertiary focus:outline-none focus:border-brand/30 focus:shadow-[0_0_20px_rgba(99,102,241,0.05)] transition-all">
+                    </div>
+
+                    <!-- Vehicle Filter Buttons -->
+                    <div class="flex items-center bg-surface border border-color rounded-2xl p-1 gap-1">
+                        <button onclick="setVehicleFilter('all')" data-filter="all" 
+                                class="vehicle-filter-btn px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest transition-all bg-brand text-white shadow-lg">
+                            ALL
+                        </button>
+                        <button onclick="setVehicleFilter('car')" data-filter="car" 
+                                class="vehicle-filter-btn px-3 py-1.5 rounded-xl text-tertiary hover:text-brand transition-all">
+                            <i class="fa-solid fa-car text-sm"></i>
+                        </button>
+                        <button onclick="setVehicleFilter('motorcycle')" data-filter="motorcycle" 
+                                class="vehicle-filter-btn px-3 py-1.5 rounded-xl text-tertiary hover:text-brand transition-all">
+                            <i class="fa-solid fa-motorcycle text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Category Filter Dropdown -->
+                    <div class="relative category-filter-container">
+                        <button onclick="toggleCategoryDropdown(event)" 
+                                class="flex items-center gap-4 bg-surface border border-color rounded-2xl px-5 py-2.5 hover:border-brand/30 transition-all group">
+                            <span id="activeCategoryLabel" class="text-[10px] font-black uppercase tracking-widest text-primary">All Entries</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-tertiary group-hover:text-brand transition-colors"></i>
+                        </button>
+                        
+                        <div id="categoryDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <button onclick="setCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">All Entries</button>
+                            <button onclick="setCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">Reservations</button>
+                            <button onclick="setCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">Regular</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- Sticky Table Header Wrapper -->
-            <div class="overflow-y-auto flex-1 no-scrollbar">
+            <div class="overflow-y-auto flex-1 no-scrollbar relative flex flex-col">
                 <table class="w-full font-inter border-collapse table-fixed">
                     <thead class="sticky top-0 bg-surface z-20">
                         <tr class="border-b border-color">
                             <th class="py-3 px-4 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
-                            <th class="py-3 px-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate Number</th>
-                            <th class="py-3 px-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket Code</th>
-                            <th class="py-3 px-4 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
-                            <th class="py-3 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
-                            <th class="py-3 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
-                            <th class="py-3 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
-                            <th class="py-3 px-4 w-[13%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Price</th>
+                            <th class="py-3 px-4 w-[16%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate Number</th>
+                            <th class="py-3 px-4 w-[16%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket Code</th>
+                            <th class="py-3 px-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
+                            <th class="py-3 px-4 w-[13%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
+                            <th class="py-3 px-4 w-[13%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
+                            <th class="py-3 px-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Estimated Fee</th>
                             <th class="py-3 px-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Action</th>
                         </tr>
                         <style>
-        @keyframes blink-red {
-            0%, 100% { opacity: 1; color: #ef4444; }
-            50% { opacity: 0.5; color: #ef4444; }
-        }
-        .blink-red {
-            animation: blink-red 1s infinite;
-        }
-    </style>
+                            @keyframes blink-red {
+                                0%, 100% { opacity: 1; color: #ef4444; }
+                                50% { opacity: 0.5; color: #ef4444; }
+                            }
+                            .blink-red {
+                                animation: blink-red 1s infinite;
+                            }
+                        </style>
                     </thead>
-                    <tbody class="divide-y divide-color">
-                        <?php if (empty($active)): ?>
-                        <tr>
+                    <tbody class="divide-y divide-color" id="activeFleetBody">
+                        <!-- Standard empty state (shown/hidden by JS) -->
+                        <tr id="noDataRow" class="<?= !empty($active) ? 'hidden' : '' ?>">
                             <td colspan="8" class="px-4 py-20 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <i class="fa-solid fa-car-tunnel text-5xl mb-4"></i>
@@ -114,7 +155,8 @@ include '../../includes/header.php';
                                 </div>
                             </td>
                         </tr>
-                        <?php else: 
+
+                        <?php if (!empty($active)): 
                             $reg_counter = 1;
                             $res_counter = 1;
                             foreach ($active as $index => $row): 
@@ -136,14 +178,14 @@ include '../../includes/header.php';
 
                                 // Slot display logic
                                 if ($is_res) {
-                                    $slot_num = intval(preg_replace('/[^0-9]/', '', $row['slot_number']));
-                                    $display_slot = "#RES " . ($slot_num > 10 ? $slot_num % 10 : $slot_num);
-                                    if ($display_slot == "#RES 0") $display_slot = "#RES 10";
+                                    $display_slot = "#RES " . $res_counter++;
                                 } else {
                                     $display_slot = "#" . $reg_counter++;
                                 }
                         ?>
-                        <tr class="group hover:bg-surface-alt/50 transition-colors">
+                        <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row" 
+                            data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
+                            data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
                             <!-- 1. Vehicle -->
                             <td class="px-4 py-2 align-middle text-left">
                                 <div class="flex items-center">
@@ -159,7 +201,7 @@ include '../../includes/header.php';
 
                             <!-- 2. Plate -->
                             <td class="px-4 py-2 align-middle text-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary leading-none">
+                                <span class="text-[13px] font-manrope font-bold text-primary leading-none plate-number">
                                     <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '<span class="opacity-20">------</span>' ?>
                                 </span>
                             </td>
@@ -167,7 +209,12 @@ include '../../includes/header.php';
                             <!-- 2.1 Ticket -->
                             <td class="px-4 py-2 align-middle text-center">
                                 <div class="flex flex-col items-center justify-center">
-                                    <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <span class="text-[13px] font-manrope font-bold text-primary leading-none uppercase ticket-code"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                                        <?php if ($row['payment_status'] === 'paid'): ?>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium font-inter status-badge-paid">PAID</span>
+                                        <?php endif; ?>
+                                    </div>
                                     <span class="text-[9px] font-inter text-tertiary leading-none uppercase"><?= $is_res ? 'RESERVATION' : 'REGULAR' ?></span>
                                 </div>
                             </td>
@@ -188,23 +235,16 @@ include '../../includes/header.php';
                             </td>
 
                             <td class="px-4 py-2 align-middle text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <span class="text-[13px] font-manrope font-bold text-tertiary/20 leading-none">-- : --</span>
-                                </div>
-                            </td>
-
-                            <td class="px-4 py-2 align-middle text-center">
                                 <span class="text-[13px] font-manrope font-bold <?= $is_long_stay ? 'blink-red' : 'text-primary' ?>">
-                                    <?= $dur_text ?>
-                                </span>
+                                     <?= $dur_text ?>
+                                 </span>
                             </td>
 
                             <td class="px-4 py-2 align-middle text-center">
                                 <span class="text-[13px] font-manrope font-bold text-primary"><?= $est_fee ?></span>
                             </td>
 
-                             <!-- 7. Action -->
-                            <!-- 7. Action (Dropdown Menu) -->
+                             <!-- 7. Action (Dropdown Menu) -->
                             <td class="px-4 py-2 align-middle text-right relative">
                                 <div class="flex justify-end">
                                     <div class="relative action-menu-container">
@@ -215,7 +255,6 @@ include '../../includes/header.php';
                                         
                                         <!-- Dropdown Menu -->
                                         <div class="action-dropdown hidden absolute right-0 top-12 w-56 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-3 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                            <!-- Lost Ticket -->
                                             <button onclick="handleLostTicket('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>', <?= $is_res ? 0 : $calc['total_fee'] ?>)"
                                                     class="w-full px-4 py-3 text-left flex items-center gap-4 hover:bg-brand/[0.03] transition-all group/item">
                                                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all group-hover/item:scale-110">
@@ -227,7 +266,6 @@ include '../../includes/header.php';
                                                 </div>
                                             </button>
 
-                                            <!-- Force Delete -->
                                             <button onclick="handleForceDelete('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>')"
                                                     class="w-full px-4 py-3 text-left flex items-center gap-4 hover:bg-brand/[0.03] transition-all group/item">
                                                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 !text-red-500 !bg-red-500/5 transition-all group-hover/item:scale-110">
@@ -246,6 +284,21 @@ include '../../includes/header.php';
                         <?php endforeach; endif; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- NEW: Standalone Load More Card -->
+        <div id="loadMoreContainer" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="bento-card py-6 flex flex-col items-center justify-center group cursor-pointer hover:border-brand/30 transition-all" onclick="loadMoreVehicles()">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-plus text-brand"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Load More Activity</span>
+                        <span id="showingCount" class="text-[9px] text-tertiary font-bold uppercase tracking-widest mt-0.5">Showing 0 of 0 entries</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -347,6 +400,9 @@ include '../../includes/header.php';
 let currentTicket = '';
 let currentPlate = '';
 let isLostMode = false;
+let currentVehicleFilter = 'all';
+let currentCategoryFilter = 'all';
+let currentLimit = 20;
 
 function handleLostTicket(ticket, plate, baseFee) {
     currentTicket = ticket;
@@ -406,7 +462,6 @@ function closeReceipt() {
     modal.classList.remove('flex');
 }
 
-// Action Menu Functions
 function toggleActionMenu(btn, e) {
     e.stopPropagation();
     const allMenus = document.querySelectorAll('.action-dropdown');
@@ -419,10 +474,115 @@ function toggleActionMenu(btn, e) {
     currentMenu.classList.toggle('hidden');
 }
 
+function loadMoreVehicles() {
+    currentLimit += 20;
+    applyFilters();
+}
+
+function applyFilters() {
+    const searchInput = document.getElementById('logSearch');
+    if (!searchInput) return;
+    
+    const search = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.fleet-row');
+    
+    let filteredCount = 0;
+    let displayedCount = 0;
+
+    rows.forEach(row => {
+        const plate = row.querySelector('.plate-number').textContent.toLowerCase();
+        const ticket = row.querySelector('.ticket-code').textContent.toLowerCase();
+        const vehicle = row.dataset.vehicle;
+        const category = row.dataset.category;
+
+        const matchesSearch = search === '' || plate.includes(search) || ticket.includes(search);
+        const matchesVehicle = currentVehicleFilter === 'all' || vehicle === currentVehicleFilter;
+        const matchesCategory = currentCategoryFilter === 'all' || category === currentCategoryFilter;
+
+        if (matchesSearch && matchesVehicle && matchesCategory) {
+            filteredCount++;
+            if (displayedCount < currentLimit) {
+                row.style.display = '';
+                displayedCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Handle "Load More" button visibility
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const showingCount = document.getElementById('showingCount');
+    
+    if (loadMoreContainer) {
+        if (filteredCount > currentLimit) {
+            loadMoreContainer.classList.remove('hidden');
+        } else {
+            loadMoreContainer.classList.add('hidden');
+        }
+    }
+
+    if (showingCount) {
+        showingCount.textContent = `Showing ${displayedCount} of ${filteredCount} entries`;
+    }
+
+    // Handle No Data Row
+    const noData = document.getElementById('noDataRow');
+    if (noData) {
+        if (filteredCount === 0) {
+            noData.classList.remove('hidden');
+            noData.querySelector('p').textContent = "No vehicles match your current filter criteria.";
+        } else {
+            noData.classList.add('hidden');
+        }
+    }
+}
+
+function setVehicleFilter(type) {
+    currentVehicleFilter = type;
+    currentLimit = 20; // Reset limit on filter change
+    document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
+        if (btn.dataset.filter === type) {
+            btn.classList.add('bg-brand', 'text-white', 'shadow-lg');
+            btn.classList.remove('text-tertiary');
+        } else {
+            btn.classList.remove('bg-brand', 'text-white', 'shadow-lg');
+            btn.classList.add('text-tertiary');
+        }
+    });
+    applyFilters();
+}
+
+function toggleCategoryDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('categoryDropdown').classList.toggle('hidden');
+}
+
+function setCategoryFilter(val, label) {
+    currentCategoryFilter = val;
+    currentLimit = 20; // Reset limit on filter change
+    document.getElementById('activeCategoryLabel').textContent = label;
+    document.getElementById('categoryDropdown').classList.add('hidden');
+    applyFilters();
+}
+
+// Search event
+document.getElementById('logSearch').addEventListener('input', () => {
+    currentLimit = 20; // Reset limit on search
+    applyFilters();
+});
+
 // Close all menus when clicking outside
 document.addEventListener('click', () => {
     document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+    const catDropdown = document.getElementById('categoryDropdown');
+    if (catDropdown) catDropdown.classList.add('hidden');
 });
+
+// Initial call
+document.addEventListener('DOMContentLoaded', applyFilters);
 </script>
 
 <?php include '../../includes/footer.php'; ?>

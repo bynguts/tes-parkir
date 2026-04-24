@@ -87,284 +87,277 @@ $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 $page_title = 'Reservation Management';
 $page_subtitle = 'Manage pre-booking and priority parking slot allocation.';
 $page_actions = '
-<span class="bg-slate-900/5 text-slate-900/60 text-xs font-bold font-inter uppercase tracking-widest px-4 py-2 rounded-lg">
-    ' . count($reservations) . ' Active
-</span>';
+<div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-color shadow-sm transition-all hover:border-brand/30">
+    <div class="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
+    <span class="text-[10px] font-black uppercase tracking-widest text-primary">
+        ' . count($reservations) . ' Active Reservations
+    </span>
+</div>';
 
 include '../../includes/header.php';
 ?>
 
+<link rel="stylesheet" href="../../assets/css/theme.css">
 <!-- Flatpickr -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
 /* =====================================
-   FLATPICKR DARK THEME — RESERVATION
+   FLATPICKR THEME — INDIGO NIGHT
    ===================================== */
 .flatpickr-calendar {
     font-family: 'Inter', sans-serif !important;
-    background: #0f172a !important;
-    border-radius: 20px !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4) !important;
-    padding: 12px !important;
+    background: var(--surface) !important;
+    border-radius: 24px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 25px 50px -12px var(--shadow-color) !important;
+    padding: 16px !important;
     width: 388px !important;
-    box-sizing: border-box !important;
 }
 
-/* Day grid sizing */
-.flatpickr-innerContainer, .flatpickr-rContainer { width: 100% !important; }
-.flatpickr-days { width: 364px !important; }
-.dayContainer { width: 364px !important; min-width: 364px !important; max-width: 364px !important; }
+.flatpickr-day.selected { background: var(--brand) !important; border-color: var(--brand) !important; }
+.flatpickr-day.today { border-color: var(--brand) !important; }
+.flatpickr-day:hover { background: var(--surface-alt) !important; }
+.flatpickr-day.flatpickr-disabled { opacity: 0.1 !important; pointer-events: none; }
 
-/* Remove default max-width so cells fill the row equally (364px / 7 = 52px each) */
-.flatpickr-day { max-width: 52px !important; width: 14.2857% !important; }
-
-.flatpickr-day.selected  { background: #3b82f6 !important; border-color: #3b82f6 !important; font-weight: 700; }
-.flatpickr-day.today     { border-color: #3b82f6 !important; }
-.flatpickr-day:hover     { background: #0f172a !important; }
-.flatpickr-day.flatpickr-disabled { color: #0f172a !important; pointer-events: none; }
-
-/* Show prev/next month day numbers — subtle so they don't confuse current month */
-.flatpickr-day.nextMonthDay,
-.flatpickr-day.prevMonthDay { color: #334155 !important; font-weight: 400 !important; }
-.flatpickr-day.nextMonthDay:hover,
-.flatpickr-day.prevMonthDay:hover { background: #0f172a !important; color: #475569 !important; }
-
-/* Global text */
 .flatpickr-months, .flatpickr-weekday, .flatpickr-day {
-    color: #ffffff !important; fill: #ffffff !important; font-weight: 600 !important;
+    color: var(--text-primary) !important; fill: var(--text-primary) !important;
 }
 
-/* Month header row */
-.flatpickr-months { padding: 6px 0 4px !important; align-items: center !important; }
-.flatpickr-current-month {
-    display: flex !important; align-items: center !important;
-    justify-content: center !important; gap: 10px !important;
-    padding: 0 !important; font-size: 100% !important;
-    position: static !important; width: auto !important;
-}
+.flatpickr-weekday { color: var(--text-secondary) !important; opacity: 0.5; font-size: 10px !important; font-weight: 800 !important; text-transform: uppercase; }
 
-/* Hide built-in month/year controls (replaced by JS selects) */
-.flatpickr-monthDropdown-months, .numInputWrapper { display: none !important; }
-.flatpickr-prev-month, .flatpickr-next-month      { display: none !important; }
-
-/* Weekday header */
-.flatpickr-weekdays                { background: transparent !important; }
-.flatpickr-weekdaycontainer        { width: 100% !important; }
-.flatpickr-weekday { color: #64748b !important; font-size: 11px !important; font-weight: 800 !important; text-transform: uppercase; }
-
-/* Time picker row */
 .flatpickr-time {
-    border-top: 1px solid #334155 !important;
-    background: #0f172a !important;
-    height: auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    padding: 10px 0 !important;
-    margin-top: 8px !important;
+    border-top: 1px solid var(--border-color) !important;
+    background: var(--surface) !important;
 }
-/* Hide built-in time inputs (replaced by JS selects) */
-.flatpickr-time .numInputWrapper, .flatpickr-time input { display: none !important; }
-.flatpickr-time-separator { color: #fff !important; font-size: 24px !important; font-weight: 800 !important; }
 
 .fp-inject {
-    background: #ffffff; color: #0f172a; font-weight: 700; font-size: 15px;
-    padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.1);
-    cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
+    background: var(--surface-alt); color: var(--text-primary); font-weight: 700; font-size: 14px;
+    padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color);
+    cursor: pointer; font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s;
 }
-.flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after { border-bottom-color: #ffffff !important; }
-.flatpickr-day.selected, .flatpickr-day.selected:hover { background: #0f172a !important; border-color: #0f172a !important; color: #ffffff !important; font-weight: 800 !important; }
-.flatpickr-day.prevMonthDay { color: rgba(15, 23, 42, 0.2) !important; font-weight: 400 !important; }
-.flatpickr-day.nextMonthDay { color: rgba(15, 23, 42, 0.2) !important; font-weight: 400 !important; }
-.flatpickr-day.prevMonthDay:hover { background: rgba(15, 23, 42, 0.05) !important; color: rgba(15, 23, 42, 0.4) !important; }
-.flatpickr-day:hover { background: rgba(15, 23, 42, 0.05) !important; }
-.flatpickr-current-month .flatpickr-monthDropdown-months { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; }
-.flatpickr-current-month input.cur-year { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; font-size: 13px; }
-.flatpickr-weekday { color: rgba(15, 23, 42, 0.3) !important; font-size: 10px !important; font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.1em; }
-.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { color: #0f172a !important; fill: #0f172a !important; }
-.flatpickr-time {
-    border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
-}
-.flatpickr-time input { font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; color: #0f172a !important; }
-.flatpickr-time .flatpickr-time-separator { color: rgba(15, 23, 42, 0.4) !important; font-weight: 800 !important; }
-.flatpickr-time .flatpickr-am-pm { font-family: 'Inter', sans-serif !important; font-weight: 800 !important; color: #0f172a !important; text-transform: uppercase; letter-spacing: 0.05em; }
-
-/* Slot Selection Dropdown Styling */
-.slot-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f172a' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    padding: 6px 32px 6px 10px; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.1);
-}
-.slot-select:focus { ring: 2px solid #0f172a; border-color: transparent; outline: none; }
-
-/* Custom Time Dropdowns for Flatpickr */
-.time-dropdown-container {
-    padding: 14px 8px 4px; border-top: 1px solid rgba(15, 23, 42, 0.1); margin-top: 8px;
-}
-.time-unit-select {
-    background: transparent; border: none; color: rgba(15, 23, 42, 0.6);
-}
+.fp-inject:hover { border-color: var(--brand); }
 
 .flatpickr-custom-btn {
     display: flex; justify-content: space-between;
-    padding: 14px 8px 4px; border-top: 1px solid rgba(15, 23, 42, 0.1); margin-top: 8px;
+    padding: 16px 8px 4px; border-top: 1px solid var(--border-color); margin-top: 12px;
 }
 .flatpickr-custom-btn button {
-    background: transparent; border: none; color: rgba(15, 23, 42, 0.4);
+    background: transparent; border: none; color: var(--text-secondary);
     font-size: 11px; cursor: pointer; font-family: 'Inter', sans-serif;
     font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; transition: color .15s;
 }
-.flatpickr-custom-btn button:hover { color: #fff; }
-.flatpickr-custom-btn button.ok   { color: #22c55e; }
+.flatpickr-custom-btn button:hover { color: var(--brand); }
+.flatpickr-custom-btn button.ok { color: var(--brand); }
+
+/* Vtype Selector */
+.vtype-btn {
+    border: 2px solid var(--border-color);
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.vtype-btn.active {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: var(--surface);
+}
 </style>
 
-    <div class="p-6">
-
+<div class="px-6 py-6 h-[calc(100vh-100px)] max-w-[1600px] mx-auto flex flex-col gap-5 overflow-hidden">
+    
+    <?php if ($msg || $error): ?>
+    <div class="flex-shrink-0">
         <?php if ($msg): ?>
-        <div class="flex items-center gap-3 bg-emerald-50/10 rounded-2xl px-5 py-4 mb-6 border border-emerald-500/20">
-            <i class="fa-solid fa-circle-check text-emerald-600"></i>
-            <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
+        <div class="flex items-center gap-3 bg-emerald-500/5 rounded-2xl px-5 py-4 border border-emerald-500/20">
+            <i class="fa-solid fa-circle-check text-emerald-500"></i>
+            <p class="text-emerald-500/80 text-sm font-inter"><?= $msg ?></p>
         </div>
         <?php endif; ?>
         <?php if ($error): ?>
-        <div class="flex items-center gap-3 bg-red-50/10 rounded-2xl px-5 py-4 mb-6 border border-red-500/20">
-            <i class="fa-solid fa-circle-exclamation text-red-600"></i>
-            <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
+        <div class="flex items-center gap-3 bg-red-500/5 rounded-2xl px-5 py-4 border border-red-500/20">
+            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+            <p class="text-red-500/80 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
         </div>
         <?php endif; ?>
+    </div>
+    <?php endif; ?>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-[400px_1fr] gap-5 overflow-hidden flex-1 min-h-0">
+
 
             <!-- CREATE FORM -->
-            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] self-start" style="overflow: visible;">
-                <div class="px-6 py-5 border-b border-slate-900/10 flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-plus text-slate-900/40 text-lg"></i>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Create New Reservation</h2>
+            <div class="bento-card flex flex-col overflow-hidden h-full">
+                <div class="flex items-center justify-between px-6 py-3.5 border-b border-color shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-plus text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title leading-tight">Create Reservation</h3>
+                            <p class="text-[11px] text-tertiary font-inter">Allocate priority parking slots</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-6">
+
+                <div class="p-6 overflow-y-auto no-scrollbar flex-1">
                     <form method="POST" class="space-y-4">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="create">
-                        <input type="hidden" name="vehicle_type" id="vtype_hidden" value="car">
+                        <?php $vtype = $_POST['vehicle_type'] ?? 'car'; ?>
+                        <input type="hidden" name="vehicle_type" id="vtype_hidden" value="<?= htmlspecialchars($vtype) ?>">
 
                         <!-- Vehicle type selector -->
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Vehicle Type</label>
-                            <div class="grid grid-cols-2 gap-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-3">Vehicle Category</label>
+                            <div class="grid grid-cols-2 gap-3">
                                 <button type="button" id="btnCar" onclick="setType('car')"
-                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 border-slate-900 bg-slate-900 text-white transition-all">
+                                        class="vtype-btn <?= $vtype === 'car' ? 'active' : '' ?> flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all">
                                     <i class="fa-solid fa-car text-2xl"></i>
-                                    <span class="text-xs font-bold font-inter">Car</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Car</span>
                                 </button>
                                 <button type="button" id="btnMoto" onclick="setType('motorcycle')"
-                                        class="vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40 transition-all">
+                                        class="vtype-btn <?= $vtype === 'motorcycle' ? 'active' : '' ?> flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all">
                                     <i class="fa-solid fa-motorcycle text-2xl"></i>
-                                    <span class="text-xs font-bold font-inter">Motorcycle</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Motorcycle</span>
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Plate Number <span class="text-red-500">*</span></label>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">License Plate</label>
                             <input type="text" name="plate_number"
-                                   class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 text-center uppercase tracking-widest transition-all"
+                                   class="modal-input w-full border-2 border-transparent focus:border-brand rounded-2xl px-5 py-3.5 text-sm font-bold font-manrope text-primary focus:outline-none text-center uppercase tracking-widest transition-all placeholder:opacity-20"
                                    placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Owner Name</label>
-                                <input type="text" name="owner_name" placeholder="Optional"
-                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Owner Name</label>
+                                <input type="text" name="owner_name" placeholder="Guest"
+                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all placeholder:opacity-20">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Phone Number</label>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Contact</label>
                                 <input type="tel" name="owner_phone" placeholder="08xxxx"
-                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all placeholder:opacity-20">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2">Reservation Start Time <span class="text-red-500">*</span></label>
-                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Choose date & time..."
-                                       class="w-full bg-slate-900/5 border-none rounded-lg px-5 py-3 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Start Time</label>
+                            <div class="relative">
+                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Select date & time"
+                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer placeholder:opacity-20">
+                                <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
                             </div>
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-slate-900 hover:bg-slate-900/90 text-white font-bold font-inter text-xs uppercase tracking-widest rounded-lg py-3.5 transition-all flex items-center justify-center gap-2">
+                                class="btn-primary w-full font-black font-inter text-[10px] uppercase tracking-widest rounded-full py-4 transition-all flex items-center justify-center gap-3">
                             <i class="fa-solid fa-calendar-check text-base"></i>
-                            Process Reservation
+                            Confirm Reservation
                         </button>
                     </form>
                 </div>
             </div>
 
+
             <!-- ACTIVE RESERVATIONS -->
-            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-900/10 flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-days text-slate-900/40 text-lg"></i>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Active Reservation Queue</h2>
+            <div class="bento-card flex flex-col overflow-hidden h-full">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-color shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-days text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title leading-tight">Active Reservation Queue</h3>
+                            <p class="text-[11px] text-tertiary font-inter">Live tracking of <?= count($reservations) ?> allocations</p>
+                        </div>
+                    </div>
                 </div>
+
                 <?php if (empty($reservations)): ?>
                 <div class="flex flex-col items-center justify-center py-24 text-center">
-                    <i class="fa-solid fa-calendar-times text-6xl text-slate-900/10 block mb-4"></i>
-                    <p class="text-slate-900/40 text-sm font-inter">No active reservations scheduled.</p>
+                    <i class="fa-solid fa-calendar-times text-6xl text-tertiary opacity-10 block mb-4"></i>
+                    <p class="text-tertiary text-sm font-inter">No active reservations scheduled.</p>
                 </div>
                 <?php else: ?>
-                <div class="overflow-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b border-slate-900/10">
-                                <th class="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Validation Code</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Client / Vehicle</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Slot Allocation</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Period</th>
-                                <th class="text-right px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Action</th>
+                <div class="overflow-y-auto no-scrollbar flex-1">
+                    <table class="w-full font-inter border-collapse table-fixed">
+                        <thead class="sticky top-0 bg-surface z-20">
+                            <tr class="border-b border-color">
+                                <th class="py-2.5 px-6 w-[18%] text-[10px] font-black uppercase tracking-widest text-tertiary text-left">Validation</th>
+                                <th class="py-2.5 px-4 w-[28%] text-[10px] font-black uppercase tracking-widest text-tertiary text-left">Client / Vehicle</th>
+                                <th class="py-2.5 px-4 w-[15%] text-[10px] font-black uppercase tracking-widest text-tertiary text-center">Slot</th>
+                                <th class="py-2.5 px-4 w-[25%] text-[10px] font-black uppercase tracking-widest text-tertiary text-left">Schedule</th>
+                                <th class="py-2.5 px-6 w-[14%] text-[10px] font-black uppercase tracking-widest text-tertiary text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-900/[0.03]">
-                            <?php foreach ($reservations as $r): ?>
-                            <tr class="hover:bg-slate-900/[0.02] transition-colors">
+                        <tbody class="divide-y divide-color">
+                            <?php 
+                            $res_counter = 1;
+                            foreach ($reservations as $r): 
+                            ?>
+                            <tr class="group hover:bg-surface-alt/50 transition-colors">
                                 <td class="px-6 py-4">
-                                    <code class="font-mono text-sm text-slate-900 bg-slate-900/5 px-3 py-1.5 rounded-lg font-bold"><?= htmlspecialchars($r['reservation_code']) ?></code>
+                                    <span class="font-manrope font-black text-[13px] text-brand tracking-widest"><?= htmlspecialchars($r['reservation_code']) ?></span>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-lg <?= $r['vehicle_type'] === 'car' ? 'bg-blue-50/10' : 'bg-emerald-50/10' ?> flex items-center justify-center">
-                                            <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-xl <?= $r['vehicle_type'] === 'car' ? 'text-blue-600' : 'text-emerald-600' ?>"></i>
+                                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-lg"></i>
                                         </div>
-                                        <div>
-                                            <div class="font-inter font-bold text-sm text-slate-900"><?= htmlspecialchars($r['plate_number']) ?></div>
-                                            <div class="text-slate-900/40 text-xs font-inter"><?= htmlspecialchars($r['owner_name']) ?></div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[13px] font-manrope font-bold text-primary leading-tight"><?= htmlspecialchars($r['plate_number']) ?></span>
+                                            <span class="text-[10px] text-tertiary font-medium"><?= htmlspecialchars($r['owner_name']) ?></span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4">
-                                    <span class="font-manrope font-bold text-slate-900"><?= htmlspecialchars($r['slot_number']) ?></span>
-                                </td>
-                                <td class="px-4 py-4">
-                                    <div class="flex items-center gap-1.5 text-slate-900/60 text-xs font-inter">
-                                        <i class="fa-solid fa-clock text-blue-400 text-[10px]"></i>
-                                        Starts: <?= date('d M Y, H:i', strtotime($r['reserved_from'])) ?>
+                                <td class="px-4 py-4 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <?php 
+                                            $display_slot = "#RES " . $res_counter++;
+                                        ?>
+                                        <span class="text-[13px] font-manrope font-black text-primary leading-none mb-1"><?= $display_slot ?></span>
+                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase">VIP AREA</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <form method="POST" onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="action" value="cancel">
-                                        <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
-                                        <button class="flex items-center gap-1.5 bg-red-50/10 hover:bg-red-50/20 text-red-600 text-xs font-bold font-inter px-4 py-2 rounded-lg transition-all ml-auto border border-red-500/20">
-                                            <i class="fa-solid fa-xmark text-sm"></i>
-                                            Cancel
-                                        </button>
-                                    </form>
+                                <td class="px-4 py-4">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-clock text-[10px] text-brand"></i>
+                                            <span class="text-[12px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($r['reserved_from'])) ?></span>
+                                        </div>
+                                        <span class="text-[10px] text-tertiary font-medium ml-4"><?= date('d M Y', strtotime($r['reserved_from'])) ?></span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right relative">
+                                    <div class="flex justify-end">
+                                        <div class="relative action-menu-container">
+                                            <button onclick="toggleActionMenu(this, event)" 
+                                                    class="w-10 h-10 rounded-xl bg-surface border border-color text-secondary hover:text-brand hover:border-brand/30 hover:shadow-lg transition-all flex items-center justify-center shadow-sm">
+                                                <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                                            </button>
+                                            
+                                            <!-- Dropdown Menu -->
+                                            <div class="action-dropdown hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                                                <form method="POST" onsubmit="return confirm('Cancel this reservation?')">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="action" value="cancel">
+                                                    <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
+                                                    <button type="submit" class="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-500/[0.03] transition-all group/item">
+                                                        <div class="w-8 h-8 rounded-lg icon-container flex items-center justify-center shrink-0 !text-red-500 !bg-red-500/5 transition-all group-hover/item:scale-110">
+                                                            <i class="fa-solid fa-calendar-xmark text-sm"></i>
+                                                        </div>
+                                                        <div class="flex flex-col">
+                                                            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 leading-tight">Cancel</span>
+                                                            <span class="text-[9px] text-tertiary font-medium">Stop Allocation</span>
+                                                        </div>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -374,20 +367,38 @@ include '../../includes/header.php';
                 <?php endif; ?>
             </div>
 
+
         </div>
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-function setType(t) {
-    document.getElementById('vtype_hidden').value = t;
-    var car  = document.getElementById('btnCar');
-    var moto = document.getElementById('btnMoto');
-    car.className  = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 transition-all ' + (t === 'car'        ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40');
-    moto.className = 'vtype-btn flex flex-col items-center gap-1.5 py-4 rounded-lg border-2 transition-all ' + (t === 'motorcycle' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-900/40');
-}
+    function setType(type) {
+        const hiddenInput = document.getElementById('vtype_hidden');
+        if (hiddenInput) hiddenInput.value = type;
+        
+        const carBtn = document.getElementById('btnCar');
+        const motoBtn = document.getElementById('btnMoto');
+        
+        if (carBtn) carBtn.classList.toggle('active', type === 'car');
+        if (motoBtn) motoBtn.classList.toggle('active', type === 'motorcycle');
+    }
 
-document.addEventListener('DOMContentLoaded', function () {
+    function toggleActionMenu(button, event) {
+        event.stopPropagation();
+        const container = button.closest('.action-menu-container');
+        const dropdown = container.querySelector('.action-dropdown');
+        document.querySelectorAll('.action-dropdown').forEach(d => {
+            if (d !== dropdown) d.classList.add('hidden');
+        });
+        dropdown.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.action-menu-container')) {
+            document.querySelectorAll('.action-dropdown').forEach(d => d.classList.add('hidden'));
+        }
+    });
 
     var MONTHS = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
@@ -506,7 +517,6 @@ document.addEventListener('DOMContentLoaded', function () {
         minDate: minDate, time_24hr: true, minuteIncrement: 15,
         onReady: onReady
     });
-});
 </script>
 
 <?php include '../../includes/footer.php'; ?>
