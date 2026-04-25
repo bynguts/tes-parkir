@@ -11,6 +11,9 @@
     --border-color: rgba(99, 102, 241, 0.15);
     --hover-border: #6366f1;
     --shadow-color: rgba(99, 102, 241, 0.08);
+    --sidebar-text: rgba(255, 255, 255, 0.5);
+    --sidebar-text-active: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.05);
 
     /* Universal Status Colors (Light Theme) */
     --status-available-bg: #dcfce7;
@@ -57,6 +60,10 @@
     --trend-down: #ef4444;  /* Vibrant Red (Merah Merona) */
     --traffic-car: #1d4ed8;
     --traffic-moto: #93c5fd;
+
+    /* Scrollbar Variables (Light) - High visibility */
+    --scrollbar-thumb: rgba(99, 102, 241, 0.65);
+    --scrollbar-thumb-hover: rgba(99, 102, 241, 0.9);
 }
 
 .bg-status-online { background-color: var(--status-online) !important; }
@@ -88,6 +95,9 @@
     --border-color: rgba(255, 255, 255, 0.05);
     --hover-border: #818cf8;
     --shadow-color: rgba(0, 0, 0, 0.4);
+    --sidebar-text: rgba(165, 166, 246, 0.5);
+    --sidebar-text-active: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.03);
 
     /* Universal Status Colors (Dark Theme) */
     --status-available-bg: rgba(52, 211, 153, 0.1);
@@ -128,6 +138,67 @@
 
     --accent-glow: rgba(255, 255, 255, 0.03);
     --accent-glow-hover: rgba(255, 255, 255, 0.05);
+
+    /* Scrollbar Variables (Dark) */
+    --scrollbar-thumb: rgba(129, 140, 248, 0.3);
+    --scrollbar-thumb-hover: rgba(129, 140, 248, 0.5);
+}
+
+
+/* 1.1 Global Scrollbar */
+:root {
+    color-scheme: light; /* Default */
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-page) !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb) !important;
+    border-radius: 20px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover) !important;
+}
+
+/* Specific for components that need a custom scrollbar feel */
+.custom-scrollbar {
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--scrollbar-thumb) transparent !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--bg-page) !important;
+}
+
+/* Fix for sidebar specifically where track must match indigo background */
+.sidebar-main, .sidebar-main .custom-scrollbar {
+    color-scheme: dark !important;
+}
+
+.sidebar-main .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--sidebar) !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb) !important;
+    border-radius: 20px !important;
 }
 
 /* 2. Base Layout & Background */
@@ -350,4 +421,92 @@ main.pl-64 {
     z-index: 10;
     transition: color 0.3s ease;
     border-radius: 9999px;
+}
+
+/* 8. Sidebar Standardization (Indigo Night) */
+.sidebar-main {
+    background-color: var(--sidebar) !important;
+    border-right: 1px solid var(--sidebar-border) !important;
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+.sidebar-brand-box {
+    border-bottom: 1px solid var(--sidebar-border) !important;
+}
+
+.sidebar-brand-icon {
+    background-color: var(--brand) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-brand-text-main {
+    color: #ffffff !important;
+}
+
+.sidebar-brand-text-sub {
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-label-text {
+    color: var(--sidebar-text) !important;
+    opacity: 0.8;
+}
+
+.sidebar-link {
+    color: var(--sidebar-text) !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-link i {
+    color: var(--sidebar-text) !important;
+    opacity: 0.6;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-link:hover i {
+    color: #ffffff !important;
+    opacity: 1;
+}
+
+.sidebar-link.nav-active {
+    background-color: var(--brand) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.sidebar-link.nav-active i {
+    color: #ffffff !important;
+    opacity: 1;
+}
+
+.sidebar-footer {
+    border-top: 1px solid var(--sidebar-border) !important;
+}
+
+.sidebar-user-avatar {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-user-name {
+    color: #ffffff !important;
+}
+
+.sidebar-user-role {
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-logout-btn {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
 }

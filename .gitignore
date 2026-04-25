@@ -62,6 +62,8 @@ dist/
 build/
 homepage/dist/
 scratch/
+scratch_*.php
+session_setter.php
 temp/
 tmp/
 .cache/

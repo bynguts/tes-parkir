@@ -265,10 +265,4 @@ h1, h2, h3, h4, h5, h6 {
 .text-success-glow { color: var(--success); text-shadow: 0 0 10px var(--success-glow); }
 .text-primary-glow { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
 
-/* Custom Modern Scrollbar -> Hidden as requested */
-::-webkit-scrollbar {
-    display: none !important;
-}
-* {
-    scrollbar-width: none !important;
-}
+

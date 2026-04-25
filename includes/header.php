@@ -44,6 +44,8 @@ $page_title = $page_title ?? 'Parking System';
         }
     }
     </script>
+    <!-- Custom Indigo Night Theme -->
+    <link rel="stylesheet" href="<?= (isset($is_module) && $is_module) ? '../../' : '' ?>assets/css/theme.css?v=<?= time() ?>">
 
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -69,21 +71,7 @@ $page_title = $page_title ?? 'Parking System';
             height: 0 !important;
         }
 
-        /* Standard custom look for ALL scrollable elements */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 20px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        /* Standard custom look for ALL scrollable elements - MOVED TO THEME.CSS */
 
         /* --- Sticky Header Fix ---
          * Body must NOT scroll. Scroll happens inside <main>.
@@ -133,6 +121,42 @@ $page_title = $page_title ?? 'Parking System';
             color: #ffffff !important;
         }
         .nav-active i { color: #ffffff !important; }
+
+        /* Sidebar collapse/expand animation */
+        aside {
+            transition: width 0.3s ease, margin-left 0.3s ease;
+            width: 256px;
+        }
+        aside.collapsed {
+            width: 80px;
+        }
+        aside.collapsed .sidebar-label {
+            display: none;
+        }
+        aside.collapsed .sidebar-brand-text {
+            display: none;
+        }
+        aside.collapsed .sidebar-badge {
+            display: none;
+        }
+        aside.collapsed .sidebar-icon-only {
+            justify-content: center;
+        }
+        aside.collapsed nav {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        aside.collapsed #sidebar-toggle {
+            width: 100%;
+            border-radius: 0;
+        }
+        main {
+            transition: padding-left 0.3s ease;
+            padding-left: 256px;
+        }
+        main.sidebar-collapsed {
+            padding-left: 80px;
+        }
 
         /* Status badge dot */
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
@@ -216,6 +240,29 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
                 
                 updateToggleUI(newTheme === 'dark');
             });
+
+            // Sidebar toggle functionality
+            (function initSidebarToggle() {
+                const toggleBtn = document.getElementById('sidebar-toggle');
+                const sidebar = document.querySelector('aside');
+                const main = document.querySelector('main');
+                if (!toggleBtn || !sidebar || !main) return;
+
+                // Restore collapse state from localStorage
+                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    main.classList.add('sidebar-collapsed');
+                }
+
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('collapsed');
+                    main.classList.toggle('sidebar-collapsed');
+                    
+                    const nowCollapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebar-collapsed', nowCollapsed);
+                });
+            })();
 
             // Global search: index all accessible sidebar links and provide quick navigation.
             (function initGlobalSearch() {

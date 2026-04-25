@@ -144,7 +144,7 @@ if (!$on_duty) {
 include 'includes/header.php';
 ?>
 
-<link rel="stylesheet" href="assets/css/theme.css" id="dashboard-custom-theme">
+
 
 
     <div class="px-10 py-10">
