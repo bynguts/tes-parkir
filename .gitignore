@@ -6,12 +6,15 @@
 *.pem
 credentials.php
 config/*.local.php
+token.json
+.htpasswd
 
 # --- DATABASE ---
 # Don't commit raw SQL dumps containing real user/system data
 database/*.sql
 !database/schema.sql
 !database/*.sample.sql
+!database/*.seed.sql
 
 # --- AI & AGENT METADATA ---
 .claude/
@@ -23,6 +26,7 @@ database/*.sql
 .tempmediaStorage/
 CLAUDE.md
 *.jsonl
+*.json.bak
 
 # --- Logs ---
 *.log
@@ -30,6 +34,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # --- Dependencies ---
 node_modules/
@@ -47,6 +52,8 @@ bower_components/
 .project
 .settings/
 .buildpath
+*.sublime-project
+*.sublime-workspace
 
 # --- OS Specific ---
 .DS_Store
@@ -80,3 +87,4 @@ assets/img/generated/
 *.bak
 *.tmp
 *.old
+*.swp

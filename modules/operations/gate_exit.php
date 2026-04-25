@@ -22,7 +22,7 @@ $stmt->execute([$code]);
 $tkt = $stmt->fetch();
 
 if (!$tkt) {
-    echo "<script>alert('❌ Invalid ticket or already processed.\\nCode: ".addslashes($code)."');window.location.href='gate_simulator.php';</script>";
+    header("Location: gate_simulator.php?msg=" . urlencode("Invalid ticket or already processed.") . "&type=error&title=INVALID_TICKET&code=" . urlencode($code));
     exit;
 }
 
@@ -47,7 +47,7 @@ $stmt->execute([$trx_id]);
 $trx = $stmt->fetch();
 
 if (!$trx) {
-    echo "<script>alert('⚠️ Transaction not found or already paid.\\nCode: ".addslashes($code)."');window.location.href='gate_simulator.php';</script>";
+    header("Location: gate_simulator.php?msg=" . urlencode("Transaction not found or already paid.") . "&type=error&title=NOT_FOUND&code=" . urlencode($code));
     exit;
 }
 
@@ -72,6 +72,10 @@ try {
     $pdo->prepare("UPDATE ticket SET status='used' WHERE ticket_code=?")
         ->execute([$code]);
 
+    // Update reservation status if this is a VIP entry (codes start with RSV-)
+    $pdo->prepare("UPDATE reservation SET status='completed' WHERE reservation_code=?")
+        ->execute([$code]);
+
     $pdo->prepare("UPDATE parking_slot SET status='available' WHERE slot_id=?")
         ->execute([$slot_id]);
 
@@ -85,7 +89,7 @@ try {
 } catch (Exception $e) {
     $pdo->rollBack();
     error_log("Checkout error: " . $e->getMessage());
-    echo "<script>alert('❌ System error occurred. Please contact administrator.');window.location.href='gate_simulator.php';</script>";
+    header("Location: gate_simulator.php?msg=" . urlencode("System error occurred. Please contact administrator.") . "&type=error");
     exit;
 }
 
@@ -95,7 +99,14 @@ $fee_fmt     = fmt_idr($total_fee);
 $minutes_parked = (int)$trx['minutes_parked'];
 $duration_label = intdiv($minutes_parked, 60) . 'j ' . ($minutes_parked % 60) . 'm';
 $display_code = preg_replace('/[^A-Za-z0-9-]/', '', $code);
-$slot_label   = str_replace(['-G', '-L'], '-', $trx['slot_number']);
+$slot_raw = trim((string)($trx['slot_number'] ?? ''));
+if (preg_match('/^#+\s*(.+)$/', $slot_raw, $m)) {
+    $slot_label = '#' . trim($m[1]);
+} elseif (preg_match('/^\d+$/', $slot_raw)) {
+    $slot_label = '#' . $slot_raw;
+} else {
+    $slot_label = $slot_raw !== '' ? $slot_raw : '-';
+}
 $now_fmt      = date('d M y H:i:s');
 $theme = $_COOKIE['theme'] ?? 'light';
 if (!in_array($theme, ['light', 'dark'], true)) {

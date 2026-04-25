@@ -20,8 +20,8 @@ if (isset($_GET['auto'])) {
             SELECT ps.slot_id, ps.slot_number, f.floor_code AS floor, ps.slot_type
             FROM parking_slot ps
             JOIN floor f ON ps.floor_id = f.floor_id
-            WHERE ps.slot_type = ? AND ps.status = 'available'
-            ORDER BY f.floor_code, ps.slot_number LIMIT 1
+            WHERE ps.slot_type = ? AND ps.status = 'available' AND ps.is_reservation_only = 0
+            ORDER BY ps.slot_id LIMIT 1
         ");
         $stmt->execute([$try_type]);
         $row = $stmt->fetch();
@@ -35,6 +35,19 @@ if (isset($_GET['auto'])) {
     $plate   = null;
     $code    = generate_ticket_code($pdo);
     $slot_id = (int)$slot['slot_id'];
+
+    // Build slot label with the same order as Active Vehicle mapping.
+    $slot_label = (string)$slot['slot_number'];
+    $slot_map_rows = $pdo->query("\n        SELECT ps.slot_id, ps.is_reservation_only, f.floor_code, ps.slot_type, ps.slot_number\n        FROM parking_slot ps\n        JOIN floor f ON ps.floor_id = f.floor_id\n        ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC\n    ")->fetchAll();
+    $reg_idx = 1;
+    $res_idx = 1;
+    foreach ($slot_map_rows as $m) {
+        $label = ((int)$m['is_reservation_only'] === 1) ? ('#RES ' . $res_idx++) : ('#' . $reg_idx++);
+        if ((int)$m['slot_id'] === $slot_id) {
+            $slot_label = $label;
+            break;
+        }
+    }
 
     // Rate lookup
     $rate = $pdo->prepare("SELECT rate_id FROM parking_rate WHERE vehicle_type = ?");
@@ -68,7 +81,9 @@ if (isset($_GET['auto'])) {
     echo json_encode([
         'ticket_code' => $code,
         'plate'       => $plate,
-        'slot'        => str_replace(['-G', '-L'], '-', $slot['slot_number']),
+        'slot'        => $slot['slot_number'],
+        'slot_label'  => $slot_label,
+        'type'        => $vtype,
         'vtype'       => $vtype,
     ]);
     exit;
@@ -143,7 +158,7 @@ if (isset($_GET['ticket_code'])) {
         <div class="barcode-container"><img src="<?= $barcode_url ?>" alt="QR Code"></div>
         <div class="branch-name">Enterprise Parking Hub</div>
         <div class="info-row">ENTRY_SCAN : <?= $checkin_fmt ?></div>
-        <div class="info-row">LOC_ALLOC : <?= htmlspecialchars(str_replace(['-G', '-L'], '-', $d['slot_number'])) ?></div>
+        <div class="info-row">LOC_ALLOC : <?= htmlspecialchars($d['slot_number']) ?></div>
         <p class="disclaimer">Secure vehicle lock engaged.<br>Retain ticket for automated exit.</p>
     </div>
 </body>

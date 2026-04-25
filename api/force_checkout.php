@@ -15,9 +15,10 @@ $is_lost = isset($_POST['is_lost']) && $_POST['is_lost'] === 'true';
 $fine = $is_lost ? 50000 : 0;
 
 try {
-    // Find transaction by ticket or plate
+    // Find transaction by ticket or plate (that hasn't exited)
     $stmt = $pdo->prepare("
-        SELECT t.transaction_id, t.slot_id, t.check_in_time, 
+        SELECT t.transaction_id, t.slot_id, t.check_in_time, t.payment_status, t.check_out_time,
+               tk.ticket_code, v.plate_number,
                r.first_hour_rate, r.next_hour_rate, r.daily_max_rate,
                TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) as minutes_parked
         FROM `transaction` t
@@ -25,7 +26,7 @@ try {
         LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
         LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
         WHERE (tk.ticket_code = ? OR v.plate_number = ? OR v.plate_number = ?)
-          AND t.payment_status = 'unpaid'
+          AND t.check_out_time IS NULL
         LIMIT 1
     ");
     $stmt->execute([$ticket, $plate, $ticket]);
@@ -42,16 +43,21 @@ try {
     $trx_id = $trx['transaction_id'];
     $slot_id = $trx['slot_id'];
     
-    // Calculate fee
-    $calc = calculate_fee($trx['minutes_parked'], $trx['first_hour_rate'], $trx['next_hour_rate'], $trx['daily_max_rate']);
-    $total_fee = $calc['total_fee'] + $fine;
-
     $pdo->beginTransaction();
     
     // 1. Update Transaction
-    $is_force = !$is_lost; // If it's not a lost ticket, it's a force checkout
-    $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = NOW(), total_fee = ?, payment_status = 'paid', is_lost_ticket = ?, is_force_checkout = ? WHERE transaction_id = ?");
-    $stmt->execute([$total_fee, $is_lost ? 1 : 0, $is_force ? 1 : 0, $trx_id]);
+    if ($trx['payment_status'] === 'unpaid') {
+        $calc = calculate_fee($trx['minutes_parked'], $trx['first_hour_rate'], $trx['next_hour_rate'], $trx['daily_max_rate']);
+        $total_fee = $calc['total_fee'] + $fine;
+        $is_force = !$is_lost; 
+        
+        $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = NOW(), total_fee = ?, payment_status = 'paid', is_lost_ticket = ?, is_force_checkout = ? WHERE transaction_id = ?");
+        $stmt->execute([$total_fee, $is_lost ? 1 : 0, $is_force ? 1 : 0, $trx_id]);
+    } else {
+        // Already paid, just ensure check_out_time is set and mark as force checkout
+        $stmt = $pdo->prepare("UPDATE `transaction` SET check_out_time = IFNULL(check_out_time, NOW()), is_force_checkout = 1 WHERE transaction_id = ?");
+        $stmt->execute([$trx_id]);
+    }
 
     // 2. Update Slot
     $stmt = $pdo->prepare("UPDATE parking_slot SET status = 'available' WHERE slot_id = ?");

@@ -122,7 +122,10 @@ include '../../includes/header.php';
     <!-- SUMMARY GRID -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Net Revenue -->
-        <div class="bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+        <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
+            </div>
             <div class="relative z-10">
                 <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Net Revenue</p>
                 <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></p>
@@ -133,37 +136,52 @@ include '../../includes/header.php';
         </div>
 
         <!-- Total Transactions -->
-        <div class="bento-card p-10 border-color shadow-xl">
-            <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Total Inflow</p>
-            <div class="flex items-baseline gap-3">
-                <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= number_format($totals['grand_total'] ?? 0) ?></p>
-                <p class="text-[11px] font-black text-tertiary uppercase">Tickets</p>
+        <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-receipt text-6xl"></i>
             </div>
-            <div class="mt-8 flex items-center gap-3">
-                <span class="px-3 py-1 bg-status-available-bg text-status-available-text text-[9px] font-black rounded-full border border-status-available-border uppercase">Paid</span>
-                <span class="text-[10px] font-black text-tertiary uppercase tracking-widest">Settled Assets</span>
+            <div class="relative z-10">
+                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Total Inflow</p>
+                <div class="flex items-baseline gap-3">
+                    <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= number_format($totals['grand_total'] ?? 0) ?></p>
+                    <p class="text-[11px] font-black text-tertiary uppercase">Tickets</p>
+                </div>
+                <div class="mt-8 flex items-center gap-3">
+                    <span class="px-3 py-1 bg-status-available-bg text-status-available-text text-[9px] font-black rounded-full border border-status-available-border uppercase">Paid</span>
+                    <span class="text-[10px] font-black text-tertiary uppercase tracking-widest">Settled Assets</span>
+                </div>
             </div>
         </div>
 
         <!-- Car Revenue -->
-        <div class="bento-card p-10 border-color shadow-xl">
-            <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Car Segments</p>
-            <div class="flex items-baseline gap-3">
-                <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
+        <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-car text-6xl"></i>
             </div>
-            <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
-                <i class="fa-solid fa-car text-brand"></i> <?= number_format($totals['total_cars'] ?? 0) ?> Volume Scans
+            <div class="relative z-10">
+                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Car Segments</p>
+                <div class="flex items-baseline gap-3">
+                    <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
+                </div>
+                <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
+                    <i class="fa-solid fa-car text-brand"></i> <?= number_format($totals['total_cars'] ?? 0) ?> Volume Scans
+                </div>
             </div>
         </div>
 
         <!-- Moto Revenue -->
-        <div class="bento-card p-10 border-color shadow-xl">
-            <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Moto Segments</p>
-            <div class="flex items-baseline gap-3">
-                <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_moto'] ?? 0)) ?></p>
+        <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-motorcycle text-6xl"></i>
             </div>
-            <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
-                <i class="fa-solid fa-motorcycle text-brand"></i> <?= number_format($totals['total_motos'] ?? 0) ?> Volume Scans
+            <div class="relative z-10">
+                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Moto Segments</p>
+                <div class="flex items-baseline gap-3">
+                    <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_moto'] ?? 0)) ?></p>
+                </div>
+                <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
+                    <i class="fa-solid fa-motorcycle text-brand"></i> <?= number_format($totals['total_motos'] ?? 0) ?> Volume Scans
+                </div>
             </div>
         </div>
     </div>

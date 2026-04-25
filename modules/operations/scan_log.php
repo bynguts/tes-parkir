@@ -11,13 +11,12 @@ $all_slots_query = $pdo->query("
     ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
 ");
 $slot_mapping = [];
-$reg_idx = 1; $res_idx = 1;
 foreach ($all_slots_query as $s) {
-    if ((int)$s['is_reservation_only'] === 1) {
-        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "VIP AREA"];
-    } else {
-        $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
-    }
+    $is_vip = (int)$s['is_reservation_only'] === 1;
+    $slot_mapping[$s['slot_id']] = [
+        "label"    => $s['slot_number'],
+        "category" => $is_vip ? "VIP AREA" : "REGULAR"
+    ];
 }
 
 // --- DATE FILTER LOGIC ---
@@ -99,7 +98,8 @@ $query = "
         JOIN parking_slot rs ON res.slot_id = rs.slot_id
         JOIN floor rf ON rs.floor_id = rf.floor_id
         WHERE res.reserved_from BETWEEN ? AND ?
-          AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = res.reservation_code))
+          AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = res.reservation_code)
+          AND NOT EXISTS (SELECT 1 FROM `transaction` t WHERE t.reservation_id = res.reservation_id))
     ) combined
     ORDER BY scan_time DESC
 ";
@@ -142,61 +142,64 @@ $chart_stmt->execute([$db_start, $db_end, $db_start, $db_end]);
 $chart_data = $chart_stmt->fetchAll();
 
 $page_title = 'Security Scan Log';
+$page_subtitle = "Viewing security sensor events from " . date('d M', strtotime($db_start)) . " to " . date('d M', strtotime($db_end));
+
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css?v=<?= time() ?>">
+<link rel="stylesheet" href="../../assets/css/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-.filter-btn-log {
-    transition: all 0.2s ease;
-    cursor: pointer !important;
-    border: none;
-    outline: none;
-}
-.filter-btn-log:hover {
-    background: rgba(99, 102, 241, 0.1);
-}
-.filter-btn-log.active {
-    background: var(--brand) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-.filter-container {
-    position: relative;
-    z-index: 50;
-}
-</style>
+<div class="px-10 py-10">
 
-<div class="px-10 py-6 max-w-[1600px] mx-auto flex flex-col gap-5">
+    <!-- Page Header (Premium Style) -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight"><?= $page_title ?></h1>
+            <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="document.getElementById('modalDelete').classList.remove('hidden'); loadDates();"
+                    class="btn-outline !text-rose-500 !border-rose-100 hover:!bg-rose-50 hover:!border-rose-200 gap-2">
+                <i class="fa-solid fa-broom"></i>
+                Purge Logs
+            </button>
+        </div>
+    </div>
 
-    <!-- CHART SECTION -->
-    <div class="bg-surface rounded-[2.5rem] p-8 border border-color shadow-sm">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h3 class="card-title text-lg">Activity Analytics</h3>
-                <p class="text-tertiary text-[10px] font-bold uppercase tracking-widest mt-1">Scan volume distribution</p>
+    <!-- Analytics Section -->
+    <div class="bento-card p-8">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <h3 class="font-manrope font-bold text-primary text-base">Activity Analytics</h3>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Operational sensor distribution</p>
+                </div>
             </div>
             
             <form id="filterForm" method="GET" class="flex items-center gap-3">
                 <div class="relative">
-                    <select name="range" onchange="this.form.submit()" class="appearance-none bg-surface-alt border border-color px-6 py-2.5 pr-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
+                    <select name="range" onchange="this.form.submit()" 
+                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
                         <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
                         <option value="24h" <?= $range === '24h' ? 'selected' : '' ?>>Past 24 Hours</option>
                         <option value="1week" <?= $range === '1week' ? 'selected' : '' ?>>Last 7 Days</option>
                         <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>Last 30 Days</option>
                         <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[8px]"></i>
+                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
                 </div>
 
                 <?php if($range === 'custom'): ?>
-                <div class="flex items-center gap-2 bg-surface-alt border border-color p-1 rounded-xl">
-                    <input type="date" name="start_date" value="<?= $start_date ?>" class="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest text-primary focus:ring-0 px-2 py-1">
-                    <span class="text-tertiary font-bold">-</span>
-                    <input type="date" name="end_date" value="<?= $end_date ?>" class="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest text-primary focus:ring-0 px-2 py-1">
-                    <button type="submit" class="bg-brand text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-all">
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-100 p-1 rounded-xl">
+                    <input type="date" name="start_date" value="<?= $start_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
+                    <span class="text-slate-300">-</span>
+                    <input type="date" name="end_date" value="<?= $end_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
+                    <button type="submit" class="bg-brand text-white w-8 h-8 rounded-lg flex items-center justify-center hover:brightness-110 transition-all">
                         <i class="fa-solid fa-check text-[10px]"></i>
                     </button>
                 </div>
@@ -204,94 +207,88 @@ include '../../includes/header.php';
             </form>
         </div>
         
-        <div class="h-[180px] w-full">
+        <div class="h-[220px] w-full">
             <canvas id="scanActivityChart"></canvas>
         </div>
     </div>
     
-    <!-- Main Card with Table -->
-    <div class="bento-card flex-1 flex flex-col overflow-hidden min-h-0">
-        <!-- Card Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-color shrink-0">
+    <!-- Table Content Card -->
+    <div class="bento-card p-4 overflow-hidden mt-6">
+        <!-- Filters Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-color">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
                     <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                 </div>
                 <div>
-                    <h3 class="card-title leading-tight">Security Scan History</h3>
-                    <p class="text-[11px] text-tertiary font-inter">Gate operational sensor events</p>
+                    <h3 class="font-manrope font-bold text-primary text-base">Operational Index</h3>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Gate sensor history</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 filter-container">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs opacity-40"></i>
-                    <input type="text" id="searchLog" placeholder="Search ticket or plate..."
-                           oninput="currentLimit = 20; applyScanLogFilters()"
-                           class="modal-input pl-10 pr-5 py-2.5 rounded-xl text-[12px] font-inter focus:outline-none w-64 transition-all border border-color">
+            <div class="flex items-center gap-4">
+                <!-- Search -->
+                <div class="relative group">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs"></i>
+                    <input type="text" id="searchLog" placeholder="Search plate or ticket..."
+                           oninput="applyScanLogFilters()"
+                           class="w-64 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
                 </div>
 
-                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 shadow-sm">
-                    <button type="button" onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
-                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">ALL</button>
-                    <button type="button" onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
-                            class="filter-btn-log px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                        <i class="fa-solid fa-car text-xs pointer-events-none"></i>
+                <!-- Vehicle Filter -->
+                <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1 gap-1">
+                    <button onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
+                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm">ALL</button>
+                    <button onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-car text-sm pointer-events-none"></i>
                     </button>
-                    <button type="button" onclick="setScanLogVehicleFilter('motorcycle')" id="btn-filter-motorcycle" 
-                            class="filter-btn-log px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                        <i class="fa-solid fa-motorcycle text-xs pointer-events-none"></i>
+                    <button onclick="setScanLogVehicleFilter('motorcycle')" id="btn-filter-motorcycle" 
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-motorcycle text-sm pointer-events-none"></i>
                     </button>
                 </div>
 
+                <!-- Type Filter -->
                 <div class="relative">
                     <select id="filterCategory" onchange="setScanLogTypeFilter(this.value)" 
-                            class="appearance-none bg-surface-alt border border-color px-6 py-2.5 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer hover:bg-surface shadow-sm">
+                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
                         <option value="all">All Entries</option>
                         <option value="reservation">Reservations</option>
                         <option value="regular">Regular</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[8px]"></i>
+                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
                 </div>
-
-                <button type="button" onclick="document.getElementById('modalDelete').classList.remove('hidden'); loadDates();"
-                        class="flex items-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-black font-inter uppercase tracking-widest px-5 py-3 rounded-xl transition-all border border-red-500/20 shadow-sm hover:shadow-lg hover:shadow-red-500/20">
-                    <i class="fa-solid fa-broom text-sm"></i>
-                    Purge Logs
-                </button>
             </div>
         </div>
 
-        <!-- Scrollable Table Body -->
-        <div class="overflow-y-auto flex-1 no-scrollbar relative flex flex-col">
-            <table class="w-full font-inter border-collapse table-fixed" id="logTable">
-                <thead class="sticky top-0 bg-surface z-20">
-                    <tr class="border-b border-color">
-                        <th class="py-4 px-6 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
-                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket</th>
-                        <th class="py-4 px-4 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
-                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
-                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
-                        <th class="py-4 px-4 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
-                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Final Fee</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Status</th>
-                        <th class="py-4 px-6 w-[7%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Action</th>
+        <!-- Table Section -->
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse" id="logTable">
+                <thead class="premium-thead">
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Plate Number</th>
+                        <th>Ticket Code</th>
+                        <th>Slot</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Duration</th>
+                        <th>Final Fee</th>
+                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-color" id="logTableBody">
-                    <!-- Standard empty state (shown/hidden by JS) -->
+                <tbody id="logTableBody" class="divide-y divide-slate-50">
                     <tr id="noDataRow" class="<?= !empty($logs) ? 'hidden' : '' ?>">
-                        <td colspan="10" class="px-6 py-20 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <i class="fa-solid fa-clock-rotate-left text-5xl mb-4"></i>
-                                <p class="text-secondary font-inter font-medium">No operational logs found in the security index.</p>
+                        <td colspan="10" class="px-6 py-24 text-center">
+                            <div class="flex flex-col items-center opacity-40">
+                                <i class="fa-solid fa-clock-rotate-left text-5xl mb-4 text-slate-300"></i>
+                                <p class="text-slate-500 font-inter font-medium text-sm">No operational records match your criteria.</p>
                             </div>
                         </td>
                     </tr>
                     <?php if (!empty($logs)): 
-                        $reg_counter = 1;
-                        $res_counter = 1;
                         foreach ($logs as $row): 
                         $hours_val = (float)($row['duration_hours'] ?? 0);
                         $h = floor($hours_val);
@@ -316,107 +313,86 @@ include '../../includes/header.php';
 
                         if ($is_pending) $dur = '---';
                     ?>
-                    <tr class="group hover:bg-surface-alt/50 transition-colors log-row" 
+                    <tr class="group hover:bg-slate-50/50 transition-colors log-row" 
                         data-vehicle="<?= trim(strtolower($row['vehicle_type'] ?? '')) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
-                        <td class="px-6 py-2 align-middle text-left">
-                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all group-hover:scale-110">
-                                <?php if (strtolower($row['vehicle_type'] ?? '') == 'motorcycle'): ?>
-                                    <i class="fa-solid fa-motorcycle text-lg"></i>
-                                <?php elseif (strtolower($row['vehicle_type'] ?? '') == 'car'): ?>
-                                    <i class="fa-solid fa-car text-lg"></i>
-                                <?php else: ?>
-                                    <i class="fa-solid fa-shield-halved text-lg"></i>
-                                <?php endif; ?>
+                        <td class="px-6 py-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand group-hover:border-brand/20 transition-all">
+                                <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
                             </div>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <span class="text-[13px] font-manrope font-bold text-primary uppercase tracking-widest leading-none">
-                                <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '<span class="opacity-20">------</span>' ?>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-extrabold text-primary tracking-tight">
+                                <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
                             </span>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <div class="flex flex-col items-center justify-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1 uppercase tracking-widest">
-                                    <?= htmlspecialchars($row['ticket_code']) ?>
-                                </span>
-                                <span class="text-[9px] font-inter text-tertiary leading-none uppercase"><?= $is_pending ? 'EXPECTED' : 'LOG ENTRY' ?></span>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary tracking-tight uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-widest"><?= $is_pending ? 'EXPECTED' : 'LOG ENTRY' ?></span>
                             </div>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <div class="flex flex-col items-center justify-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1">
-                                    <?= $display_slot ?>
-                                </span>
-                                <span class="text-[10px] font-inter text-tertiary leading-none uppercase">
-                                    <?= $slot_label ?>
-                                </span>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= $display_slot ?></span>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-wider"><?= $slot_label ?></span>
                             </div>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <div class="flex flex-col items-center justify-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1">
-                                    <?= date('H:i:s', strtotime($row['time_in'])) ?>
-                                </span>
-                                <span class="text-[10px] font-inter text-tertiary leading-none uppercase">
-                                    <?= date('d M Y', strtotime($row['time_in'])) ?>
-                                </span>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['time_in'])) ?></span>
+                                <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['time_in'])) ?></span>
                             </div>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <div class="flex flex-col items-center justify-center">
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
                                 <?php if ($row['time_out']): ?>
-                                    <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1">
-                                        <?= date('H:i:s', strtotime($row['time_out'])) ?>
-                                    </span>
-                                    <span class="text-[10px] font-inter text-tertiary leading-none uppercase">
-                                        <?= date('d M Y', strtotime($row['time_out'])) ?>
-                                    </span>
+                                    <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['time_out'])) ?></span>
+                                    <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['time_out'])) ?></span>
                                 <?php else: ?>
-                                    <span class="text-[11px] font-inter text-tertiary opacity-40 tracking-widest italic">---:---:---</span>
+                                    <span class="text-[11px] font-inter text-slate-200 tracking-widest">---:---:---</span>
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <span class="text-[12px] font-inter font-bold text-primary">
-                                <?= $dur ?>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold text-primary"><?= $dur ?></span>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold text-brand">
+                                <?= $row['final_fee'] > 0 ? fmt_idr($row['final_fee']) : 'Rp 0' ?>
                             </span>
                         </td>
-                        <td class="px-4 py-2 align-middle text-center">
-                            <span class="text-[13px] font-manrope font-bold text-primary">
-                                Rp <?= number_format($row['final_fee'] ?? 0, 0, ',', '.') ?>
-                            </span>
-                        </td>
-                        <td class="px-6 py-2 align-middle text-right">
-                            <div class="flex justify-end gap-1.5 flex-wrap">
+                        <td class="px-6 py-4">
+                            <div class="flex justify-end gap-1.5 flex-wrap max-w-[150px] ml-auto">
                                 <?php 
                                     $pay_status = strtolower($row['payment_status'] ?? '');
                                     $is_lost = (int)($row['is_lost_ticket'] ?? 0);
                                     $is_force = (int)($row['is_force_checkout'] ?? 0);
                                 ?>
                                 <?php if ($is_pending): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-reserved">PENDING</span>
+                                    <span class="badge-soft badge-soft-amber">RESERVED</span>
                                 <?php elseif ($is_departed): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-departed">DEPARTED</span>
+                                    <span class="badge-soft badge-soft-slate">DEPARTED</span>
                                 <?php else: ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-parked">ACTIVE</span>
+                                    <span class="badge-soft badge-soft-indigo">ACTIVE</span>
                                 <?php endif; ?>
+                                
                                 <?php if ($is_lost): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-lost">LOST TICKET</span>
+                                    <span class="badge-soft badge-soft-rose">LOST TICKET</span>
                                 <?php endif; ?>
                                 <?php if ($is_force): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-force">FORCE EXIT</span>
+                                    <span class="badge-soft badge-soft-amber">FORCE EXIT</span>
                                 <?php endif; ?>
                                 <?php if ($pay_status === 'paid'): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-paid">PAID</span>
+                                    <span class="badge-soft badge-soft-emerald">PAID</span>
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td class="px-6 py-2 align-middle text-right">
+                        <td class="px-6 py-4 text-right">
                             <button type="button" 
                                     onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
-                                    class="w-8 h-8 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/10 hover:shadow-lg hover:shadow-red-500/20 group/del">
-                                <i class="fa-solid fa-trash-can text-xs transition-transform group-hover/del:scale-110"></i>
+                                    class="btn-ghost !text-rose-400 hover:!text-rose-500 hover:!bg-rose-50">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </td>
                     </tr>
@@ -425,60 +401,47 @@ include '../../includes/header.php';
             </table>
         </div>
     </div>
-
-    <!-- NEW: Standalone Load More Card -->
-    <div id="loadMoreContainer" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div class="bento-card py-6 flex flex-col items-center justify-center group cursor-pointer hover:border-brand/30 transition-all" onclick="loadMoreLogs()">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-plus text-brand"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Load More Activity</span>
-                    <span id="showingCount" class="text-[9px] text-tertiary font-bold uppercase tracking-widest mt-0.5">Showing 0 of 0 entries</span>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Purge Confirmation Modal -->
 <div id="modalDelete" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-sidebar/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
         <div class="bento-card overflow-hidden">
-            <div class="px-6 py-4 border-b border-color flex justify-between items-center">
-                <h3 class="card-title">Purge Operational Logs</h3>
-                <button onclick="document.getElementById('modalDelete').classList.add('hidden')" class="text-tertiary hover:text-primary transition-colors">
+            <div class="px-8 py-5 border-b border-color flex justify-between items-center bg-white">
+                <h3 class="font-manrope font-extrabold text-primary text-base">Purge Operational Logs</h3>
+                <button onclick="document.getElementById('modalDelete').classList.add('hidden')" class="btn-ghost">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="p-6">
-                <div class="flex gap-2 mb-6">
+            <div class="p-8 bg-white">
+                <div class="flex gap-2 mb-6 bg-slate-50 border border-slate-100 p-1 rounded-2xl">
                     <button id="tabBtnDate" onclick="switchTab('date')"
-                            class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand text-white transition-all shadow-lg shadow-brand/20">By Date</button>
+                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all">By Date</button>
                     <button id="tabBtnAll" onclick="switchTab('all')"
-                            class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-surface-alt text-red-500 transition-all border border-color">Wipe All</button>
+                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all">Wipe All</button>
                 </div>
+
                 <div id="tabDate">
-                    <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-surface-alt p-2 mb-6 space-y-1 border border-color"></div>
+                    <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-50 p-2 mb-6 space-y-1 border border-slate-100"></div>
                     <button id="btnDeleteDate" disabled onclick="deleteLog('by_date')"
-                            class="btn-primary w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-calendar-xmark text-sm"></i> Purge Selected Date
+                            class="w-full py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-calendar-xmark"></i> Purge Selected Date
                     </button>
                 </div>
+
                 <div id="tabAll" class="hidden">
-                    <div class="bg-red-500/5 rounded-2xl p-6 mb-6 text-center border border-red-500/10">
-                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl block mb-3"></i>
-                        <p class="text-red-500 font-black text-sm font-inter uppercase tracking-widest">Full System Purge</p>
-                        <p class="text-tertiary text-[11px] font-inter mt-2">This action is irreversible and will wipe all recorded security sensor history. <span class="text-emerald-600 font-black italic block mt-1">(Financial transaction records remain safe)</span></p>
+                    <div class="bg-rose-50 rounded-2xl p-6 mb-6 text-center border border-rose-100">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500 text-3xl block mb-4"></i>
+                        <p class="text-rose-600 font-extrabold text-sm font-manrope uppercase tracking-tight">Full System Purge</p>
+                        <p class="text-slate-500 text-[11px] font-inter mt-3 leading-relaxed">This will permanently delete all gate sensor history. <span class="text-slate-700 font-bold block mt-1">Transaction and financial records remain secure.</span></p>
                     </div>
                     <button onclick="deleteLog('all')"
-                            class="btn-primary !bg-red-500 w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-fire text-sm"></i> Execute Wipe
+                            class="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-fire"></i> Execute Wipe
                     </button>
                 </div>
-                <div id="deleteResult" class="mt-4 hidden text-[11px] font-inter font-bold uppercase tracking-widest text-center py-3 rounded-xl"></div>
+                <div id="deleteResult" class="mt-4 hidden text-[11px] font-bold uppercase tracking-widest text-center py-3 rounded-xl"></div>
             </div>
         </div>
     </div>
@@ -489,7 +452,6 @@ const CSRF = '<?= htmlspecialchars(csrf_token()) ?>';
 let currentLogVehicleFilter = 'all';
 let currentLogCategoryFilter = 'all';
 let selectedDate = null;
-let currentLimit = 20;
 
 // --- CHART INITIALIZATION ---
 const ctx = document.getElementById('scanActivityChart').getContext('2d');
@@ -502,18 +464,34 @@ new Chart(ctx, {
             label: 'Scans',
             data: chartData.map(d => d.count),
             backgroundColor: '#6366f1',
-            borderRadius: 8,
-            barThickness: 30,
+            borderRadius: 6,
+            barThickness: 24,
             hoverBackgroundColor: '#4f46e5'
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', padding: 12, displayColors: false } },
+        plugins: { 
+            legend: { display: false }, 
+            tooltip: { 
+                backgroundColor: '#1e293b', 
+                titleFont: { family: 'Manrope', weight: '800' },
+                bodyFont: { family: 'Inter' },
+                padding: 12, 
+                displayColors: false 
+            } 
+        },
         scales: {
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)', drawBorder: false }, ticks: { stepSize: 1, color: '#94a3b8', font: { size: 10, weight: 'bold' } } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
+            y: { 
+                beginAtZero: true, 
+                grid: { color: 'rgba(241, 245, 249, 1)', drawBorder: false }, 
+                ticks: { stepSize: 1, color: '#94a3b8', font: { size: 10, weight: '700' } } 
+            },
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' } } 
+            }
         }
     }
 });
@@ -524,11 +502,11 @@ function switchTab(tab) {
     const dateBtn = document.getElementById('tabBtnDate');
     const allBtn = document.getElementById('tabBtnAll');
     if (tab === 'date') {
-        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand text-white transition-all shadow-lg shadow-brand/20";
-        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-surface-alt text-red-500 transition-all border border-color";
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all";
     } else {
-        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-surface-alt text-tertiary transition-all border border-color";
-        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-500 text-white transition-all shadow-lg shadow-red-500/20";
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:bg-slate-100 transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-lg transition-all";
     }
 }
 
@@ -536,28 +514,28 @@ window.onclick = function(e) { if (e.target === document.getElementById('modalDe
 
 function loadDates() {
     const c = document.getElementById('dateList');
-    c.innerHTML = '<div class="text-center py-8 text-tertiary text-[11px] font-black uppercase animate-pulse">Scanning sensor index...</div>';
+    c.innerHTML = '<div class="text-center py-10 text-slate-300 text-[11px] font-bold uppercase tracking-widest animate-pulse">Syncing Sensor Index...</div>';
     fetch('get_log_dates.php').then(r => r.json()).then(data => {
         if (!data.length) { 
-            c.innerHTML = '<div class="text-center py-12 text-tertiary text-[11px] font-black uppercase tracking-widest opacity-40">Index Empty</div>'; 
+            c.innerHTML = '<div class="text-center py-12 text-slate-300 text-[11px] font-bold uppercase tracking-widest opacity-40">Index Empty</div>'; 
             return; 
         }
         let html = '';
         data.forEach(d => {
             html += `
-            <div class="date-item flex justify-between items-center px-5 py-4 rounded-xl cursor-pointer hover:bg-white transition-all border border-transparent hover:border-brand/20 hover:shadow-md" 
+            <div class="date-item flex justify-between items-center px-5 py-4 rounded-xl cursor-pointer hover:bg-white transition-all border border-transparent hover:border-brand/20 hover:shadow-sm" 
                  data-date="${d.date}" onclick="selectDate(this,'${d.date}')">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg bg-surface flex items-center justify-center border border-color">
+                    <div class="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100">
                         <i class="fa-solid fa-calendar-day text-brand text-sm"></i>
                     </div>
                     <div>
-                        <div class="font-manrope font-black text-[13px] text-primary tracking-widest uppercase">${d.date}</div>
-                        <div class="text-tertiary text-[10px] font-inter mt-0.5 uppercase font-bold">${d.day}</div>
+                        <div class="font-manrope font-extrabold text-[13px] text-primary tracking-tight uppercase">${d.date}</div>
+                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">${d.day}</div>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <span class="bg-brand/10 text-brand px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter">${d.scan_count} EVENTS</span>
+                    <span class="bg-indigo-50 text-brand px-3 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">${d.scan_count} EVENTS</span>
                 </div>
             </div>`;
         });
@@ -566,20 +544,24 @@ function loadDates() {
 }
 
 function selectDate(el, date) {
-    document.querySelectorAll('.date-item').forEach(d => d.classList.remove('bg-white', 'border-brand/30', 'shadow-lg'));
-    el.classList.add('bg-white', 'border-brand/30', 'shadow-lg');
+    document.querySelectorAll('.date-item').forEach(d => d.classList.remove('bg-white', 'border-brand/20', 'shadow-sm'));
+    el.classList.add('bg-white', 'border-brand/20', 'shadow-sm');
     selectedDate = date;
     document.getElementById('btnDeleteDate').disabled = false;
 }
 
-    function deleteLog(mode) {
+function deleteLog(mode) {
     const box = document.getElementById('deleteResult');
-    if (!confirm(mode === 'by_date' ? `Purge logs for ${selectedDate}?` : 'WIPE ALL SENSOR HISTORY?')) return;
+    if (!confirm(mode === 'by_date' ? `Purge logs for ${selectedDate}?` : 'CRITICAL: WIPE ALL SENSOR HISTORY?')) return;
     const body = mode === 'by_date' ? `mode=by_date&date=${selectedDate}&csrf_token=${encodeURIComponent(CSRF)}` : `mode=all&csrf_token=${encodeURIComponent(CSRF)}`;
     fetch('delete_logs.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
     .then(r => r.json()).then(data => {
         box.classList.remove('hidden');
-        if (data.success) { box.className = 'mt-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 text-[11px] font-black uppercase text-center'; box.innerHTML = 'Records Purged'; setTimeout(() => location.reload(), 1500); }
+        if (data.success) { 
+            box.className = 'mt-4 py-3 rounded-xl bg-emerald-50 text-emerald-600 text-[11px] font-bold uppercase tracking-widest text-center'; 
+            box.innerHTML = 'Logs successfully purged'; 
+            setTimeout(() => location.reload(), 1200); 
+        }
     });
 }
 
@@ -587,7 +569,7 @@ function deleteSingleLog(btn, scanId, resId, ticket) {
     if (!confirm(`Permanently delete log entry for ticket ${ticket}?`)) return;
     
     const row = btn.closest('tr');
-    row.classList.add('opacity-50', 'pointer-events-none');
+    row.classList.add('opacity-40', 'pointer-events-none');
     
     const body = `mode=single&scan_id=${scanId}&reservation_id=${resId}&ticket=${ticket}&csrf_token=${encodeURIComponent(CSRF)}`;
     
@@ -599,38 +581,35 @@ function deleteSingleLog(btn, scanId, resId, ticket) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            row.classList.add('animate-out', 'fade-out', 'slide-out-to-right-4', 'duration-300');
+            row.classList.add('transition-all', 'duration-500', 'opacity-0', 'translate-x-4');
             setTimeout(() => {
                 row.remove();
-                applyScanLogFilters(); // Refresh empty state/counts
-            }, 300);
+                applyScanLogFilters();
+            }, 500);
         } else {
-            alert(data.message || 'Error deleting log entry');
-            row.classList.remove('opacity-50', 'pointer-events-none');
+            alert(data.message || 'Error deleting record');
+            row.classList.remove('opacity-40', 'pointer-events-none');
         }
     })
     .catch(err => {
-        alert('System error occurred');
-        row.classList.remove('opacity-50', 'pointer-events-none');
+        row.classList.remove('opacity-40', 'pointer-events-none');
     });
 }
 
 function setScanLogVehicleFilter(type) {
     currentLogVehicleFilter = type;
-    document.querySelectorAll('.filter-btn-log').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('btn-filter-' + type).classList.add('active');
-    currentLimit = 20; // Reset limit on filter change
+    document.querySelectorAll('.filter-btn-log').forEach(btn => {
+        btn.classList.remove('active', 'bg-brand', 'text-white', 'shadow-sm');
+        btn.classList.add('text-tertiary');
+    });
+    const activeBtn = document.getElementById('btn-filter-' + type);
+    activeBtn.classList.add('active', 'bg-brand', 'text-white', 'shadow-sm');
+    activeBtn.classList.remove('text-tertiary');
     applyScanLogFilters();
 }
 
 function setScanLogTypeFilter(category) {
     currentLogCategoryFilter = category;
-    currentLimit = 20; // Reset limit on filter change
-    applyScanLogFilters();
-}
-
-function loadMoreLogs() {
-    currentLimit += 20;
     applyScanLogFilters();
 }
 
@@ -642,7 +621,6 @@ function applyScanLogFilters() {
     const rows = document.querySelectorAll('.log-row');
     
     let filteredCount = 0;
-    let displayedCount = 0;
 
     rows.forEach(tr => {
         const text = tr.textContent.toLowerCase();
@@ -654,40 +632,19 @@ function applyScanLogFilters() {
         const matchCategory = currentLogCategoryFilter === 'all' || category === currentLogCategoryFilter;
         
         if (matchSearch && matchVehicle && matchCategory) {
+            tr.style.display = '';
             filteredCount++;
-            if (displayedCount < currentLimit) {
-                tr.style.display = '';
-                displayedCount++;
-            } else {
-                tr.style.display = 'none';
-            }
         } else {
             tr.style.display = 'none';
         }
     });
 
-    // Handle "Load More" button visibility
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    const showingCount = document.getElementById('showingCount');
-    
-    if (filteredCount > currentLimit) {
-        loadMoreContainer.classList.remove('hidden');
-    } else {
-        loadMoreContainer.classList.add('hidden');
-    }
-
-    if (showingCount) {
-        showingCount.textContent = `Showing ${displayedCount} of ${filteredCount} entries`;
-    }
-
-    // Handle No Data Row
     const noData = document.getElementById('noDataRow');
     if (noData) {
-        noData.style.display = (filteredCount === 0) ? '' : 'none';
+        noData.classList.toggle('hidden', filteredCount > 0);
     }
 }
 
-// Initial call
 document.addEventListener('DOMContentLoaded', applyScanLogFilters);
 </script>
 

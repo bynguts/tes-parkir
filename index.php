@@ -467,9 +467,9 @@ include 'includes/header.php';
                                 <tr class="border-b border-color">
                                     <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate/Ticket</th>
-                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">In</th>
-                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Out</th>
-                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Price</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
+                                    <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Fee</th>
                                     <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
                                 </tr>
                             </thead>
@@ -485,7 +485,7 @@ include 'includes/header.php';
                                     </td>
                                     <td class="py-2 text-center align-middle">
                                         <div class="flex flex-col items-center justify-center">
-                                            <span class="text-sm font-medium text-primary leading-none mb-1">
+                                            <span class="text-sm font-manrope font-semibold text-primary leading-none mb-1">
                                                 <?= $log['plate_number'] ?: '------' ?>
                                             </span>
                                             <span class="text-[10px] font-inter text-tertiary leading-none">
@@ -495,21 +495,21 @@ include 'includes/header.php';
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-sm font-medium text-primary">
+                                            <span class="text-sm font-manrope font-semibold text-primary">
                                                 <?= date('H:i', strtotime($log['entry_time'])) ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-sm font-medium text-primary">
+                                            <span class="text-sm font-manrope font-semibold text-primary">
                                                 <?= ($log['log_type'] === 'reservation') ? '--:--' : ($log['exit_time'] ? date('H:i', strtotime($log['exit_time'])) : '--:--') ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex items-center justify-center">
-                                            <span class="text-sm font-manrope font-medium text-primary">
+                                            <span class="text-sm font-manrope font-semibold text-primary">
                                                 <?= $log['total_fee'] !== null ? fmt_idr((float)$log['total_fee']) : 'Rp 0' ?>
                                             </span>
                                         </div>
@@ -569,7 +569,7 @@ include 'includes/header.php';
                             </div>
                         <?php else: ?>
                             <?php foreach ($display_staff as $st): ?>
-                            <div class="flex items-center justify-between p-2.5 bg-page rounded-2xl border-2 border-color group transition-all">
+                            <div class="flex items-center justify-between p-2.5 bg-page rounded-2xl border border-color group transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="relative">
                                         <div class="w-9 h-9 rounded-full bg-brand flex items-center justify-center text-white text-[10px] font-bold font-manrope">

@@ -34,7 +34,7 @@ include '../../includes/header.php';
 
 <link rel="stylesheet" href="../../assets/css/theme.css">
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-16">
+<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
     <!-- HEADER -->
     <div class="flex items-center gap-6">

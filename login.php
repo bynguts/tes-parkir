@@ -67,11 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Access — SmartParking</title>
+    <title>Enterprise Login — SmartParking</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/theme.css">
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             extend: {
                 colors: {
                     brand: '#6366f1',
-                    'brand-subtle': '#eef2ff',
+                    'brand-dark': '#4f46e5',
                 },
                 fontFamily: {
                     'manrope': ['Manrope', 'sans-serif'],
@@ -93,111 +93,188 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     </script>
     <style>
+        :root {
+            --brand-primary: #6366f1;
+            --brand-deep: #4338ca;
+            --slate-900: #0f172a;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-50: #f8fafc;
+        }
+        
         * { font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
-        body { background-color: var(--bg-page); color: var(--text-primary); }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to   { opacity: 1; transform: translateY(0); }
+        
+        .brand-side {
+            background: radial-gradient(circle at top right, var(--brand-primary), var(--brand-deep));
+            position: relative;
+            overflow: hidden;
         }
-        .fade-up { animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) forwards; }
-        .bento-card {
-            background-color: var(--surface);
-            border: 2px solid var(--border-color);
-            box-shadow: 0 25px 50px -12px var(--shadow-color);
+
+        .brand-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.4;
         }
+
+        .floating-orb {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: var(--brand-primary);
+            filter: blur(120px);
+            opacity: 0.3;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .form-side {
+            background-color: white;
+        }
+
+        input:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .animate-slide { animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden relative">
+<body class="min-h-screen bg-white">
 
-<!-- LUXURY ACCENTS -->
-<div class="fixed -top-24 -right-24 w-96 h-96 bg-brand/5 rounded-full blur-[120px] pointer-events-none"></div>
-<div class="fixed -bottom-24 -left-24 w-96 h-96 bg-brand/5 rounded-full blur-[120px] pointer-events-none"></div>
-
-<div class="w-full max-w-md fade-up z-10">
-
-    <!-- BRAND ARCHITECTURE -->
-    <div class="text-center mb-12">
-        <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand/20 ring-8 ring-brand/5 hover:scale-110 transition-transform cursor-default">
-            <i class="fa-solid fa-square-p text-white text-3xl"></i>
+<div class="flex min-h-screen">
+    <!-- LEFT SIDE: BRANDING -->
+    <div class="hidden lg:flex lg:w-1/2 brand-side flex-col justify-between p-20 relative">
+        <div class="floating-orb -top-40 -left-40"></div>
+        <div class="floating-orb -bottom-40 -right-40" style="background: white; opacity: 0.1;"></div>
+        
+        <div class="relative z-10">
+            <div class="flex items-center gap-4 group">
+                <div class="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-square-p text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-manrope font-black text-white tracking-tight">SmartParking</h1>
+            </div>
         </div>
-        <h1 class="font-manrope font-black text-4xl text-primary tracking-tight mb-2">SmartParking</h1>
-        <div class="flex items-center justify-center gap-3">
-            <div class="h-px w-8 bg-brand/20"></div>
-            <p class="text-brand text-[10px] font-black uppercase tracking-[0.4em] font-inter">Security Protocol</p>
-            <div class="h-px w-8 bg-brand/20"></div>
+
+        <div class="relative z-10 max-w-md">
+            <h2 class="text-6xl font-manrope font-black text-white leading-tight tracking-tighter mb-8">
+                Advanced Urban Mobility Core.
+            </h2>
+            <div class="space-y-6">
+                <div class="flex items-start gap-5">
+                    <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 shrink-0 mt-1">
+                        <i class="fa-solid fa-shield-check text-white text-xs"></i>
+                    </div>
+                    <p class="text-white/70 text-sm font-medium leading-relaxed">
+                        Securely manage your parking assets with enterprise-grade encryption and real-time synchronization.
+                    </p>
+                </div>
+                <div class="flex items-start gap-5">
+                    <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 shrink-0 mt-1">
+                        <i class="fa-solid fa-chart-line text-white text-xs"></i>
+                    </div>
+                    <p class="text-white/70 text-sm font-medium leading-relaxed">
+                        Access deep analytics and automated reporting for maximum operational efficiency.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10">
+            <p class="text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">
+                Precision Infrastructure Engineering &copy; <?= date('Y') ?>
+            </p>
         </div>
     </div>
 
-    <!-- LOGIN SURFACE -->
-    <div class="bento-card rounded-[3rem] p-12 relative overflow-hidden group">
-        <!-- Glossy overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-brand/[0.02] to-transparent pointer-events-none"></div>
-        
-        <div class="relative z-10">
-            <div class="mb-10">
-                <h2 class="font-manrope font-black text-2xl text-primary mb-1">Administrative Access</h2>
-                <p class="text-tertiary text-[10px] font-bold uppercase tracking-widest">Enterprise Authentication Node</p>
+    <!-- RIGHT SIDE: LOGIN FORM -->
+    <div class="w-full lg:w-1/2 form-side flex flex-col items-center justify-center p-8 lg:p-24 relative overflow-hidden">
+        <!-- Background accents for mobile -->
+        <div class="lg:hidden absolute -top-40 -right-40 w-80 h-80 bg-brand/5 rounded-full blur-3xl"></div>
+        <div class="lg:hidden absolute -bottom-40 -left-40 w-80 h-80 bg-brand/5 rounded-full blur-3xl"></div>
+
+        <div class="w-full max-w-[420px] animate-slide">
+            <!-- Mobile Brand Header -->
+            <div class="lg:hidden flex flex-col items-center mb-12">
+                <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-2xl mb-6">
+                    <i class="fa-solid fa-square-p text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-manrope font-black text-[#0f172a] tracking-tight">SmartParking</h1>
+            </div>
+
+            <div class="mb-12">
+                <h2 class="text-4xl font-manrope font-black text-[#0f172a] tracking-tight mb-3">Sign In</h2>
+                <p class="text-slate-500 font-medium">Please enter your credentials to access the administrative console.</p>
             </div>
 
             <?php if ($error): ?>
-            <div class="flex items-center gap-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl p-5 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 shrink-0">
+            <div class="flex items-center gap-4 bg-red-50 border border-red-100 rounded-2xl p-5 mb-8">
+                <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
                     <i class="fa-solid fa-shield-xmark text-lg"></i>
                 </div>
-                <p class="text-rose-500 text-xs font-black font-inter leading-relaxed"><?= htmlspecialchars($error) ?></p>
+                <p class="text-red-700 text-[13px] font-bold leading-relaxed"><?= htmlspecialchars($error) ?></p>
             </div>
             <?php endif; ?>
 
-            <form method="POST" class="space-y-6">
+            <form method="POST" class="space-y-8">
                 <?= csrf_field() ?>
 
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-2">
-                        <i class="fa-solid fa-user-shield text-[8px] text-brand"></i>
-                        Identity
+                <div class="space-y-3">
+                    <label class="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">
+                        Professional Identity
                     </label>
-                    <input type="text" name="username"
-                           class="w-full bg-surface-alt border-2 border-transparent focus:border-brand/30 rounded-2xl px-6 py-4.5 text-sm text-primary focus:outline-none transition-all font-inter font-bold placeholder-primary/20 shadow-inner"
-                           placeholder="Enter username"
-                           value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
-                           autocomplete="username" required autofocus>
+                    <div class="relative group">
+                        <i class="fa-solid fa-user absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors"></i>
+                        <input type="text" name="username"
+                               class="w-full bg-slate-50 border-2 border-slate-100 focus:border-brand/40 focus:bg-white rounded-[1.25rem] pl-14 pr-6 py-5 text-sm font-bold text-[#0f172a] focus:outline-none transition-all placeholder:text-slate-400"
+                               placeholder="Enter your username"
+                               value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
+                               autocomplete="username" required autofocus>
+                    </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-2">
-                        <i class="fa-solid fa-key-skeleton text-[8px] text-brand"></i>
-                        Security Key
-                    </label>
-                    <div class="relative group/pass">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between ml-1">
+                        <label class="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">
+                            Access Key
+                        </label>
+                    </div>
+                    <div class="relative group">
+                        <i class="fa-solid fa-key absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors"></i>
                         <input type="password" name="password" id="passInput"
-                               class="w-full bg-surface-alt border-2 border-transparent focus:border-brand/30 rounded-2xl px-6 py-4.5 text-sm text-primary focus:outline-none transition-all font-inter font-bold placeholder-primary/20 shadow-inner"
+                               class="w-full bg-slate-50 border-2 border-slate-100 focus:border-brand/40 focus:bg-white rounded-[1.25rem] pl-14 pr-16 py-5 text-sm font-bold text-[#0f172a] focus:outline-none transition-all placeholder:text-slate-400"
                                placeholder="••••••••" autocomplete="current-password" required>
-                        <button type="button" onclick="togglePass()" class="absolute right-5 top-1/2 -translate-y-1/2 text-tertiary hover:text-brand transition-colors p-2">
+                        <button type="button" onclick="togglePass()" class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand p-2">
                             <i id="passIcon" class="fa-solid fa-eye-slash text-xs"></i>
                         </button>
                     </div>
                 </div>
 
+                <div class="flex items-center gap-3 ml-1 pt-2">
+                    <input type="checkbox" id="remember" class="w-5 h-5 rounded-md border-2 border-slate-200 text-brand focus:ring-brand focus:ring-offset-0 transition-all cursor-pointer">
+                    <label for="remember" class="text-sm font-semibold text-slate-600 cursor-pointer select-none">Remember this session</label>
+                </div>
+
                 <button type="submit"
-                        class="w-full bg-brand hover:brightness-110 text-white font-black font-inter rounded-2xl uppercase tracking-[0.2em] text-[11px] py-5 transition-all mt-8 shadow-2xl shadow-brand/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3">
-                    <span>Initialize Session</span>
-                    <i class="fa-solid fa-arrow-right-to-bracket text-[10px]"></i>
+                        class="w-full bg-[#0f172a] hover:bg-black text-white font-black rounded-2xl uppercase tracking-[0.2em] text-[11px] py-6 transition-all mt-6 shadow-2xl shadow-slate-200 flex items-center justify-center gap-3 group">
+                    <span>Initialize Interface</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </form>
-        </div>
-    </div>
 
-    <!-- FOOTER ARCHITECTURE -->
-    <div class="mt-12 flex flex-col items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
-        <div class="flex items-center gap-4">
-            <div class="h-px w-12 bg-primary/10"></div>
-            <i class="fa-solid fa-microchip text-[10px]"></i>
-            <div class="h-px w-12 bg-primary/10"></div>
+            <div class="mt-20 flex items-center justify-center gap-8 opacity-20 hover:opacity-50 transition-opacity">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+                <i class="fa-solid fa-microchip text-xl"></i>
+                <i class="fa-solid fa-fingerprint text-xl"></i>
+            </div>
         </div>
-        <p class="text-center text-primary text-[10px] font-black font-inter uppercase tracking-[0.5em]">
-            Precision Engineering Core — <?= date('Y') ?>
-        </p>
     </div>
 </div>
 

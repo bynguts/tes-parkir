@@ -168,7 +168,7 @@ include '../../includes/header.php';
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 
-<div class="px-10 py-10 h-[calc(100vh-80px)] max-w-[1400px] mx-auto flex flex-col gap-6 overflow-hidden">
+<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
     <!-- Toast Notifications -->
     <div id="toastContainer" class="fixed top-24 right-10 z-[100] flex flex-col gap-3">
@@ -191,7 +191,7 @@ include '../../includes/header.php';
     </div>
 
     <!-- Main Inventory Card -->
-    <div class="bento-card flex-1 flex flex-col overflow-hidden min-h-0">
+    <div class="bento-card flex flex-col overflow-hidden min-h-[600px]">
         <!-- Card Header (Dashboard Style) -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-color shrink-0">
             <div class="flex items-center gap-3">

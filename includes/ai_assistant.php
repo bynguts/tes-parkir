@@ -2,13 +2,12 @@
 <!-- Marked.js for Markdown → HTML rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 
-<div id="archive-ai-root" class="fixed bottom-8 right-8 z-[9999] flex flex-col items-end gap-4">
+<div id="archive-ai-root" class="z-[9999]">
     
     <!-- Chat Window (Glassmorphism) -->
-    <div id="ai-chat-window" class="hidden flex flex-col w-[420px] h-[580px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50 overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
-        
+    <div id="ai-chat-window" class="hidden fixed bottom-8 right-8 flex flex-col w-[420px] h-[580px] bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-color overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
         <!-- Header -->
-        <div class="px-5 py-4 flex items-center justify-between flex-shrink-0" style="background: var(--text-primary);">
+        <div class="px-5 py-4 flex items-center justify-between flex-shrink-0 bg-brand">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
@@ -19,7 +18,7 @@
                 </div>
                 <div>
                     <h3 class="font-manrope font-extrabold text-white text-sm leading-tight" id="ai-view-title">Cereza</h3>
-                    <p class="text-slate-400 text-[9px] uppercase tracking-widest font-inter" id="ai-view-status">Live Support</p>
+                    <p class="text-white/70 text-[13px] font-medium font-inter" id="ai-view-status">SmartParking Assistant</p>
                 </div>
             </div>
             <div class="flex items-center gap-1">
@@ -33,50 +32,35 @@
                 </button>
                 <!-- New Chat Button -->
                 <button onclick="createNewSession()" class="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all" title="New Conversation">
-                    <i class="fa-solid fa-plus text-xs"></i>
+                    <i class="fa-solid fa-plus text-sm"></i>
                 </button>
             </div>
         </div>
 
         <!-- History View (Hidden by default) -->
-        <div id="ai-history-area" class="hidden flex-1 overflow-y-auto p-4 space-y-2 ai-scrollbar bg-slate-50">
+        <div id="ai-history-area" class="hidden flex-1 overflow-y-auto p-4 space-y-2 ai-scrollbar bg-page">
             <!-- Session items will be injected here -->
         </div>
 
         <!-- Chat View -->
-        <div id="ai-chat-area" class="flex flex-col flex-1 overflow-hidden">
+        <div id="ai-chat-area" class="flex flex-col flex-1 overflow-hidden bg-surface">
             <!-- Message Area -->
             <div id="ai-message-area" class="flex-1 overflow-y-auto p-4 space-y-3 ai-scrollbar"></div>
 
             <!-- Input Area -->
-            <div class="p-3 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+            <div class="p-3 bg-surface-alt border-t border-color flex-shrink-0">
                 <form id="ai-chat-form" class="relative group flex items-center gap-2">
                     <input type="text" id="ai-user-input" 
-                           placeholder="Ask something about parking..." 
-                           class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-inter text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                           placeholder="Ask something about SmartParking..." 
+                           class="flex-1 bg-surface border border-color rounded-xl px-4 py-2.5 text-sm font-inter text-primary placeholder-secondary focus:outline-none focus:border-brand transition-colors"
                            autocomplete="off">
-                    <button type="submit" class="w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all flex-shrink-0" style="background: var(--text-primary);">
+                    <button type="submit" class="w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all flex-shrink-0 bg-brand">
                         <i class="fa-solid fa-paper-plane text-[13px]"></i>
                     </button>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- FAB Button -->
-    <button id="ai-fab" onclick="toggleAIChat()" class="relative w-14 h-14 text-white rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-4 active:scale-95 flex items-center justify-center" style="background: var(--text-primary);">
-        <!-- State: Idle (Stars) -->
-        <svg id="ai-fab-stars" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 transition-all duration-300">
-            <path class="star-path star-1" stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-            <path class="star-path star-2" stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-            <path class="star-path star-3" stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-        </svg>
-        <!-- State: Open (Down Arrow) -->
-        <svg id="ai-fab-close" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6 hidden transition-all duration-300">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
-    </button>
-</div>
 
 <script>
 // Configure marked.js for safe rendering
@@ -120,7 +104,7 @@ function switchView(view) {
         chatArea.classList.remove('hidden');
         historyArea.classList.add('hidden');
         title.textContent = 'Cereza';
-        status.textContent = 'Live Support';
+        status.textContent = 'SmartParking Assistant';
         btnBack.classList.add('hidden');
         btnHist.classList.remove('hidden');
     }
@@ -168,7 +152,7 @@ function renderHistory() {
 
     if (history.length === 0) {
         container.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full opacity-30 text-slate-500 gap-2">
+            <div class="flex flex-col items-center justify-center h-full opacity-30 text-secondary gap-2">
                 <i class="fa-solid fa-box-archive text-4xl"></i>
                 <p class="text-xs font-medium">No history found</p>
             </div>
@@ -178,15 +162,15 @@ function renderHistory() {
 
     history.forEach(sess => {
         const item = document.createElement('div');
-        item.className = 'bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-400 transition-all cursor-pointer group flex items-center justify-between gap-3';
+        item.className = 'bg-surface p-3 rounded-xl border border-color hover:border-brand transition-all cursor-pointer group flex items-center justify-between gap-3';
         item.onclick = () => loadSessionFromHistory(sess.id);
         
         item.innerHTML = `
             <div class="flex-1 overflow-hidden">
-                <h4 class="text-[13px] font-bold text-slate-800 truncate">${sess.title}</h4>
-                <p class="text-[10px] text-slate-400 mt-0.5">${formatWIB(sess.ts)}</p>
+                <h4 class="text-[13px] font-bold text-primary truncate">${sess.title}</h4>
+                <p class="text-[10px] text-secondary mt-0.5">${formatWIB(sess.ts)}</p>
             </div>
-            <button onclick="deleteSession(event, '${sess.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+            <button onclick="deleteSession(event, '${sess.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
                 <i class="fa-solid fa-trash-can text-xs"></i>
             </button>
         `;
@@ -242,22 +226,16 @@ function saveAISession(role, text, ts) {
 
 function toggleAIChat() {
     const win = document.getElementById('ai-chat-window');
-    const fabStars = document.getElementById('ai-fab-stars');
-    const fabClose = document.getElementById('ai-fab-close');
     const input = document.getElementById('ai-user-input');
 
     if (aiChatVisible) {
         win.classList.add('scale-95', 'opacity-0');
         setTimeout(() => win.classList.add('hidden'), 280);
-        fabStars.classList.remove('hidden');
-        fabClose.classList.add('hidden');
     } else {
         win.classList.remove('hidden');
         requestAnimationFrame(() => {
             requestAnimationFrame(() => win.classList.remove('scale-95', 'opacity-0'));
         });
-        fabStars.classList.add('hidden');
-        fabClose.classList.remove('hidden');
         
         setTimeout(() => {
             if (input) input.focus();
@@ -325,7 +303,7 @@ function appendMessage(role, text, save = true, ts = null) {
 
     const tsEl = document.createElement('span');
     tsEl.className = 'ai-timestamp';
-    tsEl.textContent = (role === 'user' ? 'You' : 'Cereza') + ' • ' + formatWIB(timestamp);
+    tsEl.textContent = formatWIB(timestamp);
 
     wrapper.appendChild(bubble);
     wrapper.appendChild(tsEl);
@@ -358,8 +336,8 @@ function removeTyping(id) {
 
 document.addEventListener('click', function(e) {
     const win = document.getElementById('ai-chat-window');
-    const fab = document.getElementById('ai-fab');
-    if (aiChatVisible && !win.contains(e.target) && !fab.contains(e.target)) {
+    const isToggle = e.target.closest('button[onclick="toggleAIChat()"]');
+    if (aiChatVisible && !win.contains(e.target) && !isToggle) {
         toggleAIChat();
     }
 });
@@ -369,7 +347,7 @@ document.addEventListener('click', function(e) {
 /* ── Chat Window Scrollbar ─────────────────── */
 .ai-scrollbar::-webkit-scrollbar { width: 4px; }
 .ai-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.ai-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+.ai-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
 
 /* ── Bubble Base ───────────────────────────── */
 .ai-bubble-bot {
@@ -393,8 +371,8 @@ document.addEventListener('click', function(e) {
     box-shadow: 0 1px 3px var(--shadow-color);
 }
 .ai-bubble-user {
-    background: var(--text-primary);
-    color: var(--surface);
+    background: var(--brand);
+    color: white;
     border-radius: 16px 16px 0 16px;
     padding: 10px 14px;
     font-size: 13px;
@@ -403,10 +381,9 @@ document.addEventListener('click', function(e) {
     font-family: 'Inter', sans-serif;
 }
 .ai-timestamp {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--text-secondary);
     font-family: 'Inter', sans-serif;
-    text-transform: uppercase;
     letter-spacing: .04em;
     padding: 0 4px;
 }
@@ -430,14 +407,14 @@ document.addEventListener('click', function(e) {
 .ai-bubble-bot blockquote { border-left: 3px solid var(--text-secondary); padding-left: 10px; color: var(--text-secondary); margin: 6px 0; font-style: italic; }
 
 .ai-table-scroll table { border-collapse: collapse; font-size: 11px; min-width: 100%; table-layout: auto; }
-.ai-table-scroll thead { background: var(--text-primary); color: var(--surface); }
+.ai-table-scroll thead { background: var(--brand); color: white; }
 .ai-table-scroll thead th { padding: 6px 10px; text-align: left; font-weight: 800; white-space: nowrap; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
 .ai-table-scroll tbody tr { border-bottom: 1px solid var(--border-color); transition: background .15s; }
 .ai-table-scroll tbody tr:hover { background: var(--surface-alt); }
 .ai-table-scroll tbody td { padding: 5px 10px; color: var(--text-primary); vertical-align: middle; white-space: nowrap; }
 .ai-table-scroll tbody tr:nth-child(even) { background: var(--bg-page); }
 
-.ai-typing-dot { width: 4px; height: 4px; background: var(--text-primary); border-radius: 50%; opacity: 0.3; display: inline-block; animation: aiDotBounce .9s infinite ease-in-out; }
+.ai-typing-dot { width: 4px; height: 4px; background: var(--brand); border-radius: 50%; opacity: 0.3; display: inline-block; animation: aiDotBounce .9s infinite ease-in-out; }
 @keyframes aiDotBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
 
 .ai-msg-anim { animation: aiBubbleIn 0.3s cubic-bezier(.16,1,.3,1) forwards; }

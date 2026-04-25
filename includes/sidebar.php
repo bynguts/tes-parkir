@@ -106,18 +106,11 @@ function is_active(string $target): string {
                         <span class="sidebar-label">Parking Inventory</span>
                     </a>
                 </li>
-            </ul>
-        </div>
-
-        <!-- ANALYTICS -->
-        <div>
-            <div class="px-3 mb-2 text-[9px] font-normal uppercase tracking-widest font-inter sidebar-label-text">Intelligence & Analytics</div>
-            <ul class="space-y-0.5">
                 <li>
                     <a href="<?= BASE_URL ?>modules/reports/analytics.php"
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal sidebar-link <?= strpos($_SERVER['PHP_SELF'], 'analytics.php') !== false ? 'nav-active' : '' ?>">
-                        <i class="fa-solid fa-chart-pie text-[13px] w-4"></i>
-                        <span class="sidebar-label">Intelligence Dashboard</span>
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal sidebar-link <?= is_active('analytics.php') ?>">
+                        <i class="fa-solid fa-chart-pie text-sm"></i>
+                        <span class="sidebar-label">Analytics</span>
                     </a>
                 </li>
             </ul>

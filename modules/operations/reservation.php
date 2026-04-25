@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $vid  = $pdo->query("SELECT vehicle_id FROM vehicle WHERE plate_number='".addslashes($plate)."'")->fetchColumn();
                 $code = generate_reservation_code($pdo);
 
-                $pdo->prepare("INSERT INTO reservation (vehicle_id, slot_id, reservation_code, reserved_from, reserved_until, status)
-                                VALUES (?,?,?,?,?,'confirmed')")
-                    ->execute([$vid, $slot['slot_id'], $code, $date_from, $date_until]);
+                $pdo->prepare("INSERT INTO reservation (vehicle_id, plate_number, slot_id, reservation_code, reserved_from, reserved_until, status)
+                                VALUES (?,?,?,?,?,?,'confirmed')")
+                    ->execute([$vid, $plate, $slot['slot_id'], $code, $date_from, $date_until]);
 
                 $msg = "Reservation successful! Code: <strong class='font-mono'>{$code}</strong>";
             }
@@ -129,8 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $slot_id = $new_slot['slot_id'];
                 }
 
-                $pdo->prepare("UPDATE reservation SET slot_id=?, reserved_from=?, reserved_until=? WHERE reservation_id=?")
-                    ->execute([$slot_id, $date_from, $date_until, $res_id]);
+                $pdo->prepare("UPDATE reservation SET plate_number=?, slot_id=?, reserved_from=?, reserved_until=? WHERE reservation_id=?")
+                    ->execute([$plate, $slot_id, $date_from, $date_until, $res_id]);
 
                 $pdo->commit();
                 $msg = "Reservation updated successfully.";
@@ -150,8 +150,8 @@ $reservations = $pdo->query("
     JOIN vehicle v       ON r.vehicle_id  = v.vehicle_id
     JOIN parking_slot ps ON r.slot_id     = ps.slot_id
     JOIN floor f         ON ps.floor_id   = f.floor_id
-    WHERE r.status IN ('pending','confirmed')
-    ORDER BY r.reserved_from
+    WHERE r.status IN ('pending','confirmed','used')
+    ORDER BY FIELD(r.status, 'confirmed', 'pending', 'used'), r.reserved_from
 ")->fetchAll();
 
 $min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
@@ -235,7 +235,7 @@ include '../../includes/header.php';
 }
 </style>
 
-<div class="px-6 py-6 h-[calc(100vh-100px)] max-w-[1600px] mx-auto flex flex-col gap-5 overflow-hidden">
+<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
     <?php if ($msg || $error): ?>
     <div class="flex-shrink-0">
@@ -254,88 +254,11 @@ include '../../includes/header.php';
     </div>
     <?php endif; ?>
 
-    <div class="grid grid-cols-1 xl:grid-cols-[400px_1fr] gap-5 overflow-hidden flex-1 min-h-0">
-
-
-            <!-- CREATE FORM -->
-            <div class="bento-card flex flex-col overflow-hidden h-full">
-                <div class="flex items-center justify-between px-6 py-3.5 border-b border-color shrink-0">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-calendar-plus text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title leading-tight">Create Reservation</h3>
-                            <p class="text-[11px] text-tertiary font-inter">Allocate priority parking slots</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-6 overflow-y-auto no-scrollbar flex-1">
-                    <form method="POST" class="space-y-4">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="create">
-                        <?php $vtype = $_POST['vehicle_type'] ?? 'car'; ?>
-                        <input type="hidden" name="vehicle_type" id="vtype_hidden" value="<?= htmlspecialchars($vtype) ?>">
-
-                        <!-- Vehicle type selector -->
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-3">Vehicle Category</label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button type="button" id="btnCar" onclick="setType('car')"
-                                        class="vtype-btn <?= $vtype === 'car' ? 'active' : '' ?> flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all">
-                                    <i class="fa-solid fa-car text-2xl"></i>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Car</span>
-                                </button>
-                                <button type="button" id="btnMoto" onclick="setType('motorcycle')"
-                                        class="vtype-btn <?= $vtype === 'motorcycle' ? 'active' : '' ?> flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all">
-                                    <i class="fa-solid fa-motorcycle text-2xl"></i>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Motorcycle</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">License Plate</label>
-                            <input type="text" name="plate_number"
-                                   class="modal-input w-full border-2 border-transparent focus:border-brand rounded-2xl px-5 py-3.5 text-sm font-bold font-manrope text-primary focus:outline-none text-center uppercase tracking-widest transition-all placeholder:opacity-20"
-                                   placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Owner Name</label>
-                                <input type="text" name="owner_name" placeholder="Guest"
-                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all placeholder:opacity-20">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Contact</label>
-                                <input type="tel" name="owner_phone" placeholder="08xxxx"
-                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all placeholder:opacity-20">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Start Time</label>
-                            <div class="relative">
-                                <input type="text" name="reserved_from" id="from_dt" required placeholder="Select date & time"
-                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer placeholder:opacity-20">
-                                <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
-                            </div>
-                        </div>
-
-                        <button type="submit"
-                                class="btn-primary w-full font-black font-inter text-[10px] uppercase tracking-widest rounded-full py-4 transition-all flex items-center justify-center gap-3">
-                            <i class="fa-solid fa-calendar-check text-base"></i>
-                            Confirm Reservation
-                        </button>
-                    </form>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 gap-5 overflow-hidden flex-1 min-h-0">
 
 
             <!-- ACTIVE RESERVATIONS -->
-            <div class="bento-card flex flex-col overflow-hidden h-full">
+            <div class="bento-card flex flex-col p-4 overflow-hidden h-full">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-color shrink-0">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -372,7 +295,20 @@ include '../../includes/header.php';
                             ?>
                             <tr class="group hover:bg-surface-alt/50 transition-colors">
                                 <td class="px-6 py-4">
-                                    <span class="font-manrope font-black text-[13px] text-brand tracking-widest"><?= htmlspecialchars($r['reservation_code']) ?></span>
+                                    <div class="flex flex-col">
+                                        <span class="font-manrope font-black text-[13px] text-brand tracking-widest leading-none mb-1"><?= htmlspecialchars($r['reservation_code']) ?></span>
+                                        <?php if ($r['status'] === 'used'): ?>
+                                            <div class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-md w-fit">
+                                                <span class="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></span>
+                                                Inside
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md w-fit">
+                                                <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
+                                                Waiting
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
@@ -413,6 +349,7 @@ include '../../includes/header.php';
                                             
                                             <!-- Dropdown Menu -->
                                             <div class="action-dropdown hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                                                <?php if ($r['status'] !== 'used'): ?>
                                                 <button onclick="openEditModal(<?= htmlspecialchars(json_encode([
                                                     'id' => $r['reservation_id'],
                                                     'plate' => $r['plate_number'],
@@ -446,6 +383,12 @@ include '../../includes/header.php';
                                                         </div>
                                                     </button>
                                                 </form>
+                                                <?php else: ?>
+                                                <div class="px-4 py-3 text-center">
+                                                    <span class="text-[10px] font-black uppercase tracking-widest text-tertiary">Session Locked</span>
+                                                    <p class="text-[9px] text-tertiary/60 leading-tight mt-1">Vehicle is currently parked</p>
+                                                </div>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>

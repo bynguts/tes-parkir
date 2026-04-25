@@ -100,7 +100,7 @@ include '../../includes/header.php';
         border: 2px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        items-center: center;
+        align-items: center;
         justify-content: center;
         font-size: 10px;
         font-weight: 800;
@@ -108,12 +108,12 @@ include '../../includes/header.php';
         cursor: default;
     }
     .heatmap-slot:hover { transform: scale(1.1); z-index: 10; }
-    .heatmap-slot.occupied { background: var(--text-primary); border-color: var(--text-primary); color: white; }
+    .heatmap-slot.occupied { background: var(--status-parked-bg); border-color: var(--status-parked-border); color: var(--status-parked-text); }
     .heatmap-slot.available { background: var(--status-available-bg); border-color: var(--status-available-border); color: var(--status-available-text); }
     .heatmap-slot.reserved { background: var(--status-reserved-bg); border-color: var(--status-reserved-border); color: var(--status-reserved-text); }
 </style>
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-16">
+<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
     <!-- TOP FILTER BAR -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -122,7 +122,7 @@ include '../../includes/header.php';
                 <i class="fa-solid fa-brain text-3xl"></i>
             </div>
             <div>
-                <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Intelligence Dashboard</h2>
+                <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Analytics Dashboard</h2>
                 <p class="text-tertiary mt-1 text-sm font-medium">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
             </div>
         </div>
@@ -191,7 +191,10 @@ include '../../includes/header.php';
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+            <div class="bento-card p-10 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
+                </div>
                 <div class="relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Revenue Today' : 'Total Revenue' ?></p>
                     <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr($data['summary']['revenue_today']) ?></p>
@@ -201,42 +204,57 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-10 border-color shadow-xl">
-                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Occupancy Rate</p>
-                <div class="flex items-baseline gap-3">
-                    <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['active_vehicles'] ?></p>
-                    <p class="text-[11px] font-black text-tertiary uppercase">Units Active</p>
+            <div class="bento-card p-10 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-gauge-high text-6xl"></i>
                 </div>
-                <div class="mt-8 h-2 w-full bg-surface-alt rounded-full overflow-hidden">
-                    <?php $occ_rate = ($data['summary']['active_vehicles'] / max(1, $data['summary']['available_slots'] + $data['summary']['active_vehicles'])) * 100; ?>
-                    <div class="h-full bg-brand shadow-[0_0_15px_rgba(99,102,241,0.5)]" style="width: <?= min(100, $occ_rate) ?>%"></div>
-                </div>
-            </div>
-
-            <div class="bento-card p-10 border-color shadow-xl">
-                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Intake Capacity</p>
-                <div class="flex items-baseline gap-3">
-                    <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['available_slots'] ?></p>
-                    <p class="text-[11px] font-black text-tertiary uppercase">Slots Free</p>
-                </div>
-                <div class="mt-8 flex items-center gap-3">
-                    <div class="flex -space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-status-reserved-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-clock text-[8px] text-status-reserved-text"></i></div>
-                        <div class="w-8 h-8 rounded-full bg-status-available-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-check text-[8px] text-status-available-text"></i></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Occupancy Rate</p>
+                    <div class="flex items-baseline gap-3">
+                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['active_vehicles'] ?></p>
+                        <p class="text-[11px] font-black text-tertiary uppercase">Units Active</p>
                     </div>
-                    <span class="text-[10px] font-black text-tertiary uppercase tracking-widest"><?= $data['summary']['total_reservations'] ?> RSV Today</span>
+                    <div class="mt-8 h-2 w-full bg-surface-alt rounded-full overflow-hidden">
+                        <?php $occ_rate = ($data['summary']['active_vehicles'] / max(1, $data['summary']['available_slots'] + $data['summary']['active_vehicles'])) * 100; ?>
+                        <div class="h-full bg-brand shadow-[0_0_15px_rgba(99,102,241,0.5)]" style="width: <?= min(100, $occ_rate) ?>%"></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bento-card p-10 border-color shadow-xl">
-                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Traffic Today' : 'Total Traffic' ?></p>
-                <div class="flex items-baseline gap-3">
-                    <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['total_entries_today'] ?></p>
-                    <p class="text-[11px] font-black text-tertiary uppercase">Flow-ins</p>
+            <div class="bento-card p-10 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-square-p text-6xl"></i>
                 </div>
-                <p class="text-[10px] text-tertiary font-black mt-8 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-route text-brand"></i> Hardware-validated scans
-                </p>
+                <div class="relative z-10">
+                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Intake Capacity</p>
+                    <div class="flex items-baseline gap-3">
+                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['available_slots'] ?></p>
+                        <p class="text-[11px] font-black text-tertiary uppercase">Slots Free</p>
+                    </div>
+                    <div class="mt-8 flex items-center gap-3">
+                        <div class="flex -space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-status-reserved-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-clock text-[8px] text-status-reserved-text"></i></div>
+                            <div class="w-8 h-8 rounded-full bg-status-available-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-check text-[8px] text-status-available-text"></i></div>
+                        </div>
+                        <span class="text-[10px] font-black text-tertiary uppercase tracking-widest"><?= $data['summary']['total_reservations'] ?> RSV Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-card p-10 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-route text-6xl"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Traffic Today' : 'Total Traffic' ?></p>
+                    <div class="flex items-baseline gap-3">
+                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['entries_today'] ?></p>
+                        <p class="text-[11px] font-black text-tertiary uppercase">Flow-ins</p>
+                    </div>
+                    <p class="text-[10px] text-tertiary font-black mt-8 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-brand"></i> Hardware-validated scans
+                    </p>
+                </div>
             </div>
         </div>
     </section>
@@ -263,9 +281,10 @@ include '../../includes/header.php';
                             <span class="text-[10px] font-black text-tertiary uppercase tracking-[0.2em]">ZONE ID: <?= $area['code'] ?></span>
                         </div>
                     </div>
-                    <div class="flex gap-6">
-                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-available-text"></div><span class="text-[9px] font-black text-tertiary uppercase">FREE</span></div>
-                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-primary"></div><span class="text-[9px] font-black text-tertiary uppercase">FULL</span></div>
+                    <div class="flex gap-4 sm:gap-6">
+                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-available-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Available</span></div>
+                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-parked-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Occupied</span></div>
+                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-reserved-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Reserved</span></div>
                     </div>
                 </div>
                 <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
@@ -422,24 +441,33 @@ include '../../includes/header.php';
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color">
-                    <?php foreach($data['operator_performance'] as $op): ?>
+                    <?php if (!empty($data['operator_performance'])): ?>
+                    <?php foreach($data['operator_performance'] as $op): 
+                        $opName = trim((string)($op['full_name'] ?? 'Unknown Operator'));
+                        $opInitial = strtoupper(substr($opName, 0, 1));
+                    ?>
                     <tr class="hover:bg-surface-alt/30 transition-all group">
                         <td class="px-10 py-6">
                             <div class="flex items-center gap-5">
-                                <div class="w-11 h-11 rounded-2xl bg-surface-alt border border-color flex items-center justify-center text-primary text-xs font-black shadow-sm"><?= strtoupper(substr($op['full_name'],0,1)) ?></div>
+                                <div class="w-11 h-11 rounded-2xl bg-surface-alt border border-color flex items-center justify-center text-primary text-xs font-black shadow-sm"><?= $opInitial ?: 'U' ?></div>
                                 <div>
-                                    <span class="text-base font-extrabold text-primary block leading-tight"><?= $op['full_name'] ?></span>
-                                    <span class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-1 block">ID: OP-<?= $op['operator_id'] ?></span>
+                                    <span class="text-base font-extrabold text-primary block leading-tight"><?= htmlspecialchars($opName) ?></span>
+                                    <span class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-1 block">ID: OP-<?= (int)($op['operator_id'] ?? 0) ?></span>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-6 text-center">
-                            <span class="px-5 py-2 rounded-xl bg-surface-alt text-[10px] font-black text-tertiary uppercase tracking-widest border border-color"><?= $op['shift'] ?></span>
+                            <span class="px-5 py-2 rounded-xl bg-surface-alt text-[10px] font-black text-tertiary uppercase tracking-widest border border-color"><?= htmlspecialchars((string)($op['shift'] ?? 'N/A')) ?></span>
                         </td>
-                        <td class="px-6 py-6 text-center font-manrope font-black text-primary text-xl"><?= $op['total_transactions'] ?></td>
-                        <td class="px-10 py-6 text-right font-manrope font-black text-status-available-text text-xl"><?= fmt_idr($op['total_revenue_handled']) ?></td>
+                        <td class="px-6 py-6 text-center font-manrope font-black text-primary text-xl"><?= (int)($op['total_transactions'] ?? 0) ?></td>
+                        <td class="px-10 py-6 text-right font-manrope font-black text-status-available-text text-xl"><?= fmt_idr((float)($op['total_revenue_handled'] ?? 0)) ?></td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php else: ?>
+                    <tr>
+                        <td colspan="4" class="px-10 py-12 text-center text-tertiary text-sm font-semibold">No personnel intelligence data in selected range.</td>
+                    </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -487,19 +515,31 @@ include '../../includes/header.php';
 <script>
 // Chart Global Config
 Chart.defaults.font.family = "'Manrope', 'Inter', sans-serif";
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.plugins.tooltip.backgroundColor = '#0f172a';
+const analyticsRoot = document.documentElement;
+const cssVar = (name, fallback) => {
+    const value = getComputedStyle(analyticsRoot).getPropertyValue(name).trim();
+    return value || fallback;
+};
+const chartTextColor = cssVar('--text-secondary', '#94a3b8');
+const chartTooltipBg = cssVar('--surface', '#0f172a');
+const chartBrand = cssVar('--brand', '#6366f1');
+const chartCar = cssVar('--traffic-car', '#4338ca');
+const chartMoto = cssVar('--traffic-moto', '#818cf8');
+const chartGrid = analyticsRoot.getAttribute('data-theme') === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(99, 102, 241, 0.08)';
+
+Chart.defaults.color = chartTextColor;
+Chart.defaults.plugins.tooltip.backgroundColor = chartTooltipBg;
 Chart.defaults.plugins.tooltip.padding = 16;
 Chart.defaults.plugins.tooltip.cornerRadius = 16;
 Chart.defaults.plugins.tooltip.titleFont = { size: 10, weight: '800' };
 Chart.defaults.plugins.tooltip.bodyFont = { size: 14, weight: '800' };
 
 const chartColors = {
-    brand: '#6366f1',
-    car: '#1d4ed8',
-    moto: '#93c5fd',
-    grid: 'rgba(99, 102, 241, 0.05)',
-    border: 'rgba(99, 102, 241, 0.1)'
+    brand: chartBrand,
+    car: chartCar,
+    moto: chartMoto,
+    grid: chartGrid,
+    border: chartGrid
 };
 
 const commonOptions = {
@@ -509,11 +549,11 @@ const commonOptions = {
     scales: {
         y: { 
             grid: { color: chartColors.grid, drawBorder: false },
-            ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8', padding: 10 }
+            ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10 }
         },
         x: { 
             grid: { display: false },
-            ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8', padding: 10 }
+            ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10 }
         }
     }
 };
@@ -578,7 +618,7 @@ initChart('dwellTypeChart', {
     type: 'bar',
     data: {
         labels: <?= json_encode(array_column($dwell_avg, 'vehicle_type')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($dwell_avg, 'avg_min')) ?>, backgroundColor: '#0f172a', borderRadius: 20 }]
+        datasets: [{ data: <?= json_encode(array_column($dwell_avg, 'avg_min')) ?>, backgroundColor: chartColors.brand, borderRadius: 20 }]
     },
     options: commonOptions
 });
@@ -597,7 +637,7 @@ initChart('resConversionChart', {
     type: 'doughnut',
     data: {
         labels: <?= json_encode(array_column($data['reservation_summary'], 'status')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: ['#0f172a', '#334155', '#475569', '#94a3b8'], borderWidth: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: [chartColors.brand, chartColors.car, chartColors.moto, '#94a3b8'], borderWidth: 0 }]
     },
     options: { cutout: '80%', plugins: { legend: { display: false } } }
 });
@@ -606,7 +646,7 @@ initChart('paymentChart', {
     type: 'polarArea',
     data: {
         labels: <?= json_encode(array_column($data['payment_methods'], 'payment_method')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($data['payment_methods'], 'count')) ?>, backgroundColor: ['#0f172a', '#64748b', '#cbd5e1'], borderWidth: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($data['payment_methods'], 'count')) ?>, backgroundColor: [chartColors.brand, chartColors.car, chartColors.moto], borderWidth: 0 }]
     },
     options: { scales: { r: { grid: { color: chartColors.grid }, ticks: { display: false } } }, plugins: { legend: { display: false } } }
 });

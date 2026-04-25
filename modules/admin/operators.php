@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $pdo->prepare("INSERT INTO operator (full_name, shift, staff_type, phone) VALUES (?,?,?,?)")
                 ->execute([$name, $shift, $type, $phone ?: null]);
-            $msg = "Profile {$name} successfully registered in the parking HR system.";
+            $msg = "Profile {$name} successfully registered in the personnel database.";
         }
     }
 
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $type  = $_POST['staff_type'] ?? 'operator';
         $pdo->prepare("UPDATE operator SET full_name=?, shift=?, staff_type=?, phone=? WHERE operator_id=?")
             ->execute([$name, $shift, $type, $phone ?: null, $id]);
-        $msg = 'Personnel profile database successfully updated.';
+        $msg = 'Personnel profile successfully updated.';
     }
 
     if ($action === 'delete') {
@@ -43,10 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $used = $pdo->prepare("SELECT COUNT(*) FROM `transaction` WHERE operator_id=?");
         $used->execute([$id]);
         if ($used->fetchColumn() > 0) {
-            $error = 'Constraint Violation: This operator holds active transaction logs.';
+            $error = 'Constraint Violation: This operator holds active transaction records.';
         } else {
             $pdo->prepare("DELETE FROM operator WHERE operator_id=?")->execute([$id]);
-            $msg = 'Operator profile removed from the system.';
+            $msg = 'Operator profile successfully removed from the system.';
         }
     }
 }
@@ -60,62 +60,72 @@ $operators = $pdo->query("SELECT o.*, COUNT(t.transaction_id) AS total_trx
     GROUP BY o.operator_id
     ORDER BY o.staff_type ASC, o.full_name ASC")->fetchAll();
 
-$page_title = 'Manage Operators';
+$page_title = 'Personnel Roster';
+$page_subtitle = 'Management of gate operators and administrative staff profiles.';
+
 include '../../includes/header.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/theme.css">
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="px-10 py-10">
     
-    <!-- HEADER -->
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-[2rem] icon-container flex items-center justify-center shadow-2xl shrink-0">
-                <i class="fa-solid fa-users-gear text-3xl"></i>
-            </div>
-            <div>
-                <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Personnel Management</h2>
-                <p class="text-tertiary mt-1 text-sm font-medium">Manage gate personnel and administrative staff rosters.</p>
-            </div>
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight"><?= $page_title ?></h1>
+            <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
         </div>
         <button onclick="document.getElementById('addModal').classList.remove('hidden')"
-                class="flex items-center gap-3 bg-brand hover:brightness-110 text-white text-[11px] font-black uppercase tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl shadow-brand/20 transition-all active:scale-[0.98]">
-            <i class="fa-solid fa-plus text-sm"></i>
-            Add New Personnel
+                class="bg-brand hover:brightness-110 text-white font-bold font-inter text-[11px] uppercase tracking-widest px-8 py-4 rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-[0.98] flex items-center gap-3">
+            <i class="fa-solid fa-user-plus text-sm"></i>
+            Register Personnel
         </button>
     </div>
 
+    <!-- Alerts -->
     <?php if ($msg): ?>
-    <div class="flex items-center gap-4 status-badge-paid rounded-2xl px-6 py-5 border shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-        <div class="w-10 h-10 rounded-xl bg-status-available-text/10 flex items-center justify-center">
-            <i class="fa-solid fa-circle-check text-xl"></i>
+    <div class="flex items-center gap-4 bg-emerald-50 border border-emerald-100 rounded-2xl px-6 py-4 animate-in fade-in slide-in-from-top-2 duration-500">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+            <i class="fa-solid fa-check-circle"></i>
         </div>
-        <p class="text-sm font-manrope font-bold tracking-tight"><?= $msg ?></p>
+        <p class="text-emerald-700 text-sm font-bold font-inter"><?= htmlspecialchars($msg) ?></p>
     </div>
     <?php endif; ?>
 
     <?php if ($error): ?>
-    <div class="flex items-center gap-4 status-badge-lost rounded-2xl px-6 py-5 border shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-        <div class="w-10 h-10 rounded-xl bg-status-lost-text/10 flex items-center justify-center">
-            <i class="fa-solid fa-circle-exclamation text-xl"></i>
+    <div class="flex items-center gap-4 bg-rose-50 border border-rose-100 rounded-2xl px-6 py-4 animate-in fade-in slide-in-from-top-2 duration-500">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+            <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <p class="text-sm font-manrope font-bold tracking-tight"><?= htmlspecialchars($error) ?></p>
+        <p class="text-rose-700 text-sm font-bold font-inter"><?= htmlspecialchars($error) ?></p>
     </div>
     <?php endif; ?>
 
-    <!-- MAIN CARD -->
-    <div class="bento-card bg-surface border-color rounded-[2.5rem] shadow-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b border-color">
-                        <th class="text-left px-10 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">Personnel Name</th>
-                        <th class="text-left px-6 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">Access Level</th>
-                        <th class="text-left px-6 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">Active Shift</th>
-                        <th class="text-left px-6 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">Contact</th>
-                        <th class="text-center px-6 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">TRX Logs</th>
-                        <th class="text-right px-10 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">Action</th>
+    <!-- Personnel Registry -->
+    <div class="bento-card p-4 overflow-hidden">
+        <div class="px-8 py-6 border-b border-color flex items-center justify-between bg-surface">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary">
+                    <i class="fa-solid fa-users-gear text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="font-manrope font-bold text-primary text-base">Personnel Registry</h2>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Active roster management (<?= count($operators) ?> profiles)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead class="premium-thead">
+                    <tr>
+                        <th>Personnel Profile</th>
+                        <th class="text-center">Access Level</th>
+                        <th class="text-center">Active Shift</th>
+                        <th class="text-center">Contact</th>
+                        <th class="text-center">TRX Activity</th>
+                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color">
@@ -126,58 +136,67 @@ include '../../includes/header.php';
                             $current_type = $op['staff_type'];
                             $group_label  = ($current_type === 'admin') ? 'Executive Management' : 'Field Operations Staff';
                     ?>
-                    <tr class="bg-surface-alt/30">
-                        <td colspan="6" class="px-10 py-4">
-                            <span class="text-[9px] font-black uppercase tracking-[0.25em] text-brand opacity-60"><?= $group_label ?></span>
+                    <tr class="bg-surface-alt/50">
+                        <td colspan="6" class="px-8 py-2.5">
+                            <span class="text-[9px] font-extrabold uppercase tracking-[0.2em] text-brand/60"><?= $group_label ?></span>
                         </td>
                     </tr>
                     <?php endif;
+                    
                     $shiftMap = [
-                        '06:00 - 12:00'           => ['status-badge-maintenance', 'Shift 1 (06-12)'],
-                        '12:00 - 18:00'           => ['status-badge-parked',      'Shift 2 (12-18)'],
-                        '18:00 - 00:00'           => ['status-badge-reserved',    'Shift 3 (18-00)'],
-                        '00:00 - 06:00'           => ['status-badge-departed',    'Shift 4 (00-06)'],
-                        '06:00 - 18:00 (Day)'     => ['status-badge-available',   'Day (12h)'],
-                        '18:00 - 06:00 (Night)'   => ['status-badge-reserved',    'Night (12h)'],
+                        '06:00 - 12:00'           => ['badge-soft-emerald', 'Shift 1 (06-12)'],
+                        '12:00 - 18:00'           => ['badge-soft-indigo',  'Shift 2 (12-18)'],
+                        '18:00 - 00:00'           => ['badge-soft-rose',    'Shift 3 (18-00)'],
+                        '00:00 - 06:00'           => ['badge-soft-slate',   'Shift 4 (00-06)'],
+                        '06:00 - 18:00 (Day)'     => ['badge-soft-emerald', 'Day (06-18)'],
+                        '18:00 - 06:00 (Night)'   => ['badge-soft-rose',    'Night (18-06)'],
                     ];
-                    [$sCls, $sLabel] = $shiftMap[$op['shift']] ?? ['status-badge-departed', $op['shift']];
+                    [$sBadge, $sLabel] = $shiftMap[$op['shift']] ?? ['badge-soft-slate', $op['shift']];
                     ?>
-                    <tr class="hover:bg-surface-alt/50 transition-colors group">
-                        <td class="px-10 py-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-12 h-12 rounded-2xl bg-surface-alt border border-color flex items-center justify-center font-manrope font-black text-lg text-primary group-hover:bg-brand group-hover:text-white group-hover:border-brand transition-all shadow-sm">
+                    <tr class="group hover:bg-surface-alt/40 transition-all duration-300">
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-manrope font-extrabold text-white text-base shadow-sm group-hover:scale-105 transition-transform">
                                     <?= strtoupper(substr($op['full_name'], 0, 1)) ?>
                                 </div>
                                 <div>
-                                    <p class="font-manrope font-bold text-primary tracking-tight"><?= htmlspecialchars($op['full_name']) ?></p>
-                                    <p class="text-[10px] text-tertiary font-bold uppercase tracking-wider mt-0.5">ID #<?= str_pad($op['operator_id'], 4, '0', STR_PAD_LEFT) ?></p>
+                                    <p class="font-manrope font-bold text-[14px] text-primary tracking-tight"><?= htmlspecialchars($op['full_name']) ?></p>
+                                    <p class="text-[10px] font-bold text-tertiary uppercase tracking-wider leading-none mt-1">PRO-ID #<?= str_pad($op['operator_id'], 4, '0', STR_PAD_LEFT) ?></p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-6">
-                            <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border font-inter <?= $op['staff_type'] === 'admin' ? 'status-badge-parked' : 'status-badge-maintenance' ?>"><?= $op['staff_type'] ?></span>
+                        <td class="px-6 py-5 text-center">
+                            <span class="badge-soft <?= $op['staff_type'] === 'admin' ? 'badge-soft-indigo' : 'badge-soft-slate' ?>">
+                                <?= strtoupper($op['staff_type']) ?>
+                            </span>
                         </td>
-                        <td class="px-6 py-6">
-                            <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border font-inter <?= $sCls ?>"><?= $sLabel ?></span>
+                        <td class="px-6 py-5 text-center">
+                            <span class="badge-soft <?= $sBadge ?>">
+                                <?= $sLabel ?>
+                            </span>
                         </td>
-                        <td class="px-6 py-6 font-mono text-[11px] text-tertiary tracking-tight"><?= htmlspecialchars($op['phone'] ?? '—') ?></td>
-                        <td class="px-6 py-6 text-center">
-                            <span class="font-manrope font-black text-lg text-primary"><?= number_format($op['total_trx']) ?></span>
+                        <td class="px-6 py-5 text-center">
+                            <div class="text-[12px] font-inter font-medium text-secondary tracking-tight">
+                                <?= htmlspecialchars($op['phone'] ?: '—') ?>
+                            </div>
                         </td>
-                        <td class="px-10 py-6 text-right">
-                            <div class="flex items-center justify-end gap-3">
+                        <td class="px-6 py-5 text-center">
+                            <div class="text-[14px] font-manrope font-extrabold text-primary">
+                                <?= number_format($op['total_trx']) ?>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <div class="flex items-center justify-end gap-2">
                                 <button onclick="fillEdit(<?= $op['operator_id'] ?>, '<?= htmlspecialchars($op['full_name'],ENT_QUOTES) ?>', '<?= $op['shift'] ?>', '<?= $op['staff_type'] ?>', '<?= htmlspecialchars($op['phone']??'',ENT_QUOTES) ?>')"
-                                        class="w-10 h-10 flex items-center justify-center text-tertiary hover:text-brand bg-surface-alt hover:bg-brand/10 border border-color rounded-2xl transition-all shadow-sm">
+                                        class="btn-ghost !w-9 !h-9 !text-slate-400 hover:!text-brand hover:!bg-indigo-50"
+                                        title="Modify Profile">
                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
-                                <form method="POST" onsubmit="return confirm('Terminate this operator from the system?')">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="operator_id" value="<?= $op['operator_id'] ?>">
-                                    <button class="w-10 h-10 flex items-center justify-center text-status-over-text bg-status-lost-bg hover:brightness-95 border border-status-lost-border rounded-2xl transition-all shadow-sm">
-                                        <i class="fa-solid fa-trash-can text-xs"></i>
-                                    </button>
-                                </form>
+                                <button onclick="confirmDelete(<?= $op['operator_id'] ?>, '<?= htmlspecialchars($op['full_name'],ENT_QUOTES) ?>')"
+                                        class="btn-ghost !w-9 !h-9 !text-rose-400 hover:!text-rose-500 hover:!bg-rose-50"
+                                        title="Terminate Record">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -189,77 +208,99 @@ include '../../includes/header.php';
 </div>
 
 <?php
-// Shared shift options HTML
+// Shared shift options logic
 $shiftOptions = function($selected = '') {
-    $session = $_SESSION['role'] ?? '';
-    $opts = ['06:00 - 12:00'=>'Shift 1 (06-12)','12:00 - 18:00'=>'Shift 2 (12-18)','18:00 - 00:00'=>'Shift 3 (18-00)','00:00 - 06:00'=>'Shift 4 (00-06)'];
-    $adminOpts = ['06:00 - 18:00 (Day)'=>'Day (06-18)','18:00 - 06:00 (Night)'=>'Night (18-06)'];
-    $out = '<optgroup label="Operator (6h)">';
-    foreach ($opts as $v=>$l) $out .= "<option value='$v'" . ($selected===$v?' selected':'') . ">$l</option>";
+    $role = $_SESSION['role'] ?? '';
+    $opts = [
+        '06:00 - 12:00' => 'Shift 1 (06-12)',
+        '12:00 - 18:00' => 'Shift 2 (12-18)',
+        '18:00 - 00:00' => 'Shift 3 (18-00)',
+        '00:00 - 06:00' => 'Shift 4 (00-06)'
+    ];
+    $adminOpts = [
+        '06:00 - 18:00 (Day)' => 'Day Shift (06-18)',
+        '18:00 - 06:00 (Night)' => 'Night Shift (18-06)'
+    ];
+    
+    $out = '<optgroup label="OPERATIONAL STAFF (6H)">';
+    foreach ($opts as $v => $l) {
+        $out .= "<option value='$v'" . ($selected === $v ? ' selected' : '') . ">$l</option>";
+    }
     $out .= '</optgroup>';
-    if ($session === 'superadmin') {
-        $out .= '<optgroup label="Admin (12h)">';
-        foreach ($adminOpts as $v=>$l) $out .= "<option value='$v'" . ($selected===$v?' selected':'') . ">$l</option>";
+    
+    if ($role === 'superadmin') {
+        $out .= '<optgroup label="ADMINISTRATIVE STAFF (12H)">';
+        foreach ($adminOpts as $v => $l) {
+            $out .= "<option value='$v'" . ($selected === $v ? ' selected' : '') . ">$l</option>";
+        }
         $out .= '</optgroup>';
     }
     return $out;
 };
-$inputCls = "w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all placeholder:text-tertiary/20";
-$selectCls = "w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all appearance-none";
 ?>
 
-<!-- ADD MODAL -->
-<div id="addModal" class="hidden fixed inset-0 z-50 backdrop-blur-xl bg-black/20 flex items-center justify-center p-4">
-    <div class="modal-surface bento-card rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-        <div class="flex items-center justify-between px-10 py-8 border-b border-color">
+<!-- Add Modal -->
+<div id="addModal" class="hidden fixed inset-0 z-50 backdrop-blur-sm bg-slate-900/40 flex items-center justify-center p-4">
+    <div class="bento-card w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        <div class="flex items-center justify-between px-8 py-5 border-b border-color bg-surface">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                    <i class="fa-solid fa-user-plus text-xl"></i>
+                <div class="w-10 h-10 rounded-xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand">
+                    <i class="fa-solid fa-user-plus"></i>
                 </div>
                 <div>
-                    <h2 class="font-manrope font-black text-2xl text-primary tracking-tight">Recruit Personnel</h2>
-                    <p class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-0.5">Parking HR Registration</p>
+                    <h2 class="font-manrope font-bold text-primary text-base">Recruit Personnel</h2>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Parking HR Registration</p>
                 </div>
             </div>
-            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center text-tertiary hover:text-primary transition-colors">
-                <i class="fa-solid fa-xmark text-lg"></i>
+            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="btn-ghost">
+                <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <form method="POST" class="p-10 space-y-6">
+        <form method="POST" class="p-8 space-y-6 bg-surface">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="add">
             
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Full Name</label>
-                <input type="text" name="full_name" required placeholder="e.g. John Doe" class="<?= $inputCls ?>">
+            <div class="space-y-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                <input type="text" name="full_name" required placeholder="e.g. John Doe" 
+                       class="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all placeholder:text-slate-300">
             </div>
 
-            <div class="grid grid-cols-2 gap-6">
-                <div class="space-y-3">
-                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Shift Selection</label>
-                    <select name="shift" required class="<?= $selectCls ?>"><?= $shiftOptions() ?></select>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Access Level</label>
+                    <div class="relative">
+                        <select name="staff_type" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
+                            <option value="operator">Operator</option>
+                            <?php if ($_SESSION['role']==='superadmin'): ?><option value="admin">Admin Staff</option><?php endif; ?>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
+                    </div>
                 </div>
-                <div class="space-y-3">
-                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Access Level</label>
-                    <select name="staff_type" class="<?= $selectCls ?>">
-                        <option value="operator">Operator</option>
-                        <?php if ($_SESSION['role']==='superadmin'): ?><option value="admin">Admin Staff</option><?php endif; ?>
-                    </select>
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Shift Assignment</label>
+                    <div class="relative">
+                        <select name="shift" required class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
+                            <?= $shiftOptions() ?>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
+                    </div>
                 </div>
             </div>
 
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Contact Number</label>
-                <input type="tel" name="phone" placeholder="08xxxxxxxxxx" class="<?= $inputCls ?>">
+            <div class="space-y-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
+                <input type="tel" name="phone" placeholder="08xxxxxxxxxx" 
+                       class="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all placeholder:text-slate-300">
             </div>
 
-            <div class="flex gap-4 pt-6">
-                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" 
-                        class="flex-1 bg-surface-alt hover:bg-border-color/50 text-secondary font-black font-inter text-[11px] uppercase tracking-widest rounded-2xl py-5 transition-all">
-                    Cancel
+            <div class="flex gap-4 pt-2">
+                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')"
+                        class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all">
+                    Dismiss
                 </button>
-                <button type="submit" 
-                        class="flex-1 bg-brand hover:brightness-110 text-white font-black font-inter text-[11px] uppercase tracking-[0.25em] rounded-2xl py-5 shadow-xl shadow-brand/20 transition-all active:scale-[0.98]">
+                <button type="submit"
+                        class="flex-1 py-4 bg-brand hover:brightness-110 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-[0.98]">
                     Register Personnel
                 </button>
             </div>
@@ -267,65 +308,100 @@ $selectCls = "w-full modal-input border border-color rounded-2xl px-6 py-4 text-
     </div>
 </div>
 
-<!-- EDIT MODAL -->
-<div id="editModal" class="hidden fixed inset-0 z-50 backdrop-blur-xl bg-black/20 flex items-center justify-center p-4">
-    <div class="modal-surface bento-card rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-        <div class="flex items-center justify-between px-10 py-8 border-b border-color">
+<!-- Edit Modal -->
+<div id="editModal" class="hidden fixed inset-0 z-50 backdrop-blur-sm bg-slate-900/40 flex items-center justify-center p-4">
+    <div class="bento-card w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        <div class="flex items-center justify-between px-8 py-5 border-b border-color bg-surface">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                    <i class="fa-solid fa-user-gear text-xl"></i>
+                <div class="w-10 h-10 rounded-xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand">
+                    <i class="fa-solid fa-user-gear"></i>
                 </div>
                 <div>
-                    <h2 class="font-manrope font-black text-2xl text-primary tracking-tight">Modify Profile</h2>
-                    <p class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-0.5">Database Record Update</p>
+                    <h2 class="font-manrope font-bold text-primary text-base">Modify Profile</h2>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Database Record Update</p>
                 </div>
             </div>
-            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center text-tertiary hover:text-primary transition-colors">
-                <i class="fa-solid fa-xmark text-lg"></i>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="btn-ghost">
+                <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <form method="POST" class="p-10 space-y-6">
+        <form method="POST" class="p-8 space-y-6 bg-surface">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="operator_id" id="edit_id">
             
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Full Name</label>
-                <input type="text" name="full_name" id="edit_name" required class="<?= $inputCls ?>">
+            <div class="space-y-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                <input type="text" name="full_name" id="edit_name" required 
+                       class="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
             </div>
 
-            <div class="grid grid-cols-2 gap-6">
+            <div class="grid grid-cols-2 gap-4">
                 <?php if ($_SESSION['role']==='superadmin'): ?>
-                <div class="space-y-3">
-                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Access Level</label>
-                    <select name="staff_type" id="edit_type" class="<?= $selectCls ?>">
-                        <option value="operator">Operator</option>
-                        <option value="admin">Admin Staff</option>
-                    </select>
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Access Level</label>
+                    <div class="relative">
+                        <select name="staff_type" id="edit_type" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
+                            <option value="operator">Operator</option>
+                            <option value="admin">Admin Staff</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
+                    </div>
                 </div>
                 <?php endif; ?>
-                <div class="<?= $_SESSION['role']==='superadmin' ? '' : 'col-span-2' ?> space-y-3">
-                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Shift Assignment</label>
-                    <select name="shift" id="edit_shift" class="<?= $selectCls ?>"><?= $shiftOptions() ?></select>
+                <div class="<?= $_SESSION['role']==='superadmin' ? '' : 'col-span-2' ?> space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Shift Assignment</label>
+                    <div class="relative">
+                        <select name="shift" id="edit_shift" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
+                            <?= $shiftOptions() ?>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
+                    </div>
                 </div>
             </div>
 
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Emergency Contact</label>
-                <input type="tel" name="phone" id="edit_phone" class="<?= $inputCls ?>">
+            <div class="space-y-2">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Emergency Contact</label>
+                <input type="tel" name="phone" id="edit_phone" 
+                       class="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
             </div>
 
-            <div class="flex gap-4 pt-6">
-                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" 
-                        class="flex-1 bg-surface-alt hover:bg-border-color/50 text-secondary font-black font-inter text-[11px] uppercase tracking-widest rounded-2xl py-5 transition-all">
-                    Cancel
+            <div class="flex gap-4 pt-2">
+                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')"
+                        class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all">
+                    Dismiss
                 </button>
-                <button type="submit" 
-                        class="flex-1 bg-brand hover:brightness-110 text-white font-black font-inter text-[11px] uppercase tracking-[0.25em] rounded-2xl py-5 shadow-xl shadow-brand/20 transition-all active:scale-[0.98]">
+                <button type="submit"
+                        class="flex-1 py-4 bg-brand hover:brightness-110 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-[0.98]">
                     Apply Changes
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Form (Hidden) -->
+<form id="deleteForm" method="POST" class="hidden">
+    <?= csrf_field() ?>
+    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="operator_id" id="delete_id">
+</form>
+
+<!-- Universal Confirmation Modal -->
+<div id="modalConfirm" class="hidden fixed inset-0 z-[100] backdrop-blur-sm bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bento-card w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-300 bg-surface">
+        <div class="p-10 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 mx-auto mb-6">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="font-manrope font-extrabold text-xl text-primary mb-2">Personnel Protocol</h3>
+            <p id="confirmMessage" class="text-[13px] text-slate-500 font-inter leading-relaxed mb-10 px-4"></p>
+            
+            <div class="flex gap-4">
+                <button onclick="closeConfirm(false)" class="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all">Cancel</button>
+                <button id="confirmBtn" class="flex-1 py-4 bg-brand hover:brightness-110 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20 transition-all">Execute</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -339,11 +415,31 @@ function fillEdit(id, name, shift, type, phone) {
     document.getElementById('edit_phone').value = phone;
     document.getElementById('editModal').classList.remove('hidden');
 }
-['addModal','editModal'].forEach(id => {
-    document.getElementById(id).addEventListener('click', function(e) {
-        if (e.target === this) this.classList.add('hidden');
+
+let confirmCallback = null;
+function showConfirm(msg, callback) {
+    document.getElementById('confirmMessage').textContent = msg;
+    confirmCallback = callback;
+    document.getElementById('modalConfirm').classList.remove('hidden');
+}
+function closeConfirm(result) {
+    document.getElementById('modalConfirm').classList.add('hidden');
+    if (result && confirmCallback) confirmCallback();
+    confirmCallback = null;
+}
+document.getElementById('confirmBtn').onclick = () => closeConfirm(true);
+
+function confirmDelete(id, name) {
+    showConfirm(`CRITICAL: You are about to terminate the profile for '${name}'. This action is irreversible. Proceed?`, () => {
+        document.getElementById('delete_id').value = id;
+        document.getElementById('deleteForm').submit();
     });
-});
+}
+
+window.onclick = (e) => {
+    if (e.target.id === 'addModal') document.getElementById('addModal').classList.add('hidden');
+    if (e.target.id === 'editModal') document.getElementById('editModal').classList.add('hidden');
+};
 </script>
 
 <?php include '../../includes/footer.php'; ?>
