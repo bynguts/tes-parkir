@@ -33,6 +33,8 @@
     --status-departed-border: #e2e8f0;
     --status-departed-text: #334155;
     
+    --status-over-bg: #fee2e2;
+    --status-over-border: #fecaca;
     --status-over-text: #991b1b;
 
     --status-paid-bg: #dcfce7;
@@ -177,6 +179,21 @@ main.pl-64 {
 .progress-fill { background-color: var(--brand); transition: width 1s ease-out; }
 
 /* 4. Universal Status Classes */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
 .status-badge-available { background-color: var(--status-available-bg) !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-border) !important; }
 .status-dot-available { background-color: var(--status-online) !important; }
 .status-text-available { color: var(--status-available-text) !important; }

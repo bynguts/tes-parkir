@@ -156,12 +156,14 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
     <?php if (!isset($hide_header) || !$hide_header): ?>
     <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-page border-b border-color">
         <!-- Search Bar (Left Aligned) -->
-        <div class="group h-11 bento-card flex items-center px-4 gap-3 transition-all">
+        <div id="global-search-wrap" class="group relative h-11 bento-card flex items-center px-4 gap-3 transition-all">
             <i class="fa-solid fa-magnifying-glass text-brand transition-all pointer-events-none"></i>
-            <input type="text" 
+            <input id="global-search-input" type="text" 
                    placeholder="Search anything about website..." 
                    class="w-[340px] h-full bg-transparent text-[13px] font-inter font-medium text-primary placeholder:text-primary transition-colors focus:outline-none"
+                   autocomplete="off"
             >
+            <div id="global-search-results" class="hidden absolute left-0 top-[calc(100%+8px)] w-[540px] max-h-[360px] overflow-y-auto rounded-2xl border border-color bg-page shadow-xl z-50 p-2"></div>
         </div>
 
         <div class="flex items-center gap-3 ml-auto">
@@ -214,6 +216,176 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
                 
                 updateToggleUI(newTheme === 'dark');
             });
+
+            // Global search: index all accessible sidebar links and provide quick navigation.
+            (function initGlobalSearch() {
+                const input = document.getElementById('global-search-input');
+                const resultsBox = document.getElementById('global-search-results');
+                if (!input || !resultsBox) return;
+
+                const linkNodes = Array.from(document.querySelectorAll('aside nav a[href]'));
+                const unique = new Map();
+
+                linkNodes.forEach((link) => {
+                    const href = link.getAttribute('href') || '';
+                    const labelNode = link.cloneNode(true);
+                    labelNode.querySelectorAll('span').forEach((el) => el.remove());
+                    const label = (labelNode.textContent || '').replace(/\s+/g, ' ').trim().replace(/\s+\d+$/, '');
+                    if (!href || !label) return;
+
+                    const icon = link.querySelector('i') ? link.querySelector('i').className : 'fa-solid fa-link';
+                    const key = href.toLowerCase();
+                    if (!unique.has(key)) {
+                        unique.set(key, {
+                            href,
+                            label,
+                            icon,
+                            keywords: [label, href]
+                        });
+                    }
+                });
+
+                const staticItems = [
+                    { href: 'index.php', label: 'Home Dashboard', icon: 'fa-solid fa-house', keywords: ['home', 'dashboard', 'ringkasan'] },
+                    { href: 'logout.php', label: 'Logout', icon: 'fa-solid fa-power-off', keywords: ['keluar', 'sign out', 'logout'] }
+                ];
+
+                staticItems.forEach((item) => {
+                    const key = item.href.toLowerCase();
+                    if (!unique.has(key)) {
+                        unique.set(key, item);
+                    }
+                });
+
+                const pages = Array.from(unique.values());
+                let activeIndex = -1;
+                let visibleResults = [];
+
+                function normalize(v) {
+                    return (v || '').toString().toLowerCase().trim();
+                }
+
+                function score(item, q) {
+                    const label = normalize(item.label);
+                    const href = normalize(item.href);
+                    const terms = (item.keywords || []).map(normalize);
+
+                    if (label === q) return 100;
+                    if (label.startsWith(q)) return 90;
+                    if (label.includes(q)) return 75;
+                    if (href.includes(q)) return 60;
+                    if (terms.some((k) => k.includes(q))) return 50;
+                    return 0;
+                }
+
+                function hideResults() {
+                    resultsBox.classList.add('hidden');
+                    resultsBox.innerHTML = '';
+                    activeIndex = -1;
+                    visibleResults = [];
+                }
+
+                function openResult(item) {
+                    if (!item || !item.href) return;
+                    window.location.href = item.href;
+                }
+
+                function renderResults(items, query) {
+                    visibleResults = items;
+                    activeIndex = items.length ? 0 : -1;
+
+                    if (!items.length) {
+                        resultsBox.innerHTML = '<div class="px-4 py-3 text-xs text-secondary">No result for <strong>' + query.replace(/</g, '&lt;') + '</strong></div>';
+                        resultsBox.classList.remove('hidden');
+                        return;
+                    }
+
+                    const html = items.map((item, idx) => {
+                        const activeClass = idx === activeIndex ? 'bg-slate-900/5' : '';
+                        return (
+                            '<button type="button" data-index="' + idx + '" class="search-item w-full text-left flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-900/5 transition-colors ' + activeClass + '">' +
+                                '<i class="' + item.icon + ' text-brand w-4 text-sm"></i>' +
+                                '<div class="min-w-0">' +
+                                    '<div class="text-[13px] font-medium text-primary truncate">' + item.label + '</div>' +
+                                '</div>' +
+                            '</button>'
+                        );
+                    }).join('');
+
+                    resultsBox.innerHTML = html;
+                    resultsBox.classList.remove('hidden');
+
+                    resultsBox.querySelectorAll('.search-item').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const idx = Number(btn.getAttribute('data-index'));
+                            openResult(visibleResults[idx]);
+                        });
+                    });
+                }
+
+                function refreshActiveItem() {
+                    const nodes = resultsBox.querySelectorAll('.search-item');
+                    nodes.forEach((node, idx) => {
+                        if (idx === activeIndex) {
+                            node.classList.add('bg-slate-900/5');
+                        } else {
+                            node.classList.remove('bg-slate-900/5');
+                        }
+                    });
+                }
+
+                input.addEventListener('input', () => {
+                    const q = normalize(input.value);
+                    if (!q) {
+                        hideResults();
+                        return;
+                    }
+
+                    const matched = pages
+                        .map((item) => ({ item, score: score(item, q) }))
+                        .filter((x) => x.score > 0)
+                        .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+                        .slice(0, 8)
+                        .map((x) => x.item);
+
+                    renderResults(matched, q);
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (resultsBox.classList.contains('hidden') || !visibleResults.length) {
+                        if (e.key === 'Enter' && input.value.trim()) {
+                            const q = normalize(input.value);
+                            const best = pages
+                                .map((item) => ({ item, score: score(item, q) }))
+                                .sort((a, b) => b.score - a.score)[0];
+                            if (best && best.score > 0) openResult(best.item);
+                        }
+                        return;
+                    }
+
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        activeIndex = (activeIndex + 1) % visibleResults.length;
+                        refreshActiveItem();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        activeIndex = (activeIndex - 1 + visibleResults.length) % visibleResults.length;
+                        refreshActiveItem();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (activeIndex >= 0) openResult(visibleResults[activeIndex]);
+                    } else if (e.key === 'Escape') {
+                        hideResults();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    const wrap = document.getElementById('global-search-wrap');
+                    if (wrap && !wrap.contains(e.target)) {
+                        hideResults();
+                    }
+                });
+            })();
             </script>
 
         </div>

@@ -10,7 +10,7 @@ csrf_verify();
 $mode = $_POST['mode'] ?? '';
 $date = $_POST['date'] ?? '';
 
-if (!in_array($mode, ['by_date', 'all'])) {
+if (!in_array($mode, ['by_date', 'all', 'single'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid mode.']); exit;
 }
 
@@ -25,14 +25,22 @@ if ($mode === 'by_date') {
 
 $pdo->beginTransaction();
 try {
-    // 1. Get paid transaction IDs matching the date (or all)
-    if ($mode === 'by_date') {
-        $stmt = $pdo->prepare("SELECT transaction_id FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=?");
-        $stmt->execute([$date]);
-    } else {
-        $stmt = $pdo->query("SELECT transaction_id FROM `transaction` WHERE payment_status='paid'");
+    if ($mode === 'single') {
+        $scan_id = $_POST['scan_id'] ?? '';
+        $res_id = $_POST['reservation_id'] ?? '';
+        
+        if ($scan_id) {
+            $stmt = $pdo->prepare("DELETE FROM plate_scan_log WHERE scan_id = ?");
+            $stmt->execute([$scan_id]);
+        } elseif ($res_id) {
+            $stmt = $pdo->prepare("DELETE FROM reservation WHERE reservation_id = ?");
+            $stmt->execute([$res_id]);
+        }
+        
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Entry deleted successfully']);
+        exit;
     }
-    $trx_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     // 2. Delete plate_scan_log
     if ($mode === 'by_date') {
@@ -42,33 +50,7 @@ try {
         $del_scan = $pdo->query("DELETE FROM plate_scan_log");
     }
     $deleted_scans = $del_scan->rowCount();
-
-    $deleted_trx = 0;
-    if (!empty($trx_ids)) {
-        $placeholders = implode(',', array_fill(0, count($trx_ids), '?'));
-
-        // 3. Delete transaction_log
-        $pdo->prepare("DELETE FROM transaction_log WHERE transaction_id IN ($placeholders)")
-            ->execute($trx_ids);
-
-        // 4. Delete tickets
-        $pdo->prepare("DELETE FROM ticket WHERE transaction_id IN ($placeholders)")
-            ->execute($trx_ids);
-
-        // 5. Free slots (edge case: paid but slot still occupied)
-        $pdo->prepare("UPDATE parking_slot ps
-                       JOIN `transaction` t ON ps.slot_id = t.slot_id
-                       SET ps.status = 'available'
-                       WHERE t.transaction_id IN ($placeholders)
-                         AND t.payment_status = 'paid'
-                         AND ps.status = 'occupied'")
-            ->execute($trx_ids);
-
-        // 6. Delete transactions
-        $stmt2 = $pdo->prepare("DELETE FROM `transaction` WHERE transaction_id IN ($placeholders)");
-        $stmt2->execute($trx_ids);
-        $deleted_trx = $stmt2->rowCount();
-    }
+    $deleted_trx = 0; // No longer deleting transactions here
 
     $pdo->commit();
 

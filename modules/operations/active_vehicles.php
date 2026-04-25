@@ -3,6 +3,23 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+// --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+");
+$slot_mapping = [];
+$reg_idx = 1; $res_idx = 1;
+foreach ($all_slots_query as $s) {
+    if ((int)$s['is_reservation_only'] === 1) {
+        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "VIP AREA"];
+    } else {
+        $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
+    }
+}
+
 $active = $pdo->query("
     (SELECT 
         t.transaction_id, 
@@ -10,8 +27,7 @@ $active = $pdo->query("
         t.ticket_code, 
         v.plate_number, 
         v.vehicle_type, 
-        s.slot_number, 
-        f.floor_code as floor,
+        s.slot_id, 
         t.check_in_time, 
         NULL as exit_time,
         TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) as minutes_parked,
@@ -22,7 +38,6 @@ $active = $pdo->query("
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id = v.vehicle_id
     JOIN parking_slot s ON t.slot_id = s.slot_id
-    JOIN floor f ON s.floor_id = f.floor_id
     JOIN parking_rate r ON t.rate_id = r.rate_id
     WHERE NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = t.ticket_code AND psl.scan_type = 'exit'))
     
@@ -34,8 +49,7 @@ $active = $pdo->query("
         res.reservation_code as ticket_code, 
         v.plate_number, 
         v.vehicle_type, 
-        s.slot_number, 
-        f.floor_code as floor,
+        s.slot_id, 
         res.reserved_from as check_in_time, 
         res.reserved_until as exit_time,
         TIMESTAMPDIFF(MINUTE, res.reserved_from, NOW()) as minutes_parked,
@@ -46,7 +60,6 @@ $active = $pdo->query("
     FROM `reservation` res
     JOIN vehicle v ON res.vehicle_id = v.vehicle_id
     JOIN parking_slot s ON res.slot_id = s.slot_id
-    JOIN floor f ON s.floor_id = f.floor_id
     LEFT JOIN parking_rate r ON r.vehicle_type = v.vehicle_type
     WHERE res.status = 'confirmed' 
       AND DATE(res.reserved_from) = CURDATE()
@@ -177,10 +190,13 @@ include '../../includes/header.php';
                                 }
 
                                 // Slot display logic
-                                if ($is_res) {
-                                    $display_slot = "#RES " . $res_counter++;
+                                $s_id = $row['slot_id'] ?? 0;
+                                if (isset($slot_mapping[$s_id])) {
+                                    $display_slot = $slot_mapping[$s_id]['label'];
+                                    $slot_label = $slot_mapping[$s_id]['category'];
                                 } else {
-                                    $display_slot = "#" . $reg_counter++;
+                                    $display_slot = "#???";
+                                    $slot_label = "UNKNOWN";
                                 }
                         ?>
                         <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row" 
@@ -223,7 +239,7 @@ include '../../includes/header.php';
                             <td class="px-4 py-2 align-middle text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <span class="text-[13px] font-manrope font-bold text-primary leading-none mb-1"><?= $display_slot ?></span>
-                                    <span class="text-[10px] font-inter text-tertiary leading-none uppercase"><?= $is_res ? 'VIP AREA' : 'REGULAR' ?></span>
+                                    <span class="text-[10px] font-inter text-tertiary leading-none uppercase"><?= $slot_label ?></span>
                                 </div>
                             </td>
 

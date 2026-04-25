@@ -33,11 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'toggle') {
         $uid = (int)$_POST['user_id'];
-        if ($uid === (int)$_SESSION['user_id']) {
-            $error = 'Illegal Operation: Cannot modify your own active session ID.';
+        $currId = (int)($_SESSION['user_id'] ?? 0);
+        
+        if ($uid === $currId) {
+            $error = 'Security Violation: Manual revocation of your own authority is prohibited.';
         } else {
-            $pdo->prepare("UPDATE admin_users SET is_active = NOT is_active WHERE user_id=?")->execute([$uid]);
-            $msg = 'User Access Control List has been updated.';
+            $pdo->prepare("UPDATE admin_users SET is_active = IF(is_active=1, 0, 1) WHERE user_id=?")->execute([$uid]);
+            header("Location: users.php?msg=" . urlencode("Security protocol updated: Access level modified for entity ID #$uid."));
+            exit;
         }
     }
 
@@ -52,6 +55,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Cryptographic password hash successfully updated.';
         }
     }
+
+    if ($action === 'delete') {
+        $uid = (int)$_POST['user_id'];
+        $currId = (int)($_SESSION['user_id'] ?? 0);
+        
+        if ($uid === $currId) {
+            $error = 'Security Violation: Self-termination of the active administrative session is prohibited.';
+        } else {
+            $pdo->prepare("DELETE FROM admin_users WHERE user_id=?")->execute([$uid]);
+            header("Location: users.php?msg=" . urlencode("Entity purged: Administrative record for ID #$uid has been permanently removed."));
+            exit;
+        }
+    }
 }
 
 $users = $pdo->query("SELECT user_id, username, role, full_name, last_login, is_active, created_at FROM admin_users ORDER BY role, username")->fetchAll();
@@ -62,193 +78,342 @@ $page_subtitle = 'Identity provisioning and system operational access control.';
 include '../../includes/header.php';
 ?>
 
-    <div class="p-6">
+<link rel="stylesheet" href="../../assets/css/theme.css">
+<?php
+// Get messages from session OR URL
+$displayMsg = $msg ?: ($_GET['msg'] ?? '');
+$displayError = $error ?: ($_GET['error'] ?? '');
+?>
 
-        <?php if ($msg): ?>
-        <div class="flex items-center gap-3 bg-emerald-50 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-user-shield text-emerald-600"></i>
-            <p class="text-emerald-700 text-sm font-inter"><?= $msg ?></p>
+    <div class="p-8">
+        <!-- Message Handlers -->
+        <?php if ($displayMsg): ?>
+        <div class="flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-6 py-5 mb-8 animate-in slide-in-from-top-4 duration-500">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <p class="text-emerald-700 dark:text-emerald-400 text-sm font-bold font-inter tracking-tight"><?= htmlspecialchars($displayMsg) ?></p>
         </div>
         <?php endif; ?>
-        <?php if ($error): ?>
-        <div class="flex items-center gap-3 bg-red-50 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-shield-xmark text-red-600"></i>
-            <p class="text-red-700 text-sm font-inter"><?= htmlspecialchars($error) ?></p>
+
+        <?php if ($displayError): ?>
+        <div class="flex items-center gap-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl px-6 py-5 mb-8 animate-in slide-in-from-top-4 duration-500">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-500">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <p class="text-rose-700 dark:text-rose-400 text-sm font-bold font-inter tracking-tight"><?= htmlspecialchars($displayError) ?></p>
         </div>
         <?php endif; ?>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-[400px_1fr] gap-10">
 
-            <!-- PROVISION FORM -->
-            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden self-start sticky top-24">
-                <div class="px-6 py-5 border-b border-slate-900/5 flex items-center gap-3">
-                    <i class="fa-solid fa-user-gear text-slate-900 text-xl"></i>
-                    <h2 class="font-manrope font-bold text-lg text-slate-900">Provision New Account</h2>
+            <!-- PROVISIONING COMMAND CENTER -->
+            <div class="bento-card rounded-[2.5rem] shadow-2xl overflow-hidden border border-color self-start sticky top-32">
+                <div class="px-8 py-6 border-b border-color flex items-center gap-4 bg-surface-alt/30">
+                    <div class="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand border border-brand/20">
+                        <i class="fa-solid fa-user-gear text-sm"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-manrope font-black text-lg text-primary tracking-tight">Provision Identity</h2>
+                        <p class="text-[10px] font-bold text-tertiary tracking-tight mt-0.5">Define access authority</p>
+                    </div>
                 </div>
-                <div class="p-6">
-                    <form method="POST" class="space-y-4" autocomplete="off">
+                <div class="p-8">
+                    <form method="POST" class="space-y-6" autocomplete="off">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="add">
 
-                        <div>
-                            <label class="block text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter mb-2.5 ml-1">Username (Global ID)</label>
-                            <input type="text" name="username" required autocomplete="off"
-                                   class="w-full bg-slate-900/5 border-none rounded-xl px-5 py-3.5 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all placeholder-slate-900/20">
+                        <div class="space-y-2.5">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-tertiary ml-1 opacity-60">Global Username</label>
+                            <input type="text" name="username" required autocomplete="off" placeholder="e.g. jsmith_op"
+                                   class="w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-black font-manrope text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all placeholder:text-tertiary/20">
                         </div>
 
-                        <div>
-                            <label class="block text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter mb-2.5 ml-1">Full Name</label>
+                        <div class="space-y-2.5">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-tertiary ml-1 opacity-60">Display Name</label>
                             <input type="text" name="full_name" placeholder="Optional"
-                                   class="w-full bg-slate-900/5 border-none rounded-xl px-5 py-3.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all placeholder-slate-900/20">
+                                   class="w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all placeholder:text-tertiary/20">
                         </div>
 
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2.5 ml-1">Authorization Role</label>
-                            <select name="role" class="w-full bg-slate-900/5 border-none rounded-xl px-5 py-3.5 text-sm font-bold font-manrope text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all appearance-none cursor-pointer">
-                                <option value="operator">🖥 Operator</option>
-                                <option value="admin">⚒ Admin</option>
-                                <option value="superadmin">🛡 Superadmin</option>
-                            </select>
+                        <div class="space-y-2.5">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-tertiary ml-1 opacity-60">Access Role</label>
+                            <div class="relative">
+                                <select name="role" class="w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-black font-manrope text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all appearance-none cursor-pointer">
+                                    <option value="operator">Operator Access</option>
+                                    <option value="admin">Administrator Access</option>
+                                    <option value="superadmin">Superadmin Authority</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-[10px] text-tertiary pointer-events-none opacity-40"></i>
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2.5 ml-1">Password (min 8 char)</label>
-                            <input type="password" name="password" required minlength="8" autocomplete="new-password"
-                                   class="w-full bg-slate-900/5 border-none rounded-xl px-5 py-3.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all">
+                        <div class="space-y-2.5">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-tertiary ml-1 opacity-60">Access Key</label>
+                            <div class="relative group">
+                                <input type="password" name="password" id="provision_password" required minlength="8" autocomplete="new-password"
+                                       class="w-full modal-input border border-color rounded-2xl px-6 py-4 pr-14 text-sm font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all">
+                                <button type="button" onclick="togglePass('provision_password', this)" 
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-tertiary hover:text-primary transition-colors opacity-40 group-focus-within:opacity-100">
+                                    <i class="fa-solid fa-eye-slash text-xs"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4.5 transition-all flex items-center justify-center gap-2 mt-2 shadow-xl shadow-slate-900/10">
-                            <i class="fa-solid fa-user-plus text-sm"></i>
+                                class="w-full bg-brand hover:brightness-110 text-white font-black font-inter text-[11px] uppercase tracking-[0.2em] rounded-2xl py-5 shadow-xl shadow-brand/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3 mt-2">
+                            <i class="fa-solid fa-shield-check text-sm"></i>
                             Provision Account
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- USER TABLE -->
-            <div class="bg-white rounded-3xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                <div class="px-8 py-6 border-b border-slate-900/5 flex items-center gap-3">
-                    <i class="fa-solid fa-users text-slate-900/40 text-lg"></i>
-                    <h2 class="font-manrope font-extrabold text-xl text-slate-900 tracking-tight">System Identities (<?= count($users) ?>)</h2>
+            <!-- IDENTITY REGISTRY -->
+            <div class="bento-card rounded-[2.5rem] shadow-2xl overflow-hidden border border-color">
+                <div class="px-10 py-8 border-b border-color flex items-center justify-between bg-surface-alt/30">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-surface-alt flex items-center justify-center text-tertiary border border-color">
+                            <i class="fa-solid fa-users-viewfinder text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-manrope font-black text-xl text-primary tracking-tight">Identity Registry</h2>
+                            <p class="text-[10px] font-bold text-tertiary tracking-tight mt-0.5">Management of operational entities (<?= count($users) ?>)</p>
+                        </div>
+                    </div>
                 </div>
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b border-slate-900/10">
-                            <th class="text-left px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Identity</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Role</th>
-                            <th class="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Last Login</th>
-                            <th class="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Status</th>
-                            <th class="text-right px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-900/[0.03]">
-                        <?php foreach ($users as $u):
-                            $isSelf = $u['user_id'] === (int)$_SESSION['user_id'];
-                            $rColors = [
-                                'superadmin' => 'bg-red-50/10 text-red-700 border border-red-500/10',
-                                'admin'      => 'bg-amber-50/10 text-amber-700 border border-amber-500/10',
-                                'operator'   => 'bg-blue-50/10 text-blue-700 border border-blue-500/10'
-                            ];
-                            $rClass = $rColors[$u['role']] ?? 'bg-slate-900/5 text-slate-900 border border-slate-900/10';
-                        ?>
-                        <tr class="hover:bg-slate-900/[0.01] transition-colors <?= !$u['is_active'] ? 'opacity-50' : '' ?> <?= $isSelf ? 'bg-emerald-50/[0.03]' : '' ?>">
-                            <td class="px-8 py-5">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-manrope font-bold text-white text-sm shadow-lg shadow-slate-900/10">
-                                        <?= strtoupper(substr($u['username'], 0, 1)) ?>
-                                    </div>
-                                    <div>
-                                        <div class="font-inter font-bold text-sm text-slate-900">
-                                            <?= htmlspecialchars($u['username']) ?>
-                                            <?php if ($isSelf): ?><span class="text-emerald-600 text-[10px] font-bold uppercase tracking-widest ml-1 bg-emerald-50/10 px-1.5 py-0.5 rounded-md border border-emerald-500/10">Active Session</span><?php endif; ?>
+                <div class="overflow-x-auto no-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-color">
+                                <th class="px-10 py-6 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Identity Profile</th>
+                                <th class="px-6 py-6 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Authorization</th>
+                                <th class="px-6 py-6 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Last Session</th>
+                                <th class="px-6 py-6 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Status</th>
+                                <th class="px-10 py-6 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Commands</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-color">
+                            <?php foreach ($users as $u):
+                                $isSelf = $u['user_id'] === (int)$_SESSION['user_id'];
+                                $roleKey = strtolower(trim($u['role']));
+                                $rColors = [
+                                    'superadmin' => 'status-badge-reserved',
+                                    'admin'      => 'status-badge-paid',
+                                    'operator'   => 'status-badge-parked'
+                                ];
+                                $rClass = $rColors[$roleKey] ?? 'status-badge-maintenance';
+                            ?>
+                            <tr class="group hover:bg-surface-alt/50 transition-all duration-300 <?= !$u['is_active'] ? 'opacity-40 grayscale' : '' ?> <?= $isSelf ? 'bg-brand/[0.02]' : '' ?>">
+                                <td class="px-10 py-5">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-manrope font-black text-surface text-base shadow-xl shadow-primary/10 group-hover:scale-105 transition-transform">
+                                            <?= strtoupper(substr($u['username'], 0, 1)) ?>
                                         </div>
-                                        <div class="text-slate-900/40 text-[11px] font-inter mt-0.5"><?= htmlspecialchars($u['full_name'] ?? 'No display name') ?></div>
+                                        <div>
+                                            <div class="font-manrope font-black text-sm text-primary flex items-center gap-2">
+                                                <?= htmlspecialchars($u['username']) ?>
+                                                <?php if ($isSelf): ?>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold font-inter text-brand bg-brand/10 border border-brand/20">SELF</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="text-[10px] font-bold text-tertiary tracking-tight mt-0.5 opacity-60"><?= htmlspecialchars($u['full_name'] ? ucwords(strtolower($u['full_name'])) : 'Provisional account') ?></div>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-5">
-                                <span class="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg font-inter <?= $rClass ?>"><?= $u['role'] ?></span>
-                            </td>
-                            <td class="px-4 py-5 text-slate-900/40 text-xs font-mono">
-                                <?= $u['last_login'] ? date('d M Y, H:i', strtotime($u['last_login'])) : 'Never active' ?>
-                            </td>
-                            <td class="px-4 py-5 text-center">
-                                <?php if ($u['is_active']): ?>
-                                    <span class="inline-flex items-center gap-1.5 bg-emerald-50/10 text-emerald-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg font-inter border border-emerald-500/10">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-status-online"></span> Active
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium font-inter <?= $rClass ?>">
+                                        <?= ucfirst($roleKey) ?>
                                     </span>
-                                <?php else: ?>
-                                    <span class="inline-flex items-center gap-1.5 bg-red-50/10 text-red-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg font-inter border border-red-500/10">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Disabled
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="px-8 py-5 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <?php if (!$isSelf): ?>
-                                    <form method="POST" onsubmit="return confirm('Toggle account status for <?= htmlspecialchars($u['username'], ENT_QUOTES) ?>?')">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="action" value="toggle">
-                                        <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
-                                        <button class="w-9 h-9 flex items-center justify-center <?= $u['is_active'] ? 'text-amber-600 bg-amber-50/10 hover:bg-amber-50/20' : 'text-emerald-600 bg-emerald-50/10 hover:bg-emerald-50/20' ?> rounded-xl transition-all border border-transparent hover:border-current">
-                                            <i class="fa-solid <?= $u['is_active'] ? 'fa-user-slash' : 'fa-user-check' ?> text-xs"></i>
-                                        </button>
-                                    </form>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <div class="text-[11px] font-medium text-secondary font-inter">
+                                        <?= $u['last_login'] ? date('d M Y, H:i', strtotime($u['last_login'])) : '—' ?>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <?php if ($u['is_active']): ?>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium font-inter status-badge-parked">Authorized</span>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium font-inter status-badge-maintenance">Revoked</span>
                                     <?php endif; ?>
+                                </td>
+                                <td class="px-10 py-5 text-right">
+                                    <div class="flex items-center justify-end gap-3">
+                                        <?php if (!$isSelf): ?>
+                                        <?php 
+                                            $tColor = $u['is_active'] ? 'text-amber-500 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10' : 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10 hover:bg-emerald-500/10';
+                                            $tIcon = $u['is_active'] ? 'fa-shield-halved' : 'fa-shield-check';
+                                        ?>
+                                        <button type="button" 
+                                                title="Toggle Authorization Protocol"
+                                                onclick="confirmToggle(<?= $u['user_id'] ?>)"
+                                                class="w-10 h-10 flex items-center justify-center rounded-2xl transition-all shadow-sm border cursor-pointer <?= $tColor ?>">
+                                            <i class="fa-solid <?= $tIcon ?> text-xs"></i>
+                                        </button>
+                                        <?php endif; ?>
 
-                                    <button onclick="openReset(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>')"
-                                            class="w-9 h-9 flex items-center justify-center text-slate-900/40 hover:text-slate-900 bg-slate-900/5 hover:bg-slate-900/10 rounded-xl transition-all border border-transparent hover:border-slate-900/10">
-                                        <i class="fa-solid fa-key text-xs"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                        <button type="button" onclick="openReset(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>')"
+                                                class="w-10 h-10 flex items-center justify-center text-tertiary hover:text-brand bg-surface-alt hover:bg-brand/10 border border-color rounded-2xl transition-all shadow-sm">
+                                            <i class="fa-solid fa-key text-xs"></i>
+                                        </button>
+
+                                        <?php if ($u['user_id'] != $_SESSION['user_id']): ?>
+                                        <button type="button" 
+                                                title="Purge Entity Record"
+                                                onclick="confirmDelete(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>')"
+                                                class="w-10 h-10 flex items-center justify-center text-rose-500 hover:text-white bg-rose-500/5 hover:bg-rose-500 border border-rose-500/10 rounded-2xl transition-all shadow-sm">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-    </div>
+</div>
 
-<!-- Reset Password Modal -->
-<div id="modalReset" class="hidden fixed inset-0 z-50 backdrop-blur-md bg-slate-900/40 flex items-center justify-center">
-    <div class="bg-white rounded-3xl ring-1 ring-slate-900/5 shadow-[0_30px_60px_-12px_rgba(15,23,42,0.15)] w-full max-w-sm mx-4 overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-900/5">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-key text-slate-900"></i>
-                <h2 class="font-manrope font-bold text-lg text-slate-900">Force Reset Password</h2>
+<!-- SECURITY: RESET PROTOCOL MODAL -->
+<div id="modalReset" class="hidden fixed inset-0 z-50 backdrop-blur-xl bg-black/20 flex items-center justify-center p-4">
+    <div class="modal-surface bento-card rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        <div class="flex items-center justify-between px-10 py-8 border-b border-color">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand border border-brand/20">
+                    <i class="fa-solid fa-shield-keyhole text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="font-manrope font-black text-xl text-primary tracking-tight">Security Override</h2>
+                    <p class="text-[10px] font-bold text-tertiary tracking-tight mt-0.5">Credential rotation protocol</p>
+                </div>
             </div>
-            <button onclick="document.getElementById('modalReset').classList.add('hidden')" class="text-slate-900/20 hover:text-slate-900 transition-colors">
+            <button onclick="document.getElementById('modalReset').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center text-tertiary hover:text-primary transition-colors">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
-        <form method="POST" class="p-6 space-y-4">
+        <form method="POST" class="p-10 space-y-6">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="reset_password">
             <input type="hidden" name="user_id" id="resetUserId">
-            <p class="text-slate-900/40 text-xs font-inter uppercase tracking-wide">Reset password for account: <strong id="resetUsername" class="text-slate-900"></strong></p>
-            <div>
-                <label class="block text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-900/40 font-inter mb-2.5 ml-1">New Password (min 8 char)</label>
-                <input type="password" name="new_password" id="resetPass" required minlength="8" autocomplete="new-password"
-                       class="w-full bg-slate-900/5 ring-1 ring-slate-900/5 border-none rounded-xl px-5 py-3.5 text-sm font-inter text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all">
+            
+            <div class="p-6 rounded-[2rem] bg-surface-alt/50 border border-color">
+                <div class="text-[10px] font-black text-tertiary uppercase tracking-widest mb-1">Target Identity</div>
+                <div class="font-manrope font-black text-lg text-primary" id="resetUsername"></div>
             </div>
-            <div class="flex gap-3 pt-4">
+
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">New Access Key</label>
+                <div class="relative group">
+                    <input type="password" name="new_password" id="resetPass" required minlength="8" autocomplete="new-password"
+                           class="w-full modal-input border border-color rounded-2xl px-6 py-4 pr-14 text-sm font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all">
+                    <button type="button" onclick="togglePass('resetPass', this)" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-tertiary hover:text-primary transition-colors opacity-40 group-focus-within:opacity-100">
+                        <i class="fa-solid fa-eye-slash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
                 <button type="button" onclick="document.getElementById('modalReset').classList.add('hidden')"
-                        class="flex-1 bg-slate-900/5 text-slate-900/60 font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all hover:bg-slate-900/10">Cancel</button>
+                        class="flex-1 bg-surface-alt hover:bg-border-color/50 text-secondary font-black font-inter text-[11px] uppercase tracking-widest rounded-2xl py-5 transition-all">
+                    Dismiss
+                </button>
                 <button type="submit"
-                        class="flex-1 bg-slate-900 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-4 transition-all shadow-xl shadow-slate-900/10">Confirm</button>
+                        class="flex-1 bg-brand hover:brightness-110 text-white font-black font-inter text-[11px] uppercase tracking-[0.25em] rounded-2xl py-5 shadow-xl shadow-brand/20 transition-all active:scale-[0.98]">
+                    Rotate Key
+                </button>
             </div>
         </form>
     </div>
 </div>
+</div>
+
+<!-- SECURITY: CONFIRMATION PROTOCOL -->
+<div id="modalConfirm" class="hidden fixed inset-0 z-[100] backdrop-blur-xl bg-black/40 flex items-center justify-center p-4">
+    <div class="modal-surface bento-card rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-color">
+        <div class="p-10 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mx-auto mb-6 border border-amber-500/20">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="font-manrope font-black text-xl text-primary mb-2">Security Protocol</h3>
+            <p id="confirmMessage" class="text-sm text-tertiary font-inter leading-relaxed mb-10">Are you sure you want to proceed with this action?</p>
+            
+            <div class="flex gap-4">
+                <button type="button" onclick="closeConfirm(false)" class="flex-1 px-6 py-4 rounded-xl bg-surface-alt hover:bg-brand/5 border border-color text-tertiary hover:text-brand font-black font-inter text-[11px] uppercase tracking-widest transition-all">Cancel</button>
+                <button type="button" id="confirmBtn" class="flex-1 px-6 py-4 rounded-xl bg-brand hover:brightness-110 text-white font-black font-inter text-[11px] uppercase tracking-widest shadow-lg shadow-brand/20 transition-all">Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
+let confirmCallback = null;
+function showConfirm(msg, callback) {
+    document.getElementById('confirmMessage').textContent = msg;
+    confirmCallback = callback;
+    document.getElementById('modalConfirm').classList.remove('hidden');
+}
+function closeConfirm(result) {
+    document.getElementById('modalConfirm').classList.add('hidden');
+    if (result && confirmCallback) confirmCallback();
+    confirmCallback = null;
+}
+document.getElementById('confirmBtn').onclick = () => closeConfirm(true);
+
+function confirmToggle(uid) {
+    showConfirm('DANGER: Modify authorization protocol for this entity?', () => {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = 'users.php';
+        f.innerHTML = `
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="action" value="toggle">
+            <input type="hidden" name="user_id" value="${uid}">
+        `;
+        document.body.appendChild(f);
+        f.submit();
+    });
+}
+function confirmDelete(uid, uname) {
+    showConfirm(`DANGER: Are you sure you want to PERMANENTLY PURGE entity '${uname}'? This action is irreversible.`, () => {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = 'users.php';
+        f.innerHTML = `
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="user_id" value="${uid}">
+        `;
+        document.body.appendChild(f);
+        f.submit();
+    });
+}
+function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    }
+}
 function openReset(id, uname) {
     document.getElementById('resetUserId').value = id;
     document.getElementById('resetUsername').textContent = uname;
     document.getElementById('resetPass').value = '';
+    document.getElementById('resetPass').type = 'password';
+    const btn = document.querySelector('#modalReset button[onclick*="togglePass"] i');
+    if(btn) {
+        btn.classList.remove('fa-eye');
+        btn.classList.add('fa-eye-slash');
+    }
     document.getElementById('modalReset').classList.remove('hidden');
 }
 document.getElementById('modalReset').addEventListener('click', function(e) {

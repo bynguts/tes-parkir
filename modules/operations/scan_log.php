@@ -3,6 +3,23 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+// --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+");
+$slot_mapping = [];
+$reg_idx = 1; $res_idx = 1;
+foreach ($all_slots_query as $s) {
+    if ((int)$s['is_reservation_only'] === 1) {
+        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "VIP AREA"];
+    } else {
+        $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
+    }
+}
+
 // --- DATE FILTER LOGIC ---
 $range = $_GET['range'] ?? 'today';
 $start_date = $_GET['start_date'] ?? null;
@@ -46,8 +63,7 @@ $query = "
             COALESCE(t.reservation_id, r_existing.reservation_id) as reservation_id,
             COALESCE(v.plate_number, r_v_existing.plate_number, x.plate_number) as plate_number,
             COALESCE(v.vehicle_type, r_v_existing.vehicle_type) as vehicle_type,
-            COALESCE(s.slot_number, r_s_existing.slot_number) as slot_number,
-            COALESCE(f.floor_code, r_f_existing.floor_code) as floor
+            COALESCE(s.slot_id, r_s_existing.slot_id) as slot_id
         FROM plate_scan_log x
         LEFT JOIN `transaction` t ON x.ticket_code = t.ticket_code
         LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
@@ -77,8 +93,7 @@ $query = "
             res.reservation_id,
             rv.plate_number,
             rv.vehicle_type,
-            rs.slot_number,
-            rf.floor_code as floor
+            rs.slot_id
         FROM `reservation` res
         JOIN vehicle rv ON res.vehicle_id = rv.vehicle_id
         JOIN parking_slot rs ON res.slot_id = rs.slot_id
@@ -253,20 +268,21 @@ include '../../includes/header.php';
                 <thead class="sticky top-0 bg-surface z-20">
                     <tr class="border-b border-color">
                         <th class="py-4 px-6 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
+                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate</th>
                         <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket</th>
                         <th class="py-4 px-4 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
-                        <th class="py-4 px-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
-                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Final Fee</th>
-                        <th class="py-4 px-6 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
+                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
+                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
+                        <th class="py-4 px-4 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
+                        <th class="py-4 px-4 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Final Fee</th>
+                        <th class="py-4 px-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Status</th>
+                        <th class="py-4 px-6 w-[7%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color" id="logTableBody">
                     <!-- Standard empty state (shown/hidden by JS) -->
                     <tr id="noDataRow" class="<?= !empty($logs) ? 'hidden' : '' ?>">
-                        <td colspan="9" class="px-6 py-20 text-center">
+                        <td colspan="10" class="px-6 py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <i class="fa-solid fa-clock-rotate-left text-5xl mb-4"></i>
                                 <p class="text-secondary font-inter font-medium">No operational logs found in the security index.</p>
@@ -286,16 +302,16 @@ include '../../includes/header.php';
                         $is_pending = empty($row['scan_id']);
                         $is_departed = !$is_pending && !empty($row['time_out']);
                         
+                        $s_id = $row['slot_id'] ?? 0;
                         if ($is_departed) {
                             $display_slot = '<span class="opacity-20 italic">---</span>';
                             $slot_label = 'RELEASED';
+                        } elseif (isset($slot_mapping[$s_id])) {
+                            $display_slot = $slot_mapping[$s_id]['label'];
+                            $slot_label = $slot_mapping[$s_id]['category'];
                         } else {
-                            if ($is_res) {
-                                $display_slot = "#RES " . $res_counter++;
-                            } else {
-                                $display_slot = "#" . $reg_counter++;
-                            }
-                            $slot_label = $is_res ? 'VIP AREA' : 'REGULAR';
+                            $display_slot = '<span class="opacity-20">#???</span>';
+                            $slot_label = 'UNKNOWN';
                         }
 
                         if ($is_pending) $dur = '---';
@@ -396,6 +412,13 @@ include '../../includes/header.php';
                                 <?php endif; ?>
                             </div>
                         </td>
+                        <td class="px-6 py-2 align-middle text-right">
+                            <button type="button" 
+                                    onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
+                                    class="w-8 h-8 rounded-lg bg-red-500/5 hover:bg-red-500 text-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/10 hover:shadow-lg hover:shadow-red-500/20 group/del">
+                                <i class="fa-solid fa-trash-can text-xs transition-transform group-hover/del:scale-110"></i>
+                            </button>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
@@ -448,7 +471,7 @@ include '../../includes/header.php';
                     <div class="bg-red-500/5 rounded-2xl p-6 mb-6 text-center border border-red-500/10">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl block mb-3"></i>
                         <p class="text-red-500 font-black text-sm font-inter uppercase tracking-widest">Full System Purge</p>
-                        <p class="text-tertiary text-[11px] font-inter mt-2">This action is irreversible and will wipe all recorded security sensor history.</p>
+                        <p class="text-tertiary text-[11px] font-inter mt-2">This action is irreversible and will wipe all recorded security sensor history. <span class="text-emerald-600 font-black italic block mt-1">(Financial transaction records remain safe)</span></p>
                     </div>
                     <button onclick="deleteLog('all')"
                             class="btn-primary !bg-red-500 w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3">
@@ -549,7 +572,7 @@ function selectDate(el, date) {
     document.getElementById('btnDeleteDate').disabled = false;
 }
 
-function deleteLog(mode) {
+    function deleteLog(mode) {
     const box = document.getElementById('deleteResult');
     if (!confirm(mode === 'by_date' ? `Purge logs for ${selectedDate}?` : 'WIPE ALL SENSOR HISTORY?')) return;
     const body = mode === 'by_date' ? `mode=by_date&date=${selectedDate}&csrf_token=${encodeURIComponent(CSRF)}` : `mode=all&csrf_token=${encodeURIComponent(CSRF)}`;
@@ -557,6 +580,38 @@ function deleteLog(mode) {
     .then(r => r.json()).then(data => {
         box.classList.remove('hidden');
         if (data.success) { box.className = 'mt-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 text-[11px] font-black uppercase text-center'; box.innerHTML = 'Records Purged'; setTimeout(() => location.reload(), 1500); }
+    });
+}
+
+function deleteSingleLog(btn, scanId, resId, ticket) {
+    if (!confirm(`Permanently delete log entry for ticket ${ticket}?`)) return;
+    
+    const row = btn.closest('tr');
+    row.classList.add('opacity-50', 'pointer-events-none');
+    
+    const body = `mode=single&scan_id=${scanId}&reservation_id=${resId}&ticket=${ticket}&csrf_token=${encodeURIComponent(CSRF)}`;
+    
+    fetch('delete_logs.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            row.classList.add('animate-out', 'fade-out', 'slide-out-to-right-4', 'duration-300');
+            setTimeout(() => {
+                row.remove();
+                applyScanLogFilters(); // Refresh empty state/counts
+            }, 300);
+        } else {
+            alert(data.message || 'Error deleting log entry');
+            row.classList.remove('opacity-50', 'pointer-events-none');
+        }
+    })
+    .catch(err => {
+        alert('System error occurred');
+        row.classList.remove('opacity-50', 'pointer-events-none');
     });
 }
 

@@ -32,90 +32,149 @@ $page_subtitle = 'Financial parameter settings for the parking auto-billing syst
 include '../../includes/header.php';
 ?>
 
-    <div class="p-6">
+<link rel="stylesheet" href="../../assets/css/theme.css">
 
+<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-16">
+    
+    <!-- HEADER -->
+    <div class="flex items-center gap-6">
+        <div class="w-16 h-16 rounded-[2rem] icon-container flex items-center justify-center shadow-2xl shrink-0">
+            <i class="fa-solid fa-receipt text-3xl"></i>
+        </div>
+        <div>
+            <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Rate Configuration</h2>
+            <p class="text-tertiary mt-1 text-sm font-medium">Financial parameter settings for the parking auto-billing system.</p>
+        </div>
+    </div>
+
+    <!-- STICKY JUMP MENU -->
+    <div class="sticky top-20 z-40 bg-page py-5 -mx-10 px-10 border-b border-color shadow-sm">
+        <div class="flex items-center gap-3 overflow-x-auto no-scrollbar">
+            <a href="#car-rates" class="jump-link flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-tertiary hover:bg-surface border border-transparent hover:border-color shadow-sm transition-all">
+                <i class="fa-solid fa-car text-sm"></i>
+                Car Class
+            </a>
+            <a href="#moto-rates" class="jump-link flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-tertiary hover:bg-surface border border-transparent hover:border-color shadow-sm transition-all">
+                <i class="fa-solid fa-motorcycle text-sm"></i>
+                Motorcycle Class
+            </a>
+        </div>
+    </div>
+
+    <div class="space-y-24">
+        
         <?php if ($msg): ?>
-        <div class="flex items-center gap-3 bg-emerald-50 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-circle-check text-emerald-600"></i>
-            <p class="text-emerald-700 text-sm font-inter font-medium"><?= $msg ?></p>
-        </div>
-        <?php endif; ?>
-        <?php if ($error): ?>
-        <div class="flex items-center gap-3 bg-red-50 rounded-2xl px-5 py-4 mb-6">
-            <i class="fa-solid fa-circle-exclamation text-red-600"></i>
-            <p class="text-red-700 text-sm font-inter font-medium"><?= htmlspecialchars($error) ?></p>
+        <div class="flex items-center gap-4 status-badge-paid rounded-2xl px-6 py-5 border shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+            <div class="w-10 h-10 rounded-xl bg-status-available-text/10 flex items-center justify-center">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+            <p class="text-sm font-manrope font-bold tracking-tight"><?= $msg ?></p>
         </div>
         <?php endif; ?>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <?php foreach ($rates as $r):
-                $is_car = $r['vehicle_type'] === 'car';
-                $icon   = $is_car ? 'fa-car' : 'fa-motorcycle';
-                $label  = $is_car ? 'Car Class (Type 1)' : 'Motorcycle Class (Type 2)';
-                $color  = $is_car ? 'text-blue-600 bg-blue-50' : 'text-emerald-600 bg-emerald-50';
-            ?>
-            <div class="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] overflow-hidden">
-                <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-900/10 bg-slate-900/[0.02]">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center <?= $color ?>">
-                        <i class="fa-solid <?= $icon ?> text-xl"></i>
-                    </div>
+        <?php if ($error): ?>
+        <div class="flex items-center gap-4 status-badge-lost rounded-2xl px-6 py-5 border shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+            <div class="w-10 h-10 rounded-xl bg-status-lost-text/10 flex items-center justify-center">
+                <i class="fa-solid fa-circle-exclamation text-xl"></i>
+            </div>
+            <p class="text-sm font-manrope font-bold tracking-tight"><?= htmlspecialchars($error) ?></p>
+        </div>
+        <?php endif; ?>
+
+        <?php foreach ($rates as $r):
+            $is_car = $r['vehicle_type'] === 'car';
+            $section_id = $is_car ? 'car-rates' : 'moto-rates';
+            $icon   = $is_car ? 'fa-car' : 'fa-motorcycle';
+            $label  = $is_car ? 'Car Class (Type 1)' : 'Motorcycle Class (Type 2)';
+        ?>
+        <!-- SECTION: <?= strtoupper($r['vehicle_type']) ?> -->
+        <section id="<?= $section_id ?>" class="scroll-section space-y-10">
+            <div class="flex items-end justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-1.5 h-10 bg-brand rounded-full"></div>
                     <div>
-                        <h2 class="font-manrope font-bold text-lg text-slate-900"><?= $label ?></h2>
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Rate Configuration</p>
+                        <h2 class="text-2xl font-manrope font-black text-primary tracking-tight"><?= $label ?></h2>
+                        <p class="text-tertiary mt-1 text-sm font-medium">Algorithmic pricing parameters for <?= $r['vehicle_type'] ?> vehicles.</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="p-6">
-                    <form method="POST">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <!-- Parameters Card -->
+                <div class="lg:col-span-7 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+                    <form method="POST" class="space-y-12">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="rate_id" value="<?= $r['rate_id'] ?>">
 
-                        <div class="space-y-4 mb-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <?php
                             $fields = [
-                                ['first_hour_rate', 'First Hour Rate',       500,  (int)$r['first_hour_rate']],
-                                ['next_hour_rate',  'Next Hour Rate',        500,  (int)$r['next_hour_rate']],
-                                ['daily_max_rate',  'Daily Maximum Limit',   1000, (int)$r['daily_max_rate']],
+                                ['first_hour_rate', 'First Hour Rate',       500,  (int)$r['first_hour_rate'],  'fa-clock'],
+                                ['next_hour_rate',  'Next Hour Rate',        500,  (int)$r['next_hour_rate'],   'fa-forward'],
+                                ['daily_max_rate',  'Daily Max Limit',       1000, (int)$r['daily_max_rate'],   'fa-bolt'],
                             ];
-                            foreach ($fields as [$fname, $flabel, $step, $fval]):
+                            foreach ($fields as [$fname, $flabel, $step, $fval, $ficon]):
                             ?>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter mb-2"><?= $flabel ?></label>
-                                <div class="flex items-center gap-2 bg-slate-900/5 rounded-xl px-5 py-3 focus-within:ring-2 focus-within:ring-slate-900 transition-all">
-                                    <span class="text-slate-900/40 text-sm font-bold font-inter">Rp</span>
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.25em] text-tertiary ml-1">
+                                    <i class="fa-solid <?= $ficon ?> text-[8px] opacity-50"></i>
+                                    <?= $flabel ?>
+                                </label>
+                                <div class="relative group/input flex items-center bg-surface-alt border border-color rounded-2xl px-5 py-4 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/5 transition-all duration-300">
+                                    <div class="flex flex-col border-r border-color/50 pr-4 mr-1">
+                                        <span class="text-[8px] font-black text-tertiary/40 uppercase leading-none mb-1">UNIT</span>
+                                        <span class="text-[10px] font-black text-primary/70 leading-none">IDR</span>
+                                    </div>
                                     <input type="number" name="<?= $fname ?>"
                                            value="<?= $fval ?>" min="0" step="<?= $step ?>" required
                                            id="<?= $fname . '_' . $r['rate_id'] ?>"
                                            oninput="updatePreview(<?= $r['rate_id'] ?>)"
-                                           class="flex-1 bg-transparent border-none text-sm font-bold font-inter text-slate-900 focus:outline-none text-right">
-                                    <span class="text-slate-900/30 text-xs font-inter tracking-tight">/hour</span>
+                                           class="w-full bg-transparent border-none text-xl font-manrope font-black text-primary focus:outline-none text-right placeholder:text-tertiary/20">
                                 </div>
                             </div>
                             <?php endforeach; ?>
                         </div>
 
-                        <!-- Billing Preview -->
-                        <div class="bg-slate-900/[0.02] rounded-xl p-5 mb-5 border border-slate-900/5">
-                            <div class="flex items-center gap-2 mb-4">
-                                <i class="fa-solid fa-calculator text-slate-900/20 text-sm"></i>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-900/40 font-inter">Billing Engine Simulation</p>
-                            </div>
-                            <div id="preview_<?= $r['rate_id'] ?>" class="space-y-2"></div>
+                        <div class="pt-4">
+                            <button type="submit"
+                                    class="w-full bg-brand hover:brightness-110 text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-2xl py-5 transition-all flex items-center justify-center gap-3 shadow-xl shadow-brand/20 active:scale-[0.99]">
+                                <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                                Synchronize <?= $is_car ? 'Car' : 'Moto' ?> Parameters
+                            </button>
                         </div>
-
-                        <button type="submit"
-                                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold font-inter text-[11px] uppercase tracking-widest rounded-xl py-3.5 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10">
-                            <i class="fa-solid fa-floppy-disk text-sm"></i>
-                            Update Rate Parameters
-                        </button>
                     </form>
                 </div>
+
+                <!-- Simulation Card -->
+                <div class="lg:col-span-5 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl overflow-hidden">
+                    <div class="flex items-center justify-between mb-10">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-surface-alt border border-color flex items-center justify-center shadow-sm">
+                                <i class="fa-solid fa-microchip text-brand text-lg"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Simulation</p>
+                                <p class="text-[9px] font-bold text-tertiary uppercase mt-0.5">Live Engine Response</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="preview_<?= $r['rate_id'] ?>" class="space-y-1">
+                        <!-- JS Dynamic -->
+                    </div>
+
+                    <div class="mt-8 pt-8 border-t border-color flex items-center gap-3 text-tertiary">
+                        <i class="fa-solid fa-circle-info text-xs"></i>
+                        <p class="text-[10px] font-medium leading-relaxed uppercase tracking-wider">Preview reflects auto-billing logic applied at exit gates.</p>
+                    </div>
+                </div>
             </div>
-            <?php endforeach; ?>
-        </div>
+        </section>
+        <?php endforeach; ?>
+
     </div>
-    </div>
+</div>
 
 <script>
 function updatePreview(id) {
@@ -129,14 +188,39 @@ function updatePreview(id) {
     [1,2,3,6,12,24].forEach(h => {
         let fee = h <= 1 ? first : first + (h-1)*next;
         fee = Math.min(fee, max);
-        const overMax = fee >= max && max > 0;
-        html += `<div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
-                    <span class="text-slate-400 text-xs font-inter">${h} hours</span>
-                    <span class="font-manrope font-bold text-sm ${overMax ? 'text-amber-600' : 'text-slate-900'}">${fmt(fee)}${overMax ? ' (max)' : ''}</span>
+        const isMax = fee >= max && max > 0;
+        html += `<div class="flex justify-between items-center py-3 border-b border-color last:border-0">
+                    <span class="text-tertiary text-[10px] font-black uppercase tracking-widest">${h} hours</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-manrope font-black text-sm text-primary">${fmt(fee)}</span>
+                        ${isMax ? '<span class="text-[8px] font-black uppercase status-badge-over px-2 py-0.5 rounded-md">Limit</span>' : ''}
+                    </div>
                  </div>`;
     });
     box.innerHTML = html;
 }
+
+// Scroll Spy for Jump Menu
+const scrollContainer = document.querySelector('main');
+scrollContainer.addEventListener('scroll', () => {
+    let current = '';
+    document.querySelectorAll('.scroll-section').forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollContainer.scrollTop >= sectionTop - 250) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    document.querySelectorAll('.jump-link').forEach(link => {
+        link.classList.remove('bg-surface', 'border-color', 'text-primary');
+        link.classList.add('text-tertiary', 'border-transparent');
+        if (link.getAttribute('href').includes(current)) {
+            link.classList.add('bg-surface', 'border-color', 'text-primary');
+            link.classList.remove('text-tertiary', 'border-transparent');
+        }
+    });
+});
+
 <?php foreach ($rates as $r): ?>
 updatePreview(<?= $r['rate_id'] ?>);
 <?php endforeach; ?>

@@ -32,6 +32,23 @@ function rH($h, ...$cells): string { return "<Row ss:Height=\"$h\">".implode('',
 function rD(...$cells): string { return "<Row ss:Height=\"22\">".implode('', $cells)."</Row>\n"; }
 function rSp($h=8): string { return "<Row ss:Height=\"$h\"/>\n"; }
 
+// --- GLOBAL SLOT MAPPING ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+")->fetchAll();
+$slot_mapping = [];
+$reg_idx = 1; $res_idx = 1;
+foreach ($all_slots_query as $s) {
+    if ((int)$s['is_reservation_only'] === 1) {
+        $slot_mapping[$s['slot_id']] = "#RES " . $res_idx++;
+    } else {
+        $slot_mapping[$s['slot_id']] = "#" . $reg_idx++;
+    }
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 $totals = $pdo->query("
     SELECT COUNT(*) AS grand_total,
@@ -65,33 +82,34 @@ $daily = $pdo->query("
 
 $transactions = $pdo->query("
     SELECT t.transaction_id, t.ticket_code, v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
-           ps.slot_number, f.floor_name, o.full_name AS operator_name, o.shift,
+           ps.slot_id, o.full_name AS operator_name, o.shift,
            t.check_in_time, t.check_out_time, ROUND(t.duration_hours,2) AS duration_hours,
            t.payment_method, t.total_fee
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id=v.vehicle_id JOIN parking_slot ps ON t.slot_id=ps.slot_id
-    JOIN floor f ON ps.floor_id=f.floor_id JOIN operator o ON t.operator_id=o.operator_id
+    JOIN operator o ON t.operator_id=o.operator_id
     WHERE t.payment_status='paid' AND t.check_out_time IS NOT NULL
     ORDER BY t.check_out_time DESC LIMIT 3000
 ")->fetchAll();
 
 $active = $pdo->query("
     SELECT t.ticket_code, v.plate_number, v.vehicle_type, v.owner_name,
-           ps.slot_number, f.floor_name, o.full_name AS operator_name, t.check_in_time,
+           ps.slot_id, o.full_name AS operator_name, t.check_in_time,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_elapsed
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id=v.vehicle_id JOIN parking_slot ps ON t.slot_id=ps.slot_id
-    JOIN floor f ON ps.floor_id=f.floor_id JOIN operator o ON t.operator_id=o.operator_id
+    JOIN operator o ON t.operator_id=o.operator_id
     WHERE t.payment_status='unpaid' AND t.check_out_time IS NULL ORDER BY t.check_in_time
 ")->fetchAll();
 
 $slots = $pdo->query("
-    SELECT f.floor_code, f.floor_name, ps.slot_type,
+    SELECT ps.slot_type, ps.is_reservation_only,
            COUNT(*) AS total, SUM(ps.status='available') AS avail,
            SUM(ps.status='occupied') AS occ, SUM(ps.status='reserved') AS res,
            SUM(ps.status='maintenance') AS maint
-    FROM parking_slot ps JOIN floor f ON ps.floor_id=f.floor_id
-    GROUP BY f.floor_id,f.floor_code,f.floor_name,ps.slot_type ORDER BY f.floor_id,ps.slot_type
+    FROM parking_slot ps
+    GROUP BY ps.is_reservation_only, ps.slot_type 
+    ORDER BY ps.is_reservation_only, ps.slot_type
 ")->fetchAll();
 
 $ops = $pdo->query("
@@ -117,7 +135,7 @@ $hours = $pdo->query("
 
 $reservations = $pdo->query("
     SELECT r.reservation_code, v.plate_number, v.vehicle_type, v.owner_name,
-           ps.slot_number, f.floor_name, r.reserved_from, r.reserved_until, r.status, r.created_at
+           ps.slot_id, r.reserved_from, r.reserved_until, r.status, r.created_at
     FROM reservation r
     JOIN vehicle v ON r.vehicle_id=v.vehicle_id JOIN parking_slot ps ON r.slot_id=ps.slot_id
     JOIN floor f ON ps.floor_id=f.floor_id ORDER BY r.created_at DESC LIMIT 500
@@ -453,12 +471,12 @@ echo '<Column ss:Width="110"/><Column ss:Width="75"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="85"/><Column ss:Width="120"/><Column ss:Width="120"/>';
 echo '<Column ss:Width="65"/><Column ss:Width="80"/><Column ss:Width="120"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Complete Transaction Log  (max. 3,000 recent records)', 'sBrand', 14));
-echo rH(22, cS('Paid transactions only. Generated: '.$exportDate, 'sBrandS', 14));
+echo rH(48, cS('SmartParking   |   Complete Transaction Log  (max. 3,000 recent records)', 'sBrand', 13));
+echo rH(22, cS('Paid transactions only. Generated: '.$exportDate, 'sBrandS', 13));
 echo rH(34,
     cS('#','sHdrB'), cS('Trx ID','sHdrB'), cS('Ticket Code','sHdrB'),
     cS('Plate Number','sHdrB'), cS('Type','sHdrB'), cS('Owner Name','sHdrB'),
-    cS('Phone','sHdrB'), cS('Slot','sHdrB'), cS('Floor','sHdrB'),
+    cS('Phone','sHdrB'), cS('Slot','sHdrB'),
     cS('Operator','sHdrB'), cS('Check-in','sHdrB'), cS('Check-out','sHdrB'),
     cS('Duration (Hrs)','sHdrB'), cS('Payment','sHdrB'), cS('Total Fee','sHdrB')
 );
@@ -473,14 +491,14 @@ foreach ($transactions as $i => $t) {
         cS($i+1,$dc), cS($t['transaction_id'],$dc), cS($t['ticket_code']??'-',$d),
         cS($t['plate_number']??'-',$d), cS($t['vehicle_type']==='car'?'Car':'Motor',$bc),
         cS($t['owner_name'],$d), cS($t['owner_phone']??'-',$d),
-        cS($t['slot_number'],$dc), cS($t['floor_name'],$d),
+        cS($slot_mapping[$t['slot_id']]??'-',$dc),
         cS($t['operator_name'],$d), cS($cin,$d), cS($cout,$d),
         cS($t['duration_hours']??'0',$dc), cS(strtoupper($t['payment_method']),$pm),
         cS(idr((float)$t['total_fee']),$m)
     );
 }
 $sumTrx = array_sum(array_column($transactions,'total_fee'));
-echo rH(28, cS('','sTot',13), cS('','sTot'), cS(idr((float)$sumTrx),'sTotM'));
+echo rH(28, cS('','sTot',12), cS('','sTot'), cS(idr((float)$sumTrx),'sTotM'));
 echo '</Table>'."\n";
 wsClose();
 
@@ -493,12 +511,12 @@ echo '<Column ss:Width="28"/><Column ss:Width="100"/><Column ss:Width="100"/>';
 echo '<Column ss:Width="75"/><Column ss:Width="140"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="100"/><Column ss:Width="130"/><Column ss:Width="130"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Currently Parked Vehicles — Real-Time', 'sBrand', 8));
-echo rH(22, cS('Snapshot: '.$exportDate.'  ·  '.count($active).' vehicles active  ·  '.($totalSlots-$occupiedNow).' slots available out of '.$totalSlots, 'sBrandS', 8));
+echo rH(48, cS('SmartParking   |   Currently Parked Vehicles — Real-Time', 'sBrand', 7));
+echo rH(22, cS('Snapshot: '.$exportDate.'  ·  '.count($active).' vehicles active  ·  '.($totalSlots-$occupiedNow).' slots available out of '.$totalSlots, 'sBrandS', 7));
 echo rH(34,
     cS('#','sHdrA'), cS('Ticket Code','sHdrA'), cS('Plate Number','sHdrA'),
     cS('Type','sHdrA'), cS('Owner Name','sHdrA'), cS('Slot','sHdrA'),
-    cS('Floor','sHdrA'), cS('Check-in Time','sHdrA'), cS('Duration (Min)','sHdrA')
+    cS('Check-in Time','sHdrA'), cS('Duration (Min)','sHdrA')
 );
 if (empty($active)) {
     echo rH(30, cS('No vehicles are currently parked when this report was printed.', 'sNote', 8));
@@ -510,8 +528,8 @@ if (empty($active)) {
         echo rD(
             cS($i+1,$dc), cS($v['ticket_code']??'-',$d), cS($v['plate_number']??'-',$d),
             cS($v['vehicle_type']==='car'?'Car':'Motor',$bc),
-            cS($v['owner_name'],$d), cS($v['slot_number'],$dc),
-            cS($v['floor_name'],$d), cS(date('d/m/Y H:i',strtotime($v['check_in_time'])),$d),
+            cS($v['owner_name'],$d), cS($slot_mapping[$v['slot_id']]??'-',$dc),
+            cS(date('d/m/Y H:i',strtotime($v['check_in_time'])),$d),
             cS($v['minutes_elapsed'].' min',$durStyle)
         );
     }
@@ -522,25 +540,26 @@ wsClose();
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SHEET 5: PARKING SLOT PER FLOOR                               (9 columns)
 // ═══════════════════════════════════════════════════════════════════════════════
-wsOpen('Parking Slot Status', 3);
+wsOpen('Parking Slot Inventory', 3);
 echo '<Table ss:DefaultRowHeight="20">'."\n";
-echo '<Column ss:Width="28"/><Column ss:Width="80"/><Column ss:Width="120"/>';
+echo '<Column ss:Width="28"/><Column ss:Width="120"/><Column ss:Width="120"/>';
 echo '<Column ss:Width="85"/><Column ss:Width="70"/><Column ss:Width="85"/>';
 echo '<Column ss:Width="80"/><Column ss:Width="90"/><Column ss:Width="100"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Parking Slot Status per Floor', 'sBrand', 8));
-echo rH(22, cS('Real-time snapshot · '.$exportDate, 'sBrandS', 8));
+echo rH(48, cS('SmartParking   |   Parking Slot Inventory Summary', 'sBrand', 6));
+echo rH(22, cS('Grouped by category and vehicle type · '.$exportDate, 'sBrandS', 6));
 echo rH(34,
-    cS('#','sHdr'), cS('Floor Code','sHdr'), cS('Floor Name','sHdr'),
-    cS('Slot Type','sHdr'), cS('Total','sHdr'), cS('Available','sHdr'),
+    cS('#','sHdr'), cS('Category','sHdr'), cS('Vehicle Type','sHdr'),
+    cS('Total Slots','sHdr'), cS('Available','sHdr'),
     cS('Occupied','sHdr'), cS('Reserved','sHdr'), cS('Maintenance','sHdr')
 );
 $stotals = ['total'=>0,'avail'=>0,'occ'=>0,'res'=>0,'maint'=>0];
 foreach ($slots as $i => $row) {
     [$d,$dc] = $i%2 ? ['sDa','sDca'] : ['sD','sDc'];
     $bc = $row['slot_type']==='car' ? ($i%2?'sBcara':'sBcar') : ($i%2?'sBmota':'sBmot');
+    $cat = (int)$row['is_reservation_only'] === 1 ? 'Reserved' : 'Regular';
     echo rD(
-        cS($i+1,$dc), cS($row['floor_code'],$dc), cS($row['floor_name'],$d),
+        cS($i+1,$dc), cS($cat,$d),
         cS($row['slot_type']==='car'?'Car':'Motorcycle',$bc),
         cS(number_format($row['total']),$dc),
         cS(number_format($row['avail']),'sBav'), cS(number_format($row['occ']),'sBoc'),
@@ -549,7 +568,7 @@ foreach ($slots as $i => $row) {
     foreach (['total','avail','occ','res','maint'] as $k) $stotals[$k] += (int)$row[$k];
 }
 echo rH(28,
-    cS('','sSub',3), cS('TOTAL','sSub'), cS(number_format($stotals['total']),'sSubC'),
+    cS('','sSub',2), cS('TOTAL','sSub'), cS(number_format($stotals['total']),'sSubC'),
     cS(number_format($stotals['avail']),'sBav'), cS(number_format($stotals['occ']),'sBoc'),
     cS(number_format($stotals['res']),'sBres'), cS(number_format($stotals['maint']),'sBmnt')
 );
@@ -672,15 +691,15 @@ echo '<Column ss:Width="75"/><Column ss:Width="130"/><Column ss:Width="80"/>';
 echo '<Column ss:Width="100"/><Column ss:Width="125"/><Column ss:Width="125"/>';
 echo '<Column ss:Width="90"/>'."\n";
 
-echo rH(48, cS('SmartParking   |   Reservation Log (max. 500 recent)', 'sBrand', 9));
-echo rH(22, cS($exportDate, 'sBrandS', 9));
+echo rH(48, cS('SmartParking   |   Reservation Log (max. 500 recent)', 'sBrand', 8));
+echo rH(22, cS($exportDate, 'sBrandS', 8));
 if (empty($reservations)) {
-    echo rH(30, cS('No reservation data available.', 'sNote', 9));
+    echo rH(30, cS('No reservation data available.', 'sNote', 8));
 } else {
     echo rH(34,
         cS('#','sHdrP'), cS('Reservation Code','sHdrP'), cS('Plate Number','sHdrP'),
         cS('Type','sHdrP'), cS('Owner Name','sHdrP'), cS('Slot','sHdrP'),
-        cS('Floor','sHdrP'), cS('From','sHdrP'), cS('Until','sHdrP'),
+        cS('From','sHdrP'), cS('Until','sHdrP'),
         cS('Status','sHdrP')
     );
     foreach ($reservations as $i => $r) {
@@ -690,7 +709,7 @@ if (empty($reservations)) {
         echo rD(
             cS($i+1,$dc), cS($r['reservation_code'],$d), cS($r['plate_number']??'-',$d),
             cS($r['vehicle_type']==='car'?'Car':'Motor',$bc),
-            cS($r['owner_name'],$d), cS($r['slot_number'],$dc), cS($r['floor_name'],$d),
+            cS($r['owner_name'],$d), cS($slot_mapping[$r['slot_id']]??'-',$dc),
             cS(date('d/m/Y H:i',strtotime($r['reserved_from'])),$d),
             cS(date('d/m/Y H:i',strtotime($r['reserved_until'])),$d),
             cS(strtoupper($r['status']),$ss)

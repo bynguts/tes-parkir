@@ -68,8 +68,7 @@ if (isset($_GET['auto'])) {
     echo json_encode([
         'ticket_code' => $code,
         'plate'       => $plate,
-        'slot'        => $slot['slot_number'],
-        'floor'       => $slot['floor'],
+        'slot'        => str_replace(['-G', '-L'], '-', $slot['slot_number']),
         'vtype'       => $vtype,
     ]);
     exit;
@@ -144,7 +143,7 @@ if (isset($_GET['ticket_code'])) {
         <div class="barcode-container"><img src="<?= $barcode_url ?>" alt="QR Code"></div>
         <div class="branch-name">Enterprise Parking Hub</div>
         <div class="info-row">ENTRY_SCAN : <?= $checkin_fmt ?></div>
-        <div class="info-row">LOC_ALLOC : <?= htmlspecialchars($d['slot_number']) ?> / FLR <?= htmlspecialchars($d['floor']) ?></div>
+        <div class="info-row">LOC_ALLOC : <?= htmlspecialchars(str_replace(['-G', '-L'], '-', $d['slot_number'])) ?></div>
         <p class="disclaimer">Secure vehicle lock engaged.<br>Retain ticket for automated exit.</p>
     </div>
 </body>

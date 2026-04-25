@@ -95,8 +95,8 @@ $fee_fmt     = fmt_idr($total_fee);
 $minutes_parked = (int)$trx['minutes_parked'];
 $duration_label = intdiv($minutes_parked, 60) . 'j ' . ($minutes_parked % 60) . 'm';
 $display_code = preg_replace('/[^A-Za-z0-9-]/', '', $code);
-$slot_label  = htmlspecialchars($trx['slot_number'] . ' / Floor ' . $trx['floor']);
-$now_fmt     = date('d M y H:i:s');
+$slot_label   = str_replace(['-G', '-L'], '-', $trx['slot_number']);
+$now_fmt      = date('d M y H:i:s');
 $theme = $_COOKIE['theme'] ?? 'light';
 if (!in_array($theme, ['light', 'dark'], true)) {
     $theme = 'light';
@@ -182,7 +182,7 @@ if (!in_array($theme, ['light', 'dark'], true)) {
                 ['In',       date('H:i', strtotime($trx['check_in_time']))],
                 ['Out',      date('H:i')],
                 ['Duration', $duration_label],
-                ['Slot',     $trx['slot_number']],
+                ['Slot',     $slot_label],
             ];
             foreach ($rows as [$label, $value]):
             ?>

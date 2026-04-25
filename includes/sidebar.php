@@ -95,10 +95,10 @@ function is_active(string $target): string {
                     </a>
                 </li>
                 <li>
-                    <a href="<?= BASE_URL ?>modules/reports/slot_map.php"
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-900/60 hover:bg-slate-900/5 hover:text-slate-900 transition-all <?= is_active('slot_map.php') ?>">
-                        <i class="fa-solid fa-map-location-dot text-slate-900/40 text-sm"></i>
-                        Slot Map
+                    <a href="<?= BASE_URL ?>modules/reports/parking_slots.php"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-900/60 hover:bg-slate-900/5 hover:text-slate-900 transition-all <?= is_active('parking_slots.php') ?>">
+                        <i class="fa-solid fa-table-cells text-slate-900/40 text-sm"></i>
+                        Parking Inventory
                     </a>
                 </li>
             </ul>
@@ -123,13 +123,6 @@ function is_active(string $target): string {
         <div>
             <div class="px-3 mb-2 text-[9px] font-normal uppercase tracking-widest text-slate-900/40 font-inter">Administration</div>
             <ul class="space-y-0.5">
-                <li>
-                    <a href="<?= BASE_URL ?>modules/admin/slots.php"
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-900/60 hover:bg-slate-900/5 hover:text-slate-900 transition-all <?= is_active('slots.php') ?>">
-                        <i class="fa-solid fa-table-cells-large text-slate-900/40 text-sm"></i>
-                        Manage Slots
-                    </a>
-                </li>
                 <li>
                     <a href="<?= BASE_URL ?>modules/admin/rates.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-normal text-slate-900/60 hover:bg-slate-900/5 hover:text-slate-900 transition-all <?= is_active('rates.php') ?>">
