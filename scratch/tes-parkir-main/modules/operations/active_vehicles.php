@@ -1,0 +1,535 @@
+<?php
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
+
+// --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+");
+$slot_mapping = [];
+$reg_idx = 1; $res_idx = 1;
+foreach ($all_slots_query as $s) {
+    if ((int)$s['is_reservation_only'] === 1) {
+        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "VIP AREA"];
+    } else {
+        $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
+    }
+}
+
+$active = $pdo->query("
+    (SELECT 
+        t.transaction_id, 
+        t.reservation_id, 
+        t.ticket_code, 
+        v.plate_number, 
+        v.vehicle_type, 
+        s.slot_id, 
+        t.check_in_time, 
+        NULL as exit_time,
+        TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) as minutes_parked,
+        r.first_hour_rate, 
+        r.next_hour_rate, 
+        r.daily_max_rate,
+        t.payment_status
+    FROM `transaction` t
+    JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+    JOIN parking_slot s ON t.slot_id = s.slot_id
+    JOIN parking_rate r ON t.rate_id = r.rate_id
+    WHERE t.check_out_time IS NULL)
+    
+    UNION ALL
+    
+    (SELECT 
+        NULL as transaction_id, 
+        res.reservation_id, 
+        res.reservation_code as ticket_code, 
+        v.plate_number, 
+        v.vehicle_type, 
+        s.slot_id, 
+        res.reserved_from as check_in_time, 
+        res.reserved_until as exit_time,
+        TIMESTAMPDIFF(MINUTE, res.reserved_from, NOW()) as minutes_parked,
+        r.first_hour_rate, 
+        r.next_hour_rate, 
+        r.daily_max_rate,
+        'unpaid' as payment_status
+    FROM `reservation` res
+    JOIN vehicle v ON res.vehicle_id = v.vehicle_id
+    JOIN parking_slot s ON res.slot_id = s.slot_id
+    LEFT JOIN parking_rate r ON r.vehicle_type = v.vehicle_type
+    WHERE res.status = 'confirmed' 
+      AND DATE(res.reserved_from) = CURDATE()
+      AND NOT EXISTS (SELECT 1 FROM `transaction` t2 WHERE t2.reservation_id = res.reservation_id))
+      
+    ORDER BY check_in_time DESC
+")->fetchAll();
+
+$page_title = 'Live Fleet Status';
+$page_subtitle = "Actively monitoring " . count($active) . " occupied zones.";
+
+include '../../includes/header.php';
+?>
+
+<link rel="stylesheet" href="../../assets/css/theme.css">
+
+<div class="px-10 py-10">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight"><?= $page_title ?></h1>
+            <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
+        </div>
+        <div class="flex items-center gap-3">
+                <button type="button" onclick="forceCheckoutAll(this)"
+                    class="btn-outline !text-red-500 hover:!bg-red-50 !border-red-100 hover:!border-red-200 gap-2">
+                <i class="fa-solid fa-sign-out-alt"></i>
+                Force Checkout All
+            </button>
+        </div>
+    </div>
+
+    <div class="bento-card p-4 overflow-hidden">
+        <!-- Card Header with Filters -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-color">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-brand">
+                    <i class="fa-solid fa-car-side text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="font-manrope font-bold text-primary text-base">Active Fleet</h3>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Real-time occupancy</p>
+                </div>
+            </div>
+
+            <!-- Integrated Filters -->
+            <div class="flex items-center gap-4">
+                <!-- Search -->
+                <div class="relative group">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs"></i>
+                          <input type="text" id="logSearch" placeholder="Search plate or ticket..." 
+                              class="w-64 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
+                </div>
+
+                <!-- Vehicle Type Filter -->
+                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1">
+                    <button onclick="setVehicleFilter('all')" data-filter="all" 
+                            class="vehicle-filter-btn px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm">
+                        ALL
+                    </button>
+                    <button onclick="setVehicleFilter('car')" data-filter="car" 
+                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-car text-sm"></i>
+                    </button>
+                    <button onclick="setVehicleFilter('motorcycle')" data-filter="motorcycle" 
+                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-motorcycle text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="relative">
+                    <button onclick="toggleCategoryDropdown(event)" 
+                            class="flex items-center gap-4 bg-surface-alt border border-color rounded-xl px-5 py-2.5 hover:border-brand/20 transition-all group">
+                        <span id="activeCategoryLabel" class="text-[10px] font-bold uppercase tracking-wider text-primary">All Entries</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
+                    </button>
+                    
+                    <div id="categoryDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden">
+                        <button onclick="setCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Entries</button>
+                        <button onclick="setCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservations</button>
+                        <button onclick="setCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Regular</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead class="premium-thead">
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Plate Number</th>
+                        <th>Ticket Code</th>
+                        <th>Slot</th>
+                        <th>Entry Time</th>
+                        <th>Duration</th>
+                        <th>Est. Fee</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="activeFleetBody" class="divide-y divide-color">
+                    <!-- Standard empty state -->
+                    <tr id="noDataRow" class="<?= !empty($active) ? 'hidden' : '' ?>">
+                        <td colspan="8" class="px-4 py-24 text-center">
+                            <div class="flex flex-col items-center opacity-40">
+                                <i class="fa-solid fa-car-tunnel text-5xl mb-4 text-slate-300"></i>
+                                <p class="text-slate-500 font-inter font-medium text-sm">No active vehicles currently detected.</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <?php foreach ($active as $row): 
+                        $is_res = !empty($row['reservation_id']);
+                        $mins = (int)$row['minutes_parked'];
+                        
+                        if ($mins < 0) {
+                            $dur_text = "Scheduled";
+                            $is_long_stay = false;
+                            $est_fee = "Rp 0";
+                        } else {
+                            $hours = floor($mins / 60);
+                            $remaining_mins = $mins % 60;
+                            $dur_text = $hours . "h " . $remaining_mins . "m";
+                            $is_long_stay = $mins > 1440;
+                            $calc = calculate_fee($mins, $row['first_hour_rate'], $row['next_hour_rate'], $row['daily_max_rate']);
+                            $est_fee = fmt_idr($calc['total_fee']);
+                        }
+
+                        $s_id = $row['slot_id'] ?? 0;
+                        $display_slot = $slot_mapping[$s_id]['label'] ?? "#???";
+                        $slot_label = $slot_mapping[$s_id]['category'] ?? "UNKNOWN";
+                    ?>
+                    <tr class="group hover:bg-surface-alt/40 transition-colors fleet-row" 
+                        data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
+                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
+                        <td class="px-6 py-4">
+                            <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary group-hover:text-brand group-hover:border-brand/20 transition-all">
+                                <i class="fa-solid fa-<?= strtolower($row['vehicle_type']) == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="plate-number text-[13px] font-manrope font-extrabold text-primary tracking-tight">
+                                <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="ticket-code text-[13px] font-manrope font-bold text-primary tracking-tight uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                                    <?php if ($row['payment_status'] === 'paid'): ?>
+                                        <span class="badge-soft badge-soft-emerald">PAID</span>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-widest"><?= $is_res ? 'RESERVATION' : 'REGULAR' ?></span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= $display_slot ?></span>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-wider"><?= $slot_label ?></span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['check_in_time'])) ?></span>
+                                <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['check_in_time'])) ?></span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold <?= $is_long_stay ? 'text-rose-500 animate-pulse' : 'text-primary' ?>">
+                                <?= $dur_text ?>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold text-brand"><?= $est_fee ?></span>
+                        </td>
+                        <td class="px-6 py-4 text-right relative">
+                            <div class="flex justify-end relative action-menu-container">
+                                <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                
+                                <div class="action-dropdown hidden absolute right-0 top-10 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden">
+                                    <button onclick="handleLostTicket('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>', <?= $is_res ? 0 : $calc['total_fee'] ?>)"
+                                            class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-surface-alt transition-all group/item">
+                                        <i class="fa-solid fa-print text-tertiary group-hover/item:text-brand text-xs"></i>
+                                        <span class="text-[11px] font-bold text-primary uppercase tracking-wider">Tiket Hilang</span>
+                                    </button>
+                                    <button onclick="handleForceDelete('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>')"
+                                            class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-rose-50 transition-all group/item">
+                                        <i class="fa-solid fa-trash-can text-rose-300 group-hover/item:text-rose-500 text-xs"></i>
+                                        <span class="text-[11px] font-bold text-rose-500 uppercase tracking-wider">Hapus Paksa</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Protocol Info -->
+    <?php if (!empty($active)): ?>
+    <div class="bento-card p-5 border-l-4 border-brand mt-6">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-brand">
+                <i class="fa-solid fa-circle-info text-lg"></i>
+            </div>
+            <div>
+                <h4 class="font-manrope font-extrabold text-primary text-sm">Extended Stay Protocol</h4>
+                <p class="font-inter text-tertiary text-[11px] mt-0.5">Units highlighted in red indicate parking duration exceeding the standard 24-hour operational window.</p>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Receipt Modal (Aesthetic Update) -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div class="bg-surface p-8 w-full max-w-[340px] rounded-3xl shadow-2xl relative animate-in fade-in zoom-in duration-300 border border-color">
+        <button onclick="closeReceipt()" class="absolute -top-12 right-0 text-white hover:text-brand transition-colors flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest">
+            Close <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div id="receiptContent" class="receipt-thermal text-slate-900 font-mono text-[12px] leading-tight">
+            <div class="text-center mb-6">
+                <h2 class="font-black text-lg uppercase tracking-tighter">SMARTPARK v2</h2>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400">Digital Receipt</p>
+                <div class="border-b border-dashed border-slate-200 my-4"></div>
+                <p class="font-bold uppercase">KUITANSI DENDA HILANG</p>
+            </div>
+
+            <div class="space-y-2 mb-6">
+                <div class="flex justify-between"><span>TANGGAL:</span> <span id="r-date" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>TIKET:</span> <span id="r-ticket" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>PLAT:</span> <span id="r-plate" class="font-bold"></span></div>
+            </div>
+
+            <div class="border-b border-dashed border-slate-200 my-4"></div>
+
+            <div class="space-y-2 mb-6">
+                <div class="flex justify-between">
+                    <span>BIAYA PARKIR:</span>
+                    <span id="r-fee" class="font-bold"></span>
+                </div>
+                <div class="flex justify-between text-rose-500">
+                    <span>DENDA HILANG:</span>
+                    <span class="font-bold">Rp 50.000</span>
+                </div>
+            </div>
+
+            <div class="border-b border-double border-slate-300 my-4"></div>
+
+            <div class="flex justify-between items-end mb-8">
+                <span class="text-[10px] font-bold">TOTAL BAYAR:</span>
+                <span id="r-total" class="text-xl font-black tracking-tighter"></span>
+            </div>
+
+            <div class="text-center text-[10px] text-slate-400 uppercase tracking-widest">
+                <p>Terima kasih atas kunjungan Anda</p>
+                <p>Utamakan Keselamatan!</p>
+            </div>
+        </div>
+
+        <button onclick="processCheckout()" class="w-full mt-8 py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-print"></i>
+            PROSES & CETAK
+        </button>
+    </div>
+</div>
+
+<style>
+@media print {
+    body * { visibility: hidden !important; }
+    #receiptContent, #receiptContent * { visibility: visible !important; }
+    #receiptModal { background: transparent !important; backdrop-filter: none !important; }
+    #receiptContent {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+    }
+}
+</style>
+
+<script>
+let currentTicket = '';
+let currentPlate = '';
+let isLostMode = false;
+let currentVehicleFilter = 'all';
+let currentCategoryFilter = 'all';
+
+function handleLostTicket(ticket, plate, baseFee) {
+    currentTicket = ticket;
+    currentPlate = plate;
+    isLostMode = true;
+
+    const fine = 50000;
+    const total = baseFee + fine;
+    const fmt = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+    
+    document.getElementById('r-date').innerText = new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('r-ticket').innerText = ticket || 'N/A';
+    document.getElementById('r-plate').innerText = plate || 'N/A';
+    document.getElementById('r-fee').innerText = fmt(baseFee);
+    document.getElementById('r-total').innerText = fmt(total);
+
+    const modal = document.getElementById('receiptModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function handleForceDelete(ticket, plate) {
+    if (confirm(`Peringatan: Anda akan menghapus paksa kendaraan ${plate || ticket} dari sistem. Lanjutkan?`)) {
+        currentTicket = ticket;
+        currentPlate = plate;
+        isLostMode = false;
+        processCheckout();
+    }
+}
+
+function forceCheckoutAll(btn) {
+    if (!confirm('Peringatan Kritis: Tindakan ini akan memproses keluar paksa SEMUA kendaraan. Ini tidak dapat dibatalkan. Lanjutkan?')) return;
+    
+    if (!btn) {
+        btn = document.querySelector('button[onclick="forceCheckoutAll(this)"]');
+    }
+    if (!btn) return;
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+    
+    fetch('../../api/force_checkout_all.php', {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    });
+}
+
+function processCheckout() {
+    const formData = new FormData();
+    formData.append('ticket', currentTicket);
+    formData.append('plate', currentPlate);
+    formData.append('is_lost', isLostMode);
+
+    fetch('../../api/force_checkout.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (isLostMode) {
+                window.print();
+            }
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function closeReceipt() {
+    const modal = document.getElementById('receiptModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function toggleActionMenu(btn, e) {
+    e.stopPropagation();
+    const allMenus = document.querySelectorAll('.action-dropdown');
+    const currentMenu = btn.nextElementSibling;
+
+    allMenus.forEach(m => {
+        if (m !== currentMenu) m.classList.add('hidden');
+    });
+
+    currentMenu.classList.toggle('hidden');
+}
+
+function applyFilters() {
+    const searchInput = document.getElementById('logSearch');
+    if (!searchInput) return;
+    
+    const search = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.fleet-row');
+    
+    let filteredCount = 0;
+
+    rows.forEach(row => {
+        const plate = row.querySelector('.plate-number')?.textContent.toLowerCase() || '';
+        const ticket = row.querySelector('.ticket-code')?.textContent.toLowerCase() || '';
+        const vehicle = row.dataset.vehicle;
+        const category = row.dataset.category;
+
+        const matchesSearch = search === '' || plate.includes(search) || ticket.includes(search);
+        const matchesVehicle = currentVehicleFilter === 'all' || vehicle === currentVehicleFilter;
+        const matchesCategory = currentCategoryFilter === 'all' || category === currentCategoryFilter;
+
+        if (matchesSearch && matchesVehicle && matchesCategory) {
+            row.style.display = '';
+            filteredCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const noData = document.getElementById('noDataRow');
+    if (noData) {
+        if (filteredCount === 0) {
+            noData.classList.remove('hidden');
+        } else {
+            noData.classList.add('hidden');
+        }
+    }
+}
+
+function setVehicleFilter(type) {
+    currentVehicleFilter = type;
+    document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
+        if (btn.dataset.filter === type) {
+            btn.classList.add('bg-brand', 'text-white', 'shadow-sm');
+            btn.classList.remove('text-tertiary');
+        } else {
+            btn.classList.remove('bg-brand', 'text-white', 'shadow-sm');
+            btn.classList.add('text-tertiary');
+        }
+    });
+    applyFilters();
+}
+
+function toggleCategoryDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('categoryDropdown').classList.toggle('hidden');
+}
+
+function setCategoryFilter(val, label) {
+    currentCategoryFilter = val;
+    document.getElementById('activeCategoryLabel').textContent = label;
+    document.getElementById('categoryDropdown').classList.add('hidden');
+    applyFilters();
+}
+
+document.getElementById('logSearch').addEventListener('input', applyFilters);
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));
+    const catDropdown = document.getElementById('categoryDropdown');
+    if (catDropdown) catDropdown.classList.add('hidden');
+});
+
+document.addEventListener('DOMContentLoaded', applyFilters);
+</script>
+
+<?php include '../../includes/footer.php'; ?>

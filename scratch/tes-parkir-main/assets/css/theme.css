@@ -1,0 +1,627 @@
+/* 1. Theme Variables (Indigo Night) */
+:root {
+    --brand: #6366f1;
+    --brand-subtle: #eef2ff;
+    --sidebar: #1e1b4b;
+    --surface: #ffffff;
+    --surface-alt: #f1f5f9; /* Neutral Slate-100 */
+    --bg-page: #f8fafc;     /* Neutral Slate-50 */
+    --text-primary: #0f172a;   /* Slate-900 */
+    --text-secondary: #64748b; /* Slate-500 */
+    --border-color: #e2e8f0;   /* Slate-200 */
+    --hover-border: #6366f1;
+    --shadow-color: rgba(15, 23, 42, 0.08); /* Slate-900 based shadow */
+    --sidebar-text: rgba(255, 255, 255, 0.5);
+    --sidebar-text-active: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.05);
+
+    /* Universal Status Colors (Light Theme) */
+    --status-available-bg: #dcfce7;
+    --status-available-border: #bbf7d0;
+    --status-available-text: #166534;
+    
+    --status-parked-bg: #fef3c7;
+    --status-parked-border: #fde68a;
+    --status-parked-text: #92400e;
+    
+    --status-reserved-bg: #f3e8ff;
+    --status-reserved-border: #e9d5ff;
+    --status-reserved-text: #6b21a8;
+    
+    --status-maintenance-bg: #dbeafe;
+    --status-maintenance-border: #bfdbfe;
+    --status-maintenance-text: #1e40af;
+    
+    --status-departed-bg: #f1f5f9;
+    --status-departed-border: #e2e8f0;
+    --status-departed-text: #334155;
+    
+    --status-over-bg: #fee2e2;
+    --status-over-border: #fecaca;
+    --status-over-text: #991b1b;
+
+    --status-paid-bg: #dcfce7;
+    --status-paid-border: #bbf7d0;
+    --status-paid-text: #166534;
+
+    --status-lost-bg: #fee2e2;
+    --status-lost-border: #fecaca;
+    --status-lost-text: #991b1b;
+
+    --status-force-bg: #ffedd5;
+    --status-force-border: #fed7aa;
+    --status-force-text: #9a3412;
+
+    /* Fixed Status Colors (Theme-independent) */
+    --status-online: #10b981;
+    --accent-glow: rgba(15, 23, 42, 0.05);
+    --accent-glow-hover: rgba(15, 23, 42, 0.1);
+    --trend-up: #10b981;    /* Vibrant Green */
+    --trend-down: #ef4444;  /* Vibrant Red (Merah Merona) */
+    --traffic-car: #1d4ed8;
+    --traffic-moto: #93c5fd;
+
+    /* Scrollbar Variables (Light) - High visibility */
+    --scrollbar-thumb: rgba(99, 102, 241, 0.65);
+    --scrollbar-thumb-hover: rgba(99, 102, 241, 0.9);
+}
+
+.bg-status-online { background-color: var(--status-online) !important; }
+.text-status-online { color: var(--status-online) !important; }
+
+/* Trend Colors */
+.trend-up { color: var(--trend-up) !important; }
+.trend-down { color: var(--trend-down) !important; }
+
+/* Traffic Chart Legend Dots */
+.traffic-dot-car { 
+    background-color: var(--traffic-car) !important; 
+    border: 2px solid var(--surface);
+}
+.traffic-dot-moto { 
+    background-color: var(--traffic-moto) !important; 
+    border: 2px solid var(--surface);
+}
+
+[data-theme="dark"] {
+    --brand: #818cf8;
+    --brand-subtle: #1e1b4b;
+    --sidebar: #13112a;
+    --surface: #1e293b;     /* Slate-800 */
+    --surface-alt: #334155; /* Slate-700 */
+    --bg-page: #0f172a;     /* Slate-900 */
+    --text-primary: #f8fafc;   /* Slate-50 */
+    --text-secondary: #94a3b8; /* Slate-400 */
+    --border-color: rgba(51, 65, 85, 0.5); /* Slate-700 based border */
+    --hover-border: #818cf8;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --sidebar-text: rgba(148, 163, 184, 0.5);
+    --sidebar-text-active: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.03);
+
+    /* Universal Status Colors (Dark Theme) */
+    --status-available-bg: rgba(52, 211, 153, 0.1);
+    --status-available-border: rgba(52, 211, 153, 0.2);
+    --status-available-text: #34d399;
+    
+    --status-parked-bg: rgba(251, 191, 36, 0.1);
+    --status-parked-border: rgba(251, 191, 36, 0.2);
+    --status-parked-text: #fbbf24;
+    
+    --status-reserved-bg: rgba(167, 139, 250, 0.1);
+    --status-reserved-border: rgba(167, 139, 250, 0.2);
+    --status-reserved-text: #a78bfa;
+    
+    --status-maintenance-bg: rgba(96, 165, 250, 0.1);
+    --status-maintenance-border: rgba(96, 165, 250, 0.2);
+    --status-maintenance-text: #60a5fa;
+    
+    --status-departed-bg: rgba(148, 163, 184, 0.1);
+    --status-departed-border: rgba(148, 163, 184, 0.2);
+    --status-departed-text: #94a3b8;
+    
+    --status-paid-bg: rgba(52, 211, 153, 0.1);
+    --status-paid-border: rgba(52, 211, 153, 0.2);
+    --status-paid-text: #34d399;
+
+    --status-lost-bg: rgba(248, 113, 113, 0.1);
+    --status-lost-border: rgba(248, 113, 113, 0.2);
+    --status-lost-text: #f87171;
+
+    --status-force-bg: rgba(251, 146, 60, 0.1);
+    --status-force-border: rgba(251, 146, 60, 0.2);
+    --status-force-text: #fb923c;
+    
+    --status-over-bg: rgba(248, 113, 113, 0.1);
+    --status-over-border: rgba(248, 113, 113, 0.2);
+    --status-over-text: #f87171;
+
+    --accent-glow: rgba(255, 255, 255, 0.03);
+    --accent-glow-hover: rgba(255, 255, 255, 0.05);
+
+    /* Scrollbar Variables (Dark) */
+    --scrollbar-thumb: rgba(129, 140, 248, 0.3);
+    --scrollbar-thumb-hover: rgba(129, 140, 248, 0.5);
+}
+
+
+/* 1.1 Global Scrollbar */
+:root {
+    color-scheme: light; /* Default */
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-page) !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb) !important;
+    border-radius: 20px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover) !important;
+}
+
+/* Specific for components that need a custom scrollbar feel */
+.custom-scrollbar {
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--scrollbar-thumb) transparent !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--bg-page) !important;
+}
+
+/* Fix for sidebar specifically where track must match indigo background */
+.sidebar-main, .sidebar-main .custom-scrollbar {
+    color-scheme: dark !important;
+}
+
+.sidebar-main .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--sidebar) !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb) !important;
+    border-radius: 20px !important;
+}
+
+/* 2. Base Layout & Background */
+main.pl-64 {
+    background-color: var(--bg-page) !important;
+    background-image: none !important; /* Remove radial gradient for solid brand look */
+    min-height: 100vh;
+    transition: background-color 0.5s ease;
+    color: var(--text-primary);
+}
+
+/* 3. Standardized Card System */
+.bento-card {
+    background-color: var(--surface) !important;
+    border: 2px solid var(--border-color) !important;
+    box-shadow: 0 15px 35px -5px var(--shadow-color) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 1.5rem !important; /* 24px */
+    color: var(--text-primary);
+}
+
+.bento-card:hover {
+    transform: none !important;
+    box-shadow: 0 0 70px -10px var(--shadow-color) !important;
+    border-color: var(--hover-border) !important;
+}
+
+/* Universal Semantic Utilities */
+.bg-surface { background-color: var(--surface) !important; }
+.bg-surface-alt { background-color: var(--surface-alt) !important; }
+.bg-page { background-color: var(--bg-page) !important; }
+.border-color { border-color: var(--border-color) !important; }
+.divide-color > * + * { border-color: var(--border-color) !important; }
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary { color: var(--text-secondary); opacity: 0.7; }
+.text-brand { color: var(--brand) !important; }
+.bg-brand { background-color: var(--brand) !important; }
+.border-brand { border-color: var(--brand) !important; }
+
+/* Compatibility layer: map legacy light-only slate/white classes to theme tokens */
+.bg-white,
+.bg-slate-50,
+.bg-slate-50\/50,
+.bg-slate-100 {
+    background-color: var(--surface-alt) !important;
+}
+
+.bg-slate-900,
+.bg-slate-900\/60,
+.bg-slate-900\/40 {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+}
+
+.text-slate-300,
+.text-slate-400,
+.text-slate-500,
+.text-slate-600 {
+    color: var(--text-secondary) !important;
+}
+
+.border-slate-100,
+.border-slate-200,
+.divide-slate-50 > * + * {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-slate-50\/50,
+[data-theme="dark"] .bg-slate-100 {
+    background-color: var(--surface) !important;
+}
+
+/* Background Glow Utilities */
+.bg-accent-glow { background-color: var(--accent-glow) !important; }
+.group-hover-bg-accent-glow { transition: background-color 0.3s ease; }
+.group:hover .group-hover-bg-accent-glow { background-color: var(--accent-glow-hover) !important; }
+
+
+/* Progress Bars */
+.progress-track { background-color: var(--surface-alt); border: 1px solid var(--border-color); }
+.progress-fill { background-color: var(--brand); transition: width 1s ease-out; }
+
+/* 4. Universal Status Classes */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+}
+
+.status-badge-available { background-color: var(--status-available-bg) !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-border) !important; }
+.status-dot-available { background-color: var(--status-online) !important; }
+.status-text-available { color: var(--status-available-text) !important; }
+
+.status-badge-parked { background-color: var(--status-parked-bg) !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-border) !important; }
+.status-dot-parked { background-color: var(--status-parked-text) !important; }
+.status-text-parked { color: var(--status-parked-text) !important; }
+
+.status-badge-reserved { background-color: var(--status-reserved-bg) !important; color: var(--status-reserved-text) !important; border: 1px solid var(--status-reserved-border) !important; }
+.status-dot-reserved { background-color: var(--status-reserved-text) !important; }
+.status-text-reserved { color: var(--status-reserved-text) !important; }
+
+.status-badge-maintenance { background-color: var(--status-maintenance-bg) !important; color: var(--status-maintenance-text) !important; border: 1px solid var(--status-maintenance-border) !important; }
+.status-dot-maintenance { background-color: var(--status-maintenance-text) !important; }
+.status-text-maintenance { color: var(--status-maintenance-text) !important; }
+
+.status-badge-departed { background-color: var(--status-departed-bg) !important; color: var(--status-departed-text) !important; border: 1px solid var(--status-departed-border) !important; }
+.status-dot-departed { background-color: var(--status-departed-text) !important; }
+.status-text-departed { color: var(--status-departed-text) !important; }
+
+.status-badge-over { background-color: var(--status-over-bg) !important; color: var(--status-over-text) !important; border: 1px solid var(--status-over-border) !important; }
+.status-dot-over { background-color: var(--status-over-text) !important; }
+.status-text-over { color: var(--status-over-text) !important; }
+
+.status-badge-paid { background-color: var(--status-paid-bg) !important; color: var(--status-paid-text) !important; border: 1px solid var(--status-paid-border) !important; }
+.status-badge-lost { background-color: var(--status-lost-bg) !important; color: var(--status-lost-text) !important; border: 1px solid var(--status-lost-border) !important; }
+.status-badge-force { background-color: var(--status-force-bg) !important; color: var(--status-force-text) !important; border: 1px solid var(--status-force-border) !important; }
+
+/* 5. Typography & Icons */
+.card-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.text-tertiary {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+
+.icon-container {
+    background-color: var(--surface-alt);
+    color: var(--brand);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+.cctv-frame {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.24) !important;
+    color: #f8fafc;
+}
+
+/* 6. Custom Components */
+.toggle-container {
+    background-color: var(--surface-alt) !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 0.25rem !important;
+    border-radius: 0.75rem !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+.toggle-btn {
+    flex: 1 !important;
+    padding: 0.45rem 0 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+}
+
+.toggle-btn.active {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px var(--shadow-color) !important;
+}
+
+.status-dot-ring {
+    border: 2px solid var(--surface-alt) !important;
+}
+
+.toggle-btn:not(.active):hover {
+    color: var(--text-primary) !important;
+    background-color: var(--border-color);
+}
+
+/* 7. Modal & Action Buttons */
+.modal-surface {
+    background-color: var(--surface) !important;
+    border-color: var(--border-color) !important;
+}
+
+.modal-input {
+    background-color: var(--surface-alt) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-input:focus {
+    border-color: var(--brand) !important;
+    background-color: var(--surface) !important;
+}
+
+.btn-primary {
+    background-color: var(--brand) !important;
+    color: var(--surface) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--hover-border) !important;
+    box-shadow: 0 4px 15px var(--shadow-color) !important;
+}
+
+/* Segmented Toggle Component */
+.segmented-toggle {
+    background-color: var(--surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    padding: 4px;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+.segmented-toggle-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    background-color: var(--brand);
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+.segmented-toggle-btn {
+    flex: 1;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    z-index: 10;
+    transition: color 0.3s ease;
+    border-radius: 9999px;
+}
+
+/* 8. Sidebar Standardization (Indigo Night) */
+.sidebar-main {
+    background-color: var(--sidebar) !important;
+    border-right: 1px solid var(--sidebar-border) !important;
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+.sidebar-brand-box {
+    border-bottom: 1px solid var(--sidebar-border) !important;
+}
+
+.sidebar-brand-icon {
+    background-color: var(--brand) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-brand-text-main {
+    color: #ffffff !important;
+}
+
+.sidebar-brand-text-sub {
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-label-text {
+    color: var(--sidebar-text) !important;
+    opacity: 0.8;
+}
+
+.sidebar-link {
+    color: var(--sidebar-text) !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-link i {
+    color: var(--sidebar-text) !important;
+    opacity: 0.6;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-link:hover i {
+    color: #ffffff !important;
+    opacity: 1;
+}
+
+.sidebar-link.nav-active {
+    background-color: var(--brand) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.sidebar-link.nav-active i {
+    color: #ffffff !important;
+    opacity: 1;
+}
+
+.sidebar-footer {
+    border-top: 1px solid var(--sidebar-border) !important;
+}
+
+.sidebar-user-avatar {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-user-name {
+    color: #ffffff !important;
+}
+
+.sidebar-user-role {
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-logout-btn {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--sidebar-text) !important;
+}
+
+.sidebar-logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+}
+
+/* 9. Premium UI Components (60-30-10 Unification) */
+.premium-thead th {
+    padding: 0.75rem 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.premium-thead th:first-child { text-align: left; }
+.premium-thead th:last-child { text-align: right; }
+
+/* Soft Badges */
+.badge-soft {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-soft-indigo { background-color: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.badge-soft-emerald { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+.badge-soft-rose { background-color: rgba(244, 63, 94, 0.1); color: #f43f5e; }
+.badge-soft-amber { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.badge-soft-slate { background-color: rgba(148, 163, 184, 0.1); color: #64748b; }
+
+/* Ghost & Outline Buttons */
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+    background-color: var(--bg-surface-alt);
+    color: var(--brand);
+}
+
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+    background-color: rgba(99, 102, 241, 0.02);
+}

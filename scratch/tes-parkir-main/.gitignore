@@ -1,0 +1,90 @@
+# --- SECURITY & CREDENTIALS ---
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.php
+config/*.local.php
+token.json
+.htpasswd
+
+# --- DATABASE ---
+# Don't commit raw SQL dumps containing real user/system data
+database/*.sql
+!database/schema.sql
+!database/*.sample.sql
+!database/*.seed.sql
+
+# --- AI & AGENT METADATA ---
+.claude/
+.agent/
+.cursor/
+.stitch/
+.antigravity/
+.gemini/
+.tempmediaStorage/
+CLAUDE.md
+*.jsonl
+*.json.bak
+
+# --- Logs ---
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Dependencies ---
+node_modules/
+vendor/
+homepage/node_modules/
+bower_components/
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.suo
+*.sln
+*.swp
+*.swo
+.project
+.settings/
+.buildpath
+*.sublime-project
+*.sublime-workspace
+
+# --- OS Specific ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+ehthumbs.db
+Icon?
+
+# --- Build & Temporary ---
+dist/
+build/
+homepage/dist/
+scratch/
+scratch_*.php
+session_setter.php
+temp/
+tmp/
+.cache/
+.sass-cache/
+.parcel-cache/
+.next/
+.vite-inspect
+coverage/
+.nyc_output
+
+# --- Assets & Misc ---
+assets/img/temp/
+assets/img/generated/
+*.bak
+*.tmp
+*.old
+*.swp

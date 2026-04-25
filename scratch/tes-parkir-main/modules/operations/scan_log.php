@@ -1,0 +1,651 @@
+<?php
+require_once '../../includes/auth_guard.php';
+require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
+
+// --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+");
+$slot_mapping = [];
+foreach ($all_slots_query as $s) {
+    $is_vip = (int)$s['is_reservation_only'] === 1;
+    $slot_mapping[$s['slot_id']] = [
+        "label"    => $s['slot_number'],
+        "category" => $is_vip ? "VIP AREA" : "REGULAR"
+    ];
+}
+
+// --- DATE FILTER LOGIC ---
+$range = $_GET['range'] ?? 'today';
+$start_date = $_GET['start_date'] ?? null;
+$end_date = $_GET['end_date'] ?? null;
+
+if ($range !== 'custom') {
+    $end_dt = new DateTime();
+    $end_date = $end_dt->format('Y-m-d');
+    
+    switch ($range) {
+        case 'hour': $start_date = date('Y-m-d H:i:s', strtotime('-1 hour')); break;
+        case 'today': 
+            $start_date = date('Y-m-d'); 
+            break;
+        case '24h': $start_date = date('Y-m-d H:i:s', strtotime('-24 hours')); break;
+        case '1week': $start_date = date('Y-m-d', strtotime('-7 days')); break;
+        case '1month': $start_date = date('Y-m-d', strtotime('-30 days')); break;
+        default: $start_date = date('Y-m-d'); break;
+    }
+}
+
+$db_start = $start_date . (strlen($start_date) <= 10 ? ' 00:00:00' : '');
+$db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
+
+// Fetch scan logs with transaction and vehicle details
+$query = "
+    SELECT * FROM (
+        (SELECT 
+            x.scan_id, 
+            x.scan_time, 
+            x.scan_type, 
+            x.ticket_code, 
+            x.gate_action,
+            COALESCE(t.check_in_time, r_existing.reserved_from) as time_in,
+            t.check_out_time as time_out,
+            t.total_fee as final_fee,
+            t.duration_hours,
+            t.payment_status,
+            t.is_lost_ticket,
+            t.is_force_checkout,
+            COALESCE(t.reservation_id, r_existing.reservation_id) as reservation_id,
+            COALESCE(v.plate_number, r_v_existing.plate_number, x.plate_number) as plate_number,
+            COALESCE(v.vehicle_type, r_v_existing.vehicle_type) as vehicle_type,
+            COALESCE(s.slot_id, r_s_existing.slot_id) as slot_id
+        FROM plate_scan_log x
+        LEFT JOIN `transaction` t ON x.ticket_code = t.ticket_code
+        LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+        LEFT JOIN parking_slot s ON t.slot_id = s.slot_id
+        LEFT JOIN floor f ON s.floor_id = f.floor_id
+        LEFT JOIN `reservation` r_existing ON x.ticket_code = r_existing.reservation_code
+        LEFT JOIN vehicle r_v_existing ON r_existing.vehicle_id = r_v_existing.vehicle_id
+        LEFT JOIN parking_slot r_s_existing ON r_existing.slot_id = r_s_existing.slot_id
+        LEFT JOIN floor r_f_existing ON r_s_existing.floor_id = r_f_existing.floor_id
+        WHERE x.scan_time BETWEEN ? AND ?)
+        
+        UNION ALL
+        
+        (SELECT 
+            NULL as scan_id, 
+            res.reserved_from as scan_time, 
+            'entry' as scan_type, 
+            res.reservation_code as ticket_code, 
+            'open' as gate_action,
+            res.reserved_from as time_in,
+            NULL as time_out,
+            NULL as final_fee,
+            NULL as duration_hours,
+            'unpaid' as payment_status,
+            0 as is_lost_ticket,
+            0 as is_force_checkout,
+            res.reservation_id,
+            rv.plate_number,
+            rv.vehicle_type,
+            rs.slot_id
+        FROM `reservation` res
+        JOIN vehicle rv ON res.vehicle_id = rv.vehicle_id
+        JOIN parking_slot rs ON res.slot_id = rs.slot_id
+        JOIN floor rf ON rs.floor_id = rf.floor_id
+        WHERE res.reserved_from BETWEEN ? AND ?
+          AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = res.reservation_code)
+          AND NOT EXISTS (SELECT 1 FROM `transaction` t WHERE t.reservation_id = res.reservation_id))
+    ) combined
+    ORDER BY scan_time DESC
+";
+
+$stmt = $pdo->prepare($query);
+$stmt->execute([$db_start, $db_end, $db_start, $db_end]);
+$logs = $stmt->fetchAll();
+
+// --- CHART DATA FETCHING ---
+if ($range === 'today' || $range === '24h' || $range === 'hour') {
+    $chart_query = "
+        SELECT DATE_FORMAT(t.scan_time, '%h %p') as label, COUNT(*) as count
+        FROM (
+            SELECT scan_time FROM plate_scan_log WHERE scan_time BETWEEN ? AND ?
+            UNION ALL
+            SELECT reserved_from as scan_time FROM `reservation` 
+            WHERE reserved_from BETWEEN ? AND ?
+            AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = `reservation`.reservation_code)
+        ) t
+        GROUP BY DATE(t.scan_time), HOUR(t.scan_time)
+        ORDER BY t.scan_time ASC
+    ";
+} else {
+    $chart_query = "
+        SELECT DATE_FORMAT(t.scan_time, '%d %b') as label, COUNT(*) as count
+        FROM (
+            SELECT scan_time FROM plate_scan_log WHERE scan_time BETWEEN ? AND ?
+            UNION ALL
+            SELECT reserved_from as scan_time FROM `reservation` 
+            WHERE reserved_from BETWEEN ? AND ?
+            AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = `reservation`.reservation_code)
+        ) t
+        GROUP BY DATE(t.scan_time)
+        ORDER BY t.scan_time ASC
+    ";
+}
+
+$chart_stmt = $pdo->prepare($chart_query);
+$chart_stmt->execute([$db_start, $db_end, $db_start, $db_end]);
+$chart_data = $chart_stmt->fetchAll();
+
+$page_title = 'Security Scan Log';
+$page_subtitle = "Viewing security sensor events from " . date('d M', strtotime($db_start)) . " to " . date('d M', strtotime($db_end));
+
+include '../../includes/header.php';
+?>
+
+<link rel="stylesheet" href="../../assets/css/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="px-10 py-10">
+
+    <!-- Page Header (Premium Style) -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight"><?= $page_title ?></h1>
+            <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="document.getElementById('modalDelete').classList.remove('hidden'); loadDates();"
+                    class="btn-outline !text-rose-500 !border-rose-100 hover:!bg-rose-50 hover:!border-rose-200 gap-2">
+                <i class="fa-solid fa-broom"></i>
+                Purge Logs
+            </button>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="bento-card p-8">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <h3 class="font-manrope font-bold text-primary text-base">Activity Analytics</h3>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Operational sensor distribution</p>
+                </div>
+            </div>
+            
+            <form id="filterForm" method="GET" class="flex items-center gap-3">
+                <div class="relative">
+                    <select name="range" onchange="this.form.submit()" 
+                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
+                        <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
+                        <option value="24h" <?= $range === '24h' ? 'selected' : '' ?>>Past 24 Hours</option>
+                        <option value="1week" <?= $range === '1week' ? 'selected' : '' ?>>Last 7 Days</option>
+                        <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>Last 30 Days</option>
+                        <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
+                </div>
+
+                <?php if($range === 'custom'): ?>
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-100 p-1 rounded-xl">
+                    <input type="date" name="start_date" value="<?= $start_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
+                    <span class="text-slate-300">-</span>
+                    <input type="date" name="end_date" value="<?= $end_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
+                    <button type="submit" class="bg-brand text-white w-8 h-8 rounded-lg flex items-center justify-center hover:brightness-110 transition-all">
+                        <i class="fa-solid fa-check text-[10px]"></i>
+                    </button>
+                </div>
+                <?php endif; ?>
+            </form>
+        </div>
+        
+        <div class="h-[220px] w-full">
+            <canvas id="scanActivityChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Table Content Card -->
+    <div class="bento-card p-4 overflow-hidden mt-6">
+        <!-- Filters Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-color">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                    <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="font-manrope font-bold text-primary text-base">Operational Index</h3>
+                    <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Gate sensor history</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Search -->
+                <div class="relative group">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs"></i>
+                    <input type="text" id="searchLog" placeholder="Search plate or ticket..."
+                           oninput="applyScanLogFilters()"
+                           class="w-64 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
+                </div>
+
+                <!-- Vehicle Filter -->
+                <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1 gap-1">
+                    <button onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
+                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm">ALL</button>
+                    <button onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-car text-sm pointer-events-none"></i>
+                    </button>
+                    <button onclick="setScanLogVehicleFilter('motorcycle')" id="btn-filter-motorcycle" 
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                        <i class="fa-solid fa-motorcycle text-sm pointer-events-none"></i>
+                    </button>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="relative">
+                    <select id="filterCategory" onchange="setScanLogTypeFilter(this.value)" 
+                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
+                        <option value="all">All Entries</option>
+                        <option value="reservation">Reservations</option>
+                        <option value="regular">Regular</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse" id="logTable">
+                <thead class="premium-thead">
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Plate Number</th>
+                        <th>Ticket Code</th>
+                        <th>Slot</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Duration</th>
+                        <th>Final Fee</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="logTableBody" class="divide-y divide-slate-50">
+                    <tr id="noDataRow" class="<?= !empty($logs) ? 'hidden' : '' ?>">
+                        <td colspan="10" class="px-6 py-24 text-center">
+                            <div class="flex flex-col items-center opacity-40">
+                                <i class="fa-solid fa-clock-rotate-left text-5xl mb-4 text-slate-300"></i>
+                                <p class="text-slate-500 font-inter font-medium text-sm">No operational records match your criteria.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php if (!empty($logs)): 
+                        foreach ($logs as $row): 
+                        $hours_val = (float)($row['duration_hours'] ?? 0);
+                        $h = floor($hours_val);
+                        $m = round(($hours_val - $h) * 60);
+                        $dur = $h > 0 ? "{$h}h {$m}m" : "{$m}m";
+                        
+                        $is_res = !empty($row['reservation_id']);
+                        $is_pending = empty($row['scan_id']);
+                        $is_departed = !$is_pending && !empty($row['time_out']);
+                        
+                        $s_id = $row['slot_id'] ?? 0;
+                        if ($is_departed) {
+                            $display_slot = '<span class="opacity-20 italic">---</span>';
+                            $slot_label = 'RELEASED';
+                        } elseif (isset($slot_mapping[$s_id])) {
+                            $display_slot = $slot_mapping[$s_id]['label'];
+                            $slot_label = $slot_mapping[$s_id]['category'];
+                        } else {
+                            $display_slot = '<span class="opacity-20">#???</span>';
+                            $slot_label = 'UNKNOWN';
+                        }
+
+                        if ($is_pending) $dur = '---';
+                    ?>
+                    <tr class="group hover:bg-slate-50/50 transition-colors log-row" 
+                        data-vehicle="<?= trim(strtolower($row['vehicle_type'] ?? '')) ?>"
+                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
+                        <td class="px-6 py-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand group-hover:border-brand/20 transition-all">
+                                <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-extrabold text-primary tracking-tight">
+                                <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
+                            </span>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary tracking-tight uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-widest"><?= $is_pending ? 'EXPECTED' : 'LOG ENTRY' ?></span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= $display_slot ?></span>
+                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-wider"><?= $slot_label ?></span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['time_in'])) ?></span>
+                                <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['time_in'])) ?></span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <?php if ($row['time_out']): ?>
+                                    <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['time_out'])) ?></span>
+                                    <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['time_out'])) ?></span>
+                                <?php else: ?>
+                                    <span class="text-[11px] font-inter text-slate-200 tracking-widest">---:---:---</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold text-primary"><?= $dur ?></span>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <span class="text-[13px] font-manrope font-bold text-brand">
+                                <?= $row['final_fee'] > 0 ? fmt_idr($row['final_fee']) : 'Rp 0' ?>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex justify-end gap-1.5 flex-wrap max-w-[150px] ml-auto">
+                                <?php 
+                                    $pay_status = strtolower($row['payment_status'] ?? '');
+                                    $is_lost = (int)($row['is_lost_ticket'] ?? 0);
+                                    $is_force = (int)($row['is_force_checkout'] ?? 0);
+                                ?>
+                                <?php if ($is_pending): ?>
+                                    <span class="badge-soft badge-soft-amber">RESERVED</span>
+                                <?php elseif ($is_departed): ?>
+                                    <span class="badge-soft badge-soft-slate">DEPARTED</span>
+                                <?php else: ?>
+                                    <span class="badge-soft badge-soft-indigo">ACTIVE</span>
+                                <?php endif; ?>
+                                
+                                <?php if ($is_lost): ?>
+                                    <span class="badge-soft badge-soft-rose">LOST TICKET</span>
+                                <?php endif; ?>
+                                <?php if ($is_force): ?>
+                                    <span class="badge-soft badge-soft-amber">FORCE EXIT</span>
+                                <?php endif; ?>
+                                <?php if ($pay_status === 'paid'): ?>
+                                    <span class="badge-soft badge-soft-emerald">PAID</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button type="button" 
+                                    onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
+                                    class="btn-ghost !text-rose-400 hover:!text-rose-500 hover:!bg-rose-50">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Purge Confirmation Modal -->
+<div id="modalDelete" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+        <div class="bento-card overflow-hidden">
+            <div class="px-8 py-5 border-b border-color flex justify-between items-center bg-white">
+                <h3 class="font-manrope font-extrabold text-primary text-base">Purge Operational Logs</h3>
+                <button onclick="document.getElementById('modalDelete').classList.add('hidden')" class="btn-ghost">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-8 bg-white">
+                <div class="flex gap-2 mb-6 bg-slate-50 border border-slate-100 p-1 rounded-2xl">
+                    <button id="tabBtnDate" onclick="switchTab('date')"
+                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all">By Date</button>
+                    <button id="tabBtnAll" onclick="switchTab('all')"
+                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all">Wipe All</button>
+                </div>
+
+                <div id="tabDate">
+                    <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-50 p-2 mb-6 space-y-1 border border-slate-100"></div>
+                    <button id="btnDeleteDate" disabled onclick="deleteLog('by_date')"
+                            class="w-full py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-calendar-xmark"></i> Purge Selected Date
+                    </button>
+                </div>
+
+                <div id="tabAll" class="hidden">
+                    <div class="bg-rose-50 rounded-2xl p-6 mb-6 text-center border border-rose-100">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500 text-3xl block mb-4"></i>
+                        <p class="text-rose-600 font-extrabold text-sm font-manrope uppercase tracking-tight">Full System Purge</p>
+                        <p class="text-slate-500 text-[11px] font-inter mt-3 leading-relaxed">This will permanently delete all gate sensor history. <span class="text-slate-700 font-bold block mt-1">Transaction and financial records remain secure.</span></p>
+                    </div>
+                    <button onclick="deleteLog('all')"
+                            class="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-fire"></i> Execute Wipe
+                    </button>
+                </div>
+                <div id="deleteResult" class="mt-4 hidden text-[11px] font-bold uppercase tracking-widest text-center py-3 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const CSRF = '<?= htmlspecialchars(csrf_token()) ?>';
+let currentLogVehicleFilter = 'all';
+let currentLogCategoryFilter = 'all';
+let selectedDate = null;
+
+// --- CHART INITIALIZATION ---
+const ctx = document.getElementById('scanActivityChart').getContext('2d');
+const chartData = <?= json_encode($chart_data) ?>;
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: chartData.map(d => d.label),
+        datasets: [{
+            label: 'Scans',
+            data: chartData.map(d => d.count),
+            backgroundColor: '#6366f1',
+            borderRadius: 6,
+            barThickness: 24,
+            hoverBackgroundColor: '#4f46e5'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false }, 
+            tooltip: { 
+                backgroundColor: '#1e293b', 
+                titleFont: { family: 'Manrope', weight: '800' },
+                bodyFont: { family: 'Inter' },
+                padding: 12, 
+                displayColors: false 
+            } 
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                grid: { color: 'rgba(241, 245, 249, 1)', drawBorder: false }, 
+                ticks: { stepSize: 1, color: '#94a3b8', font: { size: 10, weight: '700' } } 
+            },
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' } } 
+            }
+        }
+    }
+});
+
+function switchTab(tab) {
+    document.getElementById('tabDate').classList.toggle('hidden', tab !== 'date');
+    document.getElementById('tabAll').classList.toggle('hidden', tab !== 'all');
+    const dateBtn = document.getElementById('tabBtnDate');
+    const allBtn = document.getElementById('tabBtnAll');
+    if (tab === 'date') {
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all";
+    } else {
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:bg-slate-100 transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-lg transition-all";
+    }
+}
+
+window.onclick = function(e) { if (e.target === document.getElementById('modalDelete')) document.getElementById('modalDelete').classList.add('hidden'); };
+
+function loadDates() {
+    const c = document.getElementById('dateList');
+    c.innerHTML = '<div class="text-center py-10 text-slate-300 text-[11px] font-bold uppercase tracking-widest animate-pulse">Syncing Sensor Index...</div>';
+    fetch('get_log_dates.php').then(r => r.json()).then(data => {
+        if (!data.length) { 
+            c.innerHTML = '<div class="text-center py-12 text-slate-300 text-[11px] font-bold uppercase tracking-widest opacity-40">Index Empty</div>'; 
+            return; 
+        }
+        let html = '';
+        data.forEach(d => {
+            html += `
+            <div class="date-item flex justify-between items-center px-5 py-4 rounded-xl cursor-pointer hover:bg-white transition-all border border-transparent hover:border-brand/20 hover:shadow-sm" 
+                 data-date="${d.date}" onclick="selectDate(this,'${d.date}')">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100">
+                        <i class="fa-solid fa-calendar-day text-brand text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="font-manrope font-extrabold text-[13px] text-primary tracking-tight uppercase">${d.date}</div>
+                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">${d.day}</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <span class="bg-indigo-50 text-brand px-3 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">${d.scan_count} EVENTS</span>
+                </div>
+            </div>`;
+        });
+        c.innerHTML = html;
+    });
+}
+
+function selectDate(el, date) {
+    document.querySelectorAll('.date-item').forEach(d => d.classList.remove('bg-white', 'border-brand/20', 'shadow-sm'));
+    el.classList.add('bg-white', 'border-brand/20', 'shadow-sm');
+    selectedDate = date;
+    document.getElementById('btnDeleteDate').disabled = false;
+}
+
+function deleteLog(mode) {
+    const box = document.getElementById('deleteResult');
+    if (!confirm(mode === 'by_date' ? `Purge logs for ${selectedDate}?` : 'CRITICAL: WIPE ALL SENSOR HISTORY?')) return;
+    const body = mode === 'by_date' ? `mode=by_date&date=${selectedDate}&csrf_token=${encodeURIComponent(CSRF)}` : `mode=all&csrf_token=${encodeURIComponent(CSRF)}`;
+    fetch('delete_logs.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
+    .then(r => r.json()).then(data => {
+        box.classList.remove('hidden');
+        if (data.success) { 
+            box.className = 'mt-4 py-3 rounded-xl bg-emerald-50 text-emerald-600 text-[11px] font-bold uppercase tracking-widest text-center'; 
+            box.innerHTML = 'Logs successfully purged'; 
+            setTimeout(() => location.reload(), 1200); 
+        }
+    });
+}
+
+function deleteSingleLog(btn, scanId, resId, ticket) {
+    if (!confirm(`Permanently delete log entry for ticket ${ticket}?`)) return;
+    
+    const row = btn.closest('tr');
+    row.classList.add('opacity-40', 'pointer-events-none');
+    
+    const body = `mode=single&scan_id=${scanId}&reservation_id=${resId}&ticket=${ticket}&csrf_token=${encodeURIComponent(CSRF)}`;
+    
+    fetch('delete_logs.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            row.classList.add('transition-all', 'duration-500', 'opacity-0', 'translate-x-4');
+            setTimeout(() => {
+                row.remove();
+                applyScanLogFilters();
+            }, 500);
+        } else {
+            alert(data.message || 'Error deleting record');
+            row.classList.remove('opacity-40', 'pointer-events-none');
+        }
+    })
+    .catch(err => {
+        row.classList.remove('opacity-40', 'pointer-events-none');
+    });
+}
+
+function setScanLogVehicleFilter(type) {
+    currentLogVehicleFilter = type;
+    document.querySelectorAll('.filter-btn-log').forEach(btn => {
+        btn.classList.remove('active', 'bg-brand', 'text-white', 'shadow-sm');
+        btn.classList.add('text-tertiary');
+    });
+    const activeBtn = document.getElementById('btn-filter-' + type);
+    activeBtn.classList.add('active', 'bg-brand', 'text-white', 'shadow-sm');
+    activeBtn.classList.remove('text-tertiary');
+    applyScanLogFilters();
+}
+
+function setScanLogTypeFilter(category) {
+    currentLogCategoryFilter = category;
+    applyScanLogFilters();
+}
+
+function applyScanLogFilters() {
+    const searchInput = document.getElementById('searchLog');
+    if (!searchInput) return;
+    
+    const q = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.log-row');
+    
+    let filteredCount = 0;
+
+    rows.forEach(tr => {
+        const text = tr.textContent.toLowerCase();
+        const vehicle = (tr.getAttribute('data-vehicle') || '').trim();
+        const category = (tr.getAttribute('data-category') || '').trim();
+        
+        const matchSearch = q === '' || text.includes(q);
+        const matchVehicle = currentLogVehicleFilter === 'all' || vehicle === currentLogVehicleFilter;
+        const matchCategory = currentLogCategoryFilter === 'all' || category === currentLogCategoryFilter;
+        
+        if (matchSearch && matchVehicle && matchCategory) {
+            tr.style.display = '';
+            filteredCount++;
+        } else {
+            tr.style.display = 'none';
+        }
+    });
+
+    const noData = document.getElementById('noDataRow');
+    if (noData) {
+        noData.classList.toggle('hidden', filteredCount > 0);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', applyScanLogFilters);
+</script>
+
+<?php include '../../includes/footer.php'; ?>

@@ -1,0 +1,30 @@
+# SmartParking Backend .htaccess
+# Allows React dev server (localhost:3000) to call the PHP API
+
+# ── Security headers ─────────────────────────────────────────────────────
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# ── Block direct access to sensitive dirs ────────────────────────────────
+<FilesMatch "^(connection\.php|auth_guard\.php|functions\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ── CORS for local React dev (localhost:3000 / localhost:5173) ───────────
+<IfModule mod_headers.c>
+    SetEnvIf Origin "http://localhost:(3000|5173)" CORS_ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-CSRF-Token"
+</IfModule>
+
+# Handle preflight OPTIONS
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Friendly 404
+ErrorDocument 404 /index.php
