@@ -88,7 +88,8 @@ $trends = $pdo->query("
 
 function calc_trend($curr, $prev) {
     if ($prev <= 0) return $curr > 0 ? 100 : 0;
-    return (($curr - $prev) / $prev) * 100;
+    $trend = (($curr - $prev) / $prev) * 100;
+    return max(-100, min(100, $trend));
 }
 
 $trend_total = calc_trend($trends['curr_total'], $trends['prev_total']);

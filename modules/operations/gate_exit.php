@@ -312,7 +312,7 @@ function pushNotify(title, message, type = 'info', code = null) {
     }
 
     const html = `
-        <div id="${id}" class="notification-item bento-card !p-0 flex flex-col animate-slide-in pointer-events-auto shadow-2xl border border-color overflow-hidden w-[380px] bg-surface/80 backdrop-blur-xl">
+        <div id="${id}" class="notification-item bento-card !p-0 flex flex-col animate-slide-in pointer-events-auto border border-color overflow-hidden w-[380px] bg-surface/80 backdrop-blur-xl" style="box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5) !important;">
             <div class="flex items-center gap-4 p-4">
                 <div class="w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shrink-0">
                     <i class="fa-solid ${icon} text-xl ${iconColor}"></i>

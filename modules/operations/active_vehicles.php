@@ -93,15 +93,15 @@ include '../../includes/header.php';
         </div>
     </div>
 
-    <div class="bento-card p-4 overflow-hidden">
+    <div class="bento-card p-4">
         <!-- Card Header with Filters -->
-        <div class="flex items-center justify-between px-6 py-5 border-b border-color">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-brand">
+        <div class="flex items-center justify-between py-5 border-b border-color">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-car-side text-lg"></i>
                 </div>
                 <div>
-                    <h3 class="font-manrope font-bold text-primary text-base">Active Fleet</h3>
+                    <h3 class="card-title leading-tight">Active Fleet</h3>
                     <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Real-time occupancy</p>
                 </div>
             </div>
@@ -112,28 +112,28 @@ include '../../includes/header.php';
                 <button onclick="toggleSort()" id="sortBtn" 
                         class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
                     <i id="sortIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-primary">SORT</span>
+                    <span class="text-[11px] font-inter font-medium tracking-wider text-primary">Sort</span>
                 </button>
 
                 <!-- Search -->
                 <div class="relative group">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                           <input type="text" id="logSearch" placeholder="Search plate or ticket..." 
-                              class="w-64 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
+                              class="w-44 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
                 <!-- Vehicle Type Filter -->
                 <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 h-[38px]">
                     <button onclick="setVehicleFilter('all')" data-filter="all" 
-                            class="vehicle-filter-btn px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm leading-none">
-                        ALL
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-[11px] font-inter font-medium tracking-wider transition-all bg-brand text-white shadow-sm leading-none">
+                        All
                     </button>
                     <button onclick="setVehicleFilter('car')" data-filter="car" 
-                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-car text-sm"></i>
                     </button>
                     <button onclick="setVehicleFilter('motorcycle')" data-filter="motorcycle" 
-                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-motorcycle text-sm"></i>
                     </button>
                 </div>
@@ -141,33 +141,33 @@ include '../../includes/header.php';
                 <!-- Category Filter -->
                 <div class="relative">
                     <button onclick="toggleCategoryDropdown(event)" 
-                            class="flex items-center gap-4 bg-surface-alt border border-color rounded-xl px-5 h-[38px] hover:border-brand/20 transition-all group">
-                        <span id="activeCategoryLabel" class="text-[10px] font-bold uppercase tracking-wider text-primary">All Entries</span>
+                            class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <span id="activeCategoryLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Entries</span>
                         <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                     </button>
                     
                     <div id="categoryDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden">
-                        <button onclick="setCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Entries</button>
-                        <button onclick="setCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservations</button>
-                        <button onclick="setCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Regular</button>
+                        <button onclick="setCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Entries</button>
+                        <button onclick="setCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservations</button>
+                        <button onclick="setCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Regular</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Table Section -->
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse">
-                <thead class="premium-thead">
-                    <tr>
-                        <th>Vehicle</th>
-                        <th>Plate Number</th>
-                        <th>Ticket Code</th>
-                        <th>Slot</th>
-                        <th>Entry</th>
-                        <th>Duration</th>
-                        <th>Est. Fee</th>
-                        <th>Actions</th>
+        <div class="overflow-x-auto custom-scrollbar min-h-[350px]">
+            <table class="w-full font-inter border-collapse table-fixed activity-table">
+                <thead>
+                    <tr class="border-b border-color">
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate Number</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket Code</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Est. Fee</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="activeFleetBody" class="divide-y divide-color">
@@ -202,53 +202,61 @@ include '../../includes/header.php';
                         $display_slot = $slot_mapping[$s_id]['label'] ?? "#???";
                         $slot_label = $slot_mapping[$s_id]['category'] ?? "UNKNOWN";
                     ?>
-                    <tr class="group hover:bg-surface-alt/40 transition-colors fleet-row" 
+                    <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row" 
                         data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
                         data-timestamp="<?= strtotime($row['check_in_time']) ?>">
-                        <td class="px-6 py-4">
-                            <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary group-hover:text-brand group-hover:border-brand/20 transition-all">
-                                <i class="fa-solid fa-<?= strtolower($row['vehicle_type']) == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
+                        <td class="py-2 text-left align-middle">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
+                                    <i class="fa-solid fa-<?= strtolower($row['vehicle_type']) == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
+                                </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="plate-number text-[13px] font-manrope font-extrabold text-primary tracking-tight">
-                                <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
-                            </span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex items-center justify-center">
+                                <span class="plate-number text-sm font-manrope font-semibold text-primary leading-none">
+                                    <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
+                                </span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex flex-col items-center gap-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="ticket-code text-[13px] font-manrope font-bold text-primary tracking-tight uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex flex-col items-center justify-center gap-1">
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="ticket-code text-sm font-manrope font-semibold text-primary leading-none uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
                                     <?php if ($row['payment_status'] === 'paid'): ?>
-                                        <span class="badge-soft badge-soft-emerald">PAID</span>
+                                        <span class="badge-soft badge-soft-emerald text-[9px] leading-none">PAID</span>
                                     <?php endif; ?>
                                 </div>
-                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-widest"><?= $is_res ? 'RESERVATION' : 'REGULAR' ?></span>
+                                <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-widest"><?= $is_res ? 'RESERVATION' : 'REGULAR' ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex flex-col items-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary"><?= $display_slot ?></span>
-                                <span class="text-[9px] font-bold text-tertiary uppercase tracking-wider"><?= $slot_label ?></span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex flex-col items-center justify-center gap-1">
+                                <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $display_slot ?></span>
+                                <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-wider"><?= $slot_label ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex flex-col items-center">
-                                <span class="text-[13px] font-manrope font-bold text-primary"><?= date('H:i', strtotime($row['check_in_time'])) ?></span>
-                                <span class="text-[10px] font-inter text-tertiary font-medium"><?= date('d M Y', strtotime($row['check_in_time'])) ?></span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex flex-col items-center justify-center gap-1">
+                                <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($row['check_in_time'])) ?></span>
+                                <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($row['check_in_time'])) ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-[13px] font-manrope font-bold <?= $is_long_stay ? 'text-rose-500 animate-pulse' : 'text-primary' ?>">
-                                <?= $dur_text ?>
-                            </span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex items-center justify-center">
+                                <span class="text-sm font-manrope font-semibold <?= $is_long_stay ? 'text-rose-500 animate-pulse' : 'text-primary' ?> leading-none">
+                                    <?= $dur_text ?>
+                                </span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-[13px] font-manrope font-bold text-brand"><?= $est_fee ?></span>
+                        <td class="py-2 text-center align-middle">
+                            <div class="flex items-center justify-center">
+                                <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $est_fee ?></span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-right relative">
-                            <div class="flex justify-end relative action-menu-container">
+                        <td class="py-2 text-right align-middle relative">
+                            <div class="flex justify-end items-center relative action-menu-container">
                                 <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
                                     <i class="fa-solid fa-ellipsis-vertical"></i>
                                 </button>
@@ -426,7 +434,7 @@ function forceCheckoutAll(btn) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Error: ' + data.message);
+            pushNotify('Error', data.message, 'error');
             btn.disabled = false;
             btn.innerHTML = originalContent;
         }
@@ -455,7 +463,7 @@ function processCheckout() {
             }
             location.reload();
         } else {
-            alert('Error: ' + data.message);
+            pushNotify('Error', data.message, 'error');
         }
     });
 }

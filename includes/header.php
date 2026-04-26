@@ -247,6 +247,76 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 }
 ?>
 
+<!-- Global Notification Container -->
+<div id="push-notification-container" class="fixed top-10 right-10 z-[200000] flex flex-col gap-3 w-[380px] pointer-events-none"></div>
+
+<script>
+    // GLOBAL PUSH NOTIFICATION SYSTEM
+    function pushNotify(title, message, type = 'info', code = null) {
+        const container = document.getElementById('push-notification-container');
+        if (!container) return;
+        const id = 'notif-' + Date.now();
+        
+        let iconBg = 'bg-indigo-500/10';
+        let iconColor = 'text-indigo-500';
+        let icon = 'fa-info-circle';
+        
+        if (type === 'success') {
+            iconBg = 'bg-emerald-500/10';
+            iconColor = 'text-emerald-500';
+            icon = 'fa-circle-check';
+        } else if (type === 'error') {
+            iconBg = 'bg-rose-500/10';
+            iconColor = 'text-rose-500';
+            icon = 'fa-circle-exclamation';
+        } else if (type === 'ticket') {
+            iconBg = 'bg-brand/10';
+            iconColor = 'text-brand';
+            icon = 'fa-ticket';
+        } else if (type === 'vip') {
+            iconBg = 'bg-indigo-500/10';
+            iconColor = 'text-indigo-500';
+            icon = 'fa-crown';
+        } else if (type === 'exit') {
+            iconBg = 'bg-rose-500/10';
+            iconColor = 'text-rose-500';
+            icon = 'fa-car-side';
+        }
+
+        const html = `
+            <div id="${id}" class="notification-item bento-card !p-0 flex flex-col animate-slide-in pointer-events-auto border border-color overflow-hidden w-[380px]" style="box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5) !important;">
+                <div class="flex items-center gap-4 p-4">
+                    <div class="w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+                        <i class="fa-solid ${icon} text-xl ${iconColor}"></i>
+                    </div>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <h4 class="text-[15px] font-manrope font-extrabold text-primary truncate tracking-tight">${title}</h4>
+                        <p class="text-[12px] font-medium text-tertiary leading-snug">${message}</p>
+                    </div>
+                    <button onclick="this.closest('.notification-item').remove()" class="w-8 h-8 rounded-full hover:bg-rose-500/10 text-tertiary/30 hover:text-rose-500 transition-all flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+                <div class="h-[3px] bg-brand/5 w-full overflow-hidden">
+                    <div class="h-full bg-brand notification-progress opacity-60"></div>
+                </div>
+            </div>
+        `;
+        
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const el = temp.firstElementChild;
+        container.appendChild(el);
+        
+        setTimeout(() => {
+            if (el) {
+                el.classList.add('animate-slide-out');
+                setTimeout(() => el.remove(), 400);
+            }
+        }, 5000);
+    }
+</script>
+
 <!-- Main Content Wrapper & Scroll Container -->
 <main class="min-h-screen bg-page text-primary">
 
@@ -264,7 +334,7 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             </div>
             <input id="global-search-input" type="text" 
                    placeholder="Search anything about website..." 
-                   class="w-[340px] h-full bg-transparent text-[13px] font-inter font-medium text-primary placeholder:text-secondary transition-colors focus:outline-none"
+                   class="w-[240px] h-full bg-transparent text-[13px] font-inter font-medium text-primary placeholder:text-secondary transition-colors focus:outline-none"
                    autocomplete="off"
             >
             <div id="global-search-results" class="hidden absolute left-0 top-[calc(100%+8px)] w-[540px] max-h-[360px] overflow-y-auto rounded-2xl border border-color bg-page shadow-xl z-50 p-2"></div>
@@ -273,7 +343,7 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 
 
             <!-- Visit Public Site -->
-            <a href="<?= BASE_URL ?>home.php" class="flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
+            <a href="<?= BASE_URL ?>home.php" class="ml-auto flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
                 <div class="w-5 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-earth-americas text-brand text-lg transition-colors"></i>
                 </div>
@@ -281,10 +351,11 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             </a>
 
             <!-- Theme Toggle Switch -->
+            <?php $is_dark = ($_COOKIE['theme'] ?? 'light') === 'dark'; ?>
             <div class="flex items-center gap-3 h-11 bento-card px-4 transition-all min-w-[104px]">
-                <span id="theme-label" class="w-10 text-[13px] font-manrope font-bold text-primary">Light</span>
-                <div id="theme-toggle" class="w-10 h-5 bg-slate-200 dark:bg-brand/30 rounded-full p-1 cursor-pointer transition-all relative flex items-center">
-                    <div id="theme-thumb" class="w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0 shadow-sm"></div>
+                <span id="theme-label" class="w-10 text-[13px] font-manrope font-bold text-primary"><?= $is_dark ? 'Dark' : 'Light' ?></span>
+                <div id="theme-toggle" class="w-10 h-5 <?= $is_dark ? 'bg-brand' : 'bg-slate-200' ?> rounded-full p-1 cursor-pointer transition-all relative flex items-center">
+                    <div id="theme-thumb" class="w-3 h-3 bg-white rounded-full transition-transform shadow-sm" style="transform: translateX(<?= $is_dark ? '20px' : '0px' ?>)"></div>
                 </div>
             </div>
 
@@ -362,11 +433,13 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 
             function updateToggleUI(isDark) {
                 if (isDark) {
-                    themeToggle.classList.replace('bg-slate-200', 'bg-brand');
+                    themeToggle.classList.remove('bg-slate-200');
+                    themeToggle.classList.add('bg-brand');
                     themeThumb.style.transform = 'translateX(20px)';
                     themeLabel.textContent = 'Dark';
                 } else {
-                    themeToggle.classList.replace('bg-brand', 'bg-slate-200');
+                    themeToggle.classList.remove('bg-brand');
+                    themeToggle.classList.add('bg-slate-200');
                     themeThumb.style.transform = 'translateX(0)';
                     themeLabel.textContent = 'Light';
                 }

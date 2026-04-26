@@ -285,7 +285,7 @@ while ($r = $rates_stmt->fetch()) {
             const range = fp.selectedDates;
             
             if (range.length < 2) {
-                alert('Please select a complete time range');
+                pushNotify('Validation Error', 'Please select a complete time range', 'error');
                 return;
             }
 
@@ -307,12 +307,12 @@ while ($r = $rates_stmt->fetch()) {
                     document.getElementById('res-code').textContent = result.reservation_code;
                     document.getElementById('success-overlay').classList.remove('hidden');
                 } else {
-                    alert(result.error || 'Reservation failed. Please try again.');
+                    pushNotify('Error', result.error || 'Reservation failed. Please try again.', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<span>Confirm Reservation</span> <i class="fa-solid fa-arrow-right"></i>';
                 }
             } catch (err) {
-                alert('An error occurred. Please check your connection.');
+                pushNotify('Connection Error', 'An error occurred. Please check your connection.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<span>Confirm Reservation</span> <i class="fa-solid fa-arrow-right"></i>';
             }

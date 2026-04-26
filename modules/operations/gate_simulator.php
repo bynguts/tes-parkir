@@ -418,7 +418,7 @@ include '../../includes/header.php';
         </div>
 
     <!-- Push Notification Container -->
-    <div id="push-notification-container" class="fixed top-[90px] right-10 z-[200000] flex flex-col gap-3 w-[380px] pointer-events-none"></div>
+    <!-- Global push-notification-container is now in header.php -->
 
     
     <!-- Gate Cards -->
@@ -550,12 +550,22 @@ include '../../includes/header.php';
                                 <div id="qrStartPrompt" class="absolute inset-0 flex flex-col items-center justify-center gap-3" style="z-index:200; pointer-events:auto; background:rgba(15,23,42,0.5);">
                                     <i class="fa-solid fa-qrcode text-white/20 text-4xl"></i>
                                     <button onclick="startQRManually()"
+                                            id="qrStartBtn"
                                             style="pointer-events:auto; cursor:pointer;"
                                             class="px-5 py-2.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-[12px] font-bold transition-all active:scale-95 shadow-lg">
-                                        <i class="fa-solid fa-camera mr-2"></i>Start Scanner
+                                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>Starting...
                                     </button>
-                                    <p class="text-[10px] font-bold text-white/40 text-center">Tap to activate QR scanner</p>
+                                    <p class="text-[10px] font-bold text-white/40 text-center">Activating QR scanner...</p>
                                 </div>
+                                <script>
+                                    if (sessionStorage.getItem('qr_scanner_active') === 'true') {
+                                        const btn = document.querySelector('#qrStartPrompt button');
+                                        if (btn) {
+                                            btn.disabled = true;
+                                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Starting...';
+                                        }
+                                    }
+                                </script>
                             </div>
                         </div>
                         
@@ -600,67 +610,7 @@ include '../../includes/header.php';
     // QR Scanner instance (declared at top to avoid TDZ errors)
     let qrInstance = null;
 
-    // PUSH NOTIFICATION SYSTEM
-    function pushNotify(title, message, type = 'info', code = null) {
-        const container = document.getElementById('push-notification-container');
-        const id = 'notif-' + Date.now();
-        
-        let iconBg = 'bg-indigo-500/10';
-        let iconColor = 'text-indigo-500';
-        let icon = 'fa-info-circle';
-        
-        if (type === 'success') {
-            iconBg = 'bg-emerald-500/10';
-            iconColor = 'text-emerald-500';
-            icon = 'fa-circle-check';
-        } else if (type === 'error') {
-            iconBg = 'bg-rose-500/10';
-            iconColor = 'text-rose-500';
-            icon = 'fa-circle-exclamation';
-        } else if (type === 'ticket') {
-            iconBg = 'bg-brand/10';
-            iconColor = 'text-brand';
-            icon = 'fa-ticket';
-        } else if (type === 'vip') {
-            iconBg = 'bg-indigo-500/10';
-            iconColor = 'text-indigo-500';
-            icon = 'fa-crown';
-        } else if (type === 'exit') {
-            iconBg = 'bg-rose-500/10';
-            iconColor = 'text-rose-500';
-            icon = 'fa-car-side';
-        }
-
-        const html = `
-            <div id="${id}" class="notification-item bento-card !p-0 flex flex-col animate-slide-in pointer-events-auto shadow-2xl border border-color overflow-hidden w-[380px]">
-                <div class="flex items-center gap-4 p-4">
-                    <div class="w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                        <i class="fa-solid ${icon} text-xl ${iconColor}"></i>
-                    </div>
-                    <div class="flex flex-col min-w-0 flex-1">
-                        <h4 class="text-[15px] font-manrope font-extrabold text-primary truncate tracking-tight">${title}</h4>
-                        <p class="text-[12px] font-medium text-tertiary leading-snug">${message}</p>
-                    </div>
-                    <button onclick="this.closest('.notification-item').remove()" class="w-8 h-8 rounded-full hover:bg-rose-500/10 text-tertiary/30 hover:text-rose-500 transition-all flex items-center justify-center">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                </div>
-                <div class="h-[3px] bg-brand/5 w-full overflow-hidden">
-                    <div class="h-full bg-brand notification-progress opacity-60"></div>
-                </div>
-            </div>
-        `;
-        
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        const el = temp.firstElementChild;
-        container.appendChild(el);
-        
-        setTimeout(() => {
-            el.classList.add('animate-slide-out');
-            setTimeout(() => el.remove(), 400);
-        }, 5000);
-    }
+    // PUSH NOTIFICATION SYSTEM is now handled globally in header.php
 
     // CHECK FOR URL NOTIFICATIONS
     window.addEventListener('DOMContentLoaded', () => {
@@ -1031,10 +981,7 @@ function processTicket(code, notifyTitle = null, notifyMsg = null) {
     }, 800);
 }
 
-document.getElementById('manualCode').addEventListener('keydown', e => {
-    if (e.key === 'Enter') processTicket(e.target.value);
-    else e.target.value = e.target.value.toUpperCase();
-});
+
 
 // ─── QR SCANNER: Smart start with camera enumeration ────────────────────────
 
@@ -1043,10 +990,10 @@ function hideQRPrompt() {
     if (p) p.style.display = 'none';
 }
 
-async function startQRManually() {
+async function startQRManually(retryCount = 0) {
     // Show loading state on button
     const btn = document.querySelector('#qrStartPrompt button');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Starting...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + (retryCount > 0 ? 'Retrying...' : 'Starting...'); }
 
     try {
         const cameras = await Html5Qrcode.getCameras();
@@ -1054,8 +1001,8 @@ async function startQRManually() {
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-camera mr-2"></i>No Camera Found'; }
             return;
         }
-        const backCam = cameras.find(c => /back|environment|rear/i.test(c.label));
-        const cam = backCam || cameras[cameras.length - 1];
+        const frontCam = cameras.find(c => /front|user|face|integrated|webcam/i.test(c.label));
+        const cam = frontCam || cameras[0];
 
         // Clear any previous instance
         if (qrInstance) {
@@ -1070,20 +1017,39 @@ async function startQRManually() {
             (decodedText) => processTicket(decodedText),
             () => {}
         );
-        // Success: hide the prompt overlay
+        
+        // Success: set session flag and hide prompt
+        sessionStorage.setItem('qr_scanner_active', 'true');
         hideQRPrompt();
     } catch (err) {
+        if (retryCount < 3 && err.name !== 'NotAllowedError') {
+            // Retry if it's not a strict permission denial (likely device in use lock)
+            setTimeout(() => startQRManually(retryCount + 1), 600);
+            return;
+        }
+
+        const prompt = document.getElementById('qrStartPrompt');
+        if (prompt) prompt.style.display = 'flex'; // Unhide if it failed
+        
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-camera mr-2"></i>Retry Camera'; }
         const lbl = document.querySelector('#qrStartPrompt p');
-        if (lbl) lbl.textContent = 'Error: ' + (err.message || 'Camera denied');
+        if (lbl) lbl.textContent = 'Error: ' + (err.message || 'Camera locked/denied');
     }
 }
 
 async function initQRScanner() {
-    // Silent auto-start attempt (no user gesture needed on localhost)
+    // If we've already activated in this session, use robust start
+    if (sessionStorage.getItem('qr_scanner_active') === 'true') {
+        const prompt = document.getElementById('qrStartPrompt');
+        if (prompt) prompt.style.display = 'flex'; // Keep it flex so spinner is visible
+        startQRManually();
+        return;
+    }
+
+    // Otherwise, attempt a silent auto-start just in case the browser allows it natively
     try {
         const cameras = await Html5Qrcode.getCameras();
-        if (!cameras || cameras.length === 0) return; // prompt stays visible
+        if (!cameras || cameras.length === 0) return;
         const frontCam = cameras.find(c => /front|user|face|integrated|webcam/i.test(c.label));
         const cam = frontCam || cameras[0];
 
@@ -1094,14 +1060,26 @@ async function initQRScanner() {
             (decodedText) => processTicket(decodedText),
             () => {}
         );
-        // Auto-start succeeded: hide prompt
         hideQRPrompt();
     } catch (_) {
-        // Silent fail — user will use the "Start Scanner" button in the prompt
+        // Fallback: wait for user to click "Start Scanner"
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => setTimeout(initQRScanner, 800));
+// Release camera lock on page unload
+window.addEventListener('beforeunload', () => {
+    if (qrInstance) {
+        try { qrInstance.stop(); } catch(e) {}
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('qr_scanner_active') === 'true') {
+        initQRScanner();
+    } else {
+        setTimeout(initQRScanner, 800);
+    }
+});
 
 
 

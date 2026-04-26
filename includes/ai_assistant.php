@@ -5,9 +5,9 @@
 <div id="archive-ai-root" class="relative z-[999999]">
     
     <!-- Chat Window (Glassmorphism) -->
-    <div id="ai-chat-window" class="hidden fixed bottom-24 right-8 flex flex-col w-[360px] h-[520px] bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-color overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right z-[999999]">
+    <div id="ai-chat-window" class="hidden fixed bottom-24 right-8 flex flex-col w-[320px] h-[460px] bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-color overflow-hidden transition-all duration-300 transform translate-y-8 opacity-0 origin-bottom-right z-[999999]" style="will-change: transform, opacity; -webkit-font-smoothing: antialiased; backface-visibility: hidden;">
         <!-- Header -->
-        <div class="px-5 py-4 flex items-center justify-between flex-shrink-0 bg-brand">
+        <div class="px-4 py-3 flex items-center justify-between flex-shrink-0 bg-brand">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
@@ -65,10 +65,10 @@
     <!-- Cereza FAB: Fixed circular button at bottom-right -->
     <button id="cereza-fab" onclick="toggleAIChat()"
             title="Ask Cereza"
-            style="position:fixed; bottom:28px; right:28px; z-index:999999; width:52px; height:52px; border-radius:50%; background:var(--brand); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px -4px color-mix(in srgb, var(--brand) 60%, transparent); transition: transform 0.2s ease, box-shadow 0.2s ease;"
-            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 12px 32px -4px color-mix(in srgb, var(--brand) 70%, transparent)';"
-            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 24px -4px color-mix(in srgb, var(--brand) 60%, transparent)';">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" style="width:22px; height:22px;">
+            style="position:fixed; bottom:28px; right:28px; z-index:999999; width:52px; height:52px; border-radius:50%; background:var(--brand); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform 0.2s ease;"
+            onmouseover="this.style.transform='scale(1.08)';"
+            onmouseout="this.style.transform='scale(1)';">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" style="width:28px; height:28px;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
@@ -117,7 +117,7 @@ function switchView(view) {
         chatArea.classList.remove('hidden');
         historyArea.classList.add('hidden');
         title.textContent = 'Cereza';
-        status.textContent = 'Cereza Assistant';
+        status.textContent = 'SmartParking Assistant';
         btnBack.classList.add('hidden');
         btnHist.classList.remove('hidden');
     }
@@ -128,8 +128,17 @@ function createNewSession() {
     localStorage.removeItem(ACTIVE_KEY);
     const area = document.getElementById('ai-message-area');
     area.innerHTML = '';
-    loadAISession();
     switchView('chat');
+    showInitialGreeting();
+}
+
+function showInitialGreeting() {
+    const loadingId = 'ai-initial-loading';
+    showTyping(loadingId);
+    setTimeout(() => {
+        const initialText = "Hello, I'm **Cereza**. I manage the unified parking data for your enterprise network. Currently analyzing live feeds from **Berserk Mall**. How can I assist you today?";
+        appendMessage('bot', initialText, true, null, true, false, loadingId);
+    }, 800);
 }
 
 
@@ -223,16 +232,13 @@ function loadAISession() {
     if (session) {
         area.innerHTML = '';
         const messages = JSON.parse(session);
-        messages.forEach(msg => appendMessage(msg.role, msg.text, false, msg.ts, false));
+        messages.forEach(msg => appendMessage(msg.role, msg.text, false, msg.ts, false, false));
         
         // Restore scroll position after loading messages
         const savedScroll = localStorage.getItem('smartparking_scroll_pos');
         if (savedScroll !== null) {
             area.scrollTop = parseInt(savedScroll);
         }
-    } else {
-        const initialText = "Hello, I'm **Cereza**. I manage the unified parking data for your enterprise network. Currently analyzing live feeds from **Berserk Mall**. How can I assist you today?";
-        appendMessage('bot', initialText, true, null, true);
     }
 }
 
@@ -252,11 +258,17 @@ function toggleAIChat() {
         // Save scroll position before closing
         localStorage.setItem('smartparking_scroll_pos', area.scrollTop);
         
-        win.classList.add('scale-95', 'opacity-0');
+        win.classList.add('translate-y-8', 'opacity-0');
         setTimeout(() => win.classList.add('hidden'), 280);
     } else {
         win.classList.remove('hidden');
         
+        // Initial Greeting with typing animation for new sessions
+        if (area.children.length === 0 && !localStorage.getItem(ACTIVE_KEY)) {
+            // Wait for window animation (300ms) to finish before starting typing
+            setTimeout(showInitialGreeting, 350);
+        }
+
         // Restore scroll position before showing
         const savedScroll = localStorage.getItem('smartparking_scroll_pos');
         if (savedScroll !== null) {
@@ -266,7 +278,7 @@ function toggleAIChat() {
         }
         
         requestAnimationFrame(() => {
-            win.classList.remove('scale-95', 'opacity-0');
+            win.classList.remove('translate-y-8', 'opacity-0');
         });
         
         setTimeout(() => {
@@ -287,31 +299,31 @@ document.getElementById('ai-chat-form').addEventListener('submit', async functio
     appendMessage('user', query, true);
     input.value = '';
 
-    const loadingId = 'ai-loading-' + Date.now();
-    showTyping(loadingId);
+    setTimeout(async () => {
+        const loadingId = 'ai-loading-' + Date.now();
+        showTyping(loadingId);
 
-    try {
-        const response = await fetch('<?= BASE_URL ?>api/ai_chat.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: query })
-        });
-        
-        const data = await response.json();
-        removeTyping(loadingId);
-        
-        if (data.error) throw new Error(data.error);
-        appendMessage('bot', data.response, true);
-    } catch (err) {
-        removeTyping(loadingId);
-        appendMessage('bot', '⚠️ **An error occurred:**\n\n' + err.message, false);
-    }
+        try {
+            const response = await fetch('<?= BASE_URL ?>api/ai_chat.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query })
+            });
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            appendMessage('bot', data.response, true, null, true, false, loadingId);
+        } catch (err) {
+            appendMessage('bot', '⚠️ **An error occurred:**\n\n' + err.message, false, null, true, false, loadingId);
+        }
+    }, 1200);
 });
 
-function appendMessage(role, text, save = true, ts = null, shouldScroll = true) {
+function appendMessage(role, text, save = true, ts = null, shouldScroll = true, animate = true, replaceId = null) {
     const area = document.getElementById('ai-message-area');
     const wrapper = document.createElement('div');
-    wrapper.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-1 ai-msg-anim`;
+    const animClass = animate ? 'ai-msg-anim' : '';
+    wrapper.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-1 ${animClass}`;
 
     const bubble = document.createElement('div');
     const timestamp = ts || new Date().toISOString();
@@ -339,7 +351,14 @@ function appendMessage(role, text, save = true, ts = null, shouldScroll = true) 
 
     wrapper.appendChild(bubble);
     wrapper.appendChild(tsEl);
-    area.appendChild(wrapper);
+
+    if (replaceId) {
+        const oldEl = document.getElementById(replaceId);
+        if (oldEl) oldEl.replaceWith(wrapper);
+        else area.appendChild(wrapper);
+    } else {
+        area.appendChild(wrapper);
+    }
     
     if (shouldScroll) {
         area.scrollTop = area.scrollHeight;
@@ -352,13 +371,14 @@ function showTyping(id) {
     const area = document.getElementById('ai-message-area');
     const div = document.createElement('div');
     div.id = id;
-    div.className = 'flex flex-col items-start gap-1';
+    div.className = 'flex flex-col items-start gap-1 ai-msg-anim';
     div.innerHTML = `
-        <div class="ai-bubble-bot flex items-center gap-1.5 py-3">
+        <div class="ai-bubble-bot flex items-center gap-1.5" style="padding: 10px 12px; min-height: 35.5px;">
             <span class="ai-typing-dot"></span>
             <span class="ai-typing-dot" style="animation-delay:.15s"></span>
             <span class="ai-typing-dot" style="animation-delay:.3s"></span>
         </div>
+        <span class="ai-timestamp" style="visibility: hidden;">00:00 WIB</span>
     `;
     area.appendChild(div);
     area.scrollTop = area.scrollHeight;
@@ -390,19 +410,38 @@ window.addEventListener('beforeunload', () => {
 </script>
 
 <style>
-/* ── Chat Window Scrollbar ─────────────────── */
-.ai-scrollbar::-webkit-scrollbar { width: 4px; }
-.ai-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.ai-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
+/* ── Chat Window & Table Scrollbars ─────────── */
+.ai-scrollbar::-webkit-scrollbar, .ai-table-scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+.ai-scrollbar::-webkit-scrollbar-track, .ai-table-scroll::-webkit-scrollbar-track { background: transparent; }
+
+.ai-scrollbar::-webkit-scrollbar-thumb:vertical,
+.ai-table-scroll::-webkit-scrollbar-thumb:vertical { 
+    background: rgba(99, 102, 241, 0.4); 
+    border-radius: 10px; 
+    min-height: 32px;
+    max-height: 32px;
+    height: 32px;
+}
+
+.ai-scrollbar::-webkit-scrollbar-thumb:horizontal,
+.ai-table-scroll::-webkit-scrollbar-thumb:horizontal { 
+    background: rgba(99, 102, 241, 0.4); 
+    border-radius: 10px; 
+    min-width: 32px;
+    max-width: 32px;
+    width: 32px;
+}
+
+.ai-scrollbar::-webkit-scrollbar-thumb:hover, .ai-table-scroll::-webkit-scrollbar-thumb:hover { background: var(--brand); }
 
 /* ── Bubble Base ───────────────────────────── */
 .ai-bubble-bot {
     background: var(--surface-alt);
     color: var(--text-primary);
     border-radius: 0 16px 16px 16px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     max-width: 96%;
     min-width: 0;
     overflow: hidden;
@@ -412,7 +451,7 @@ window.addEventListener('beforeunload', () => {
 .ai-table-scroll {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    margin: 8px 0;
+    margin: 6px 0;
     border-radius: 8px;
     box-shadow: 0 1px 3px var(--shadow-color);
 }
@@ -420,18 +459,18 @@ window.addEventListener('beforeunload', () => {
     background: var(--brand);
     color: white;
     border-radius: 16px 16px 0 16px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     max-width: 88%;
     font-family: 'Inter', sans-serif;
 }
 .ai-timestamp {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-secondary);
     font-family: 'Inter', sans-serif;
     letter-spacing: .04em;
-    padding: 0 4px;
+    padding: 0 2px;
 }
 
 /* ── Markdown Rendering ──── */
@@ -463,8 +502,16 @@ window.addEventListener('beforeunload', () => {
 .ai-typing-dot { width: 4px; height: 4px; background: var(--brand); border-radius: 50%; opacity: 0.3; display: inline-block; animation: aiDotBounce .9s infinite ease-in-out; }
 @keyframes aiDotBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
 
-.ai-msg-anim { animation: aiBubbleIn 0.3s cubic-bezier(.16,1,.3,1) forwards; }
-@keyframes aiBubbleIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.ai-msg-anim { 
+    opacity: 0; 
+    animation: aiBubbleIn 0.4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; 
+    backface-visibility: hidden; 
+    will-change: transform, opacity;
+}
+@keyframes aiBubbleIn { 
+    from { opacity: 0; transform: translateY(8px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
 
 /* Star icon — no animation */
 .star-path { transform-origin: center; transform-box: fill-box; }

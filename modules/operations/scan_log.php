@@ -626,7 +626,7 @@ function deleteSingleLog(btn, scanId, resId, ticket) {
                 applyScanLogFilters();
             }, 500);
         } else {
-            alert(data.message || 'Error deleting record');
+            pushNotify('Error', data.message || 'Error deleting record', 'error');
             row.classList.remove('opacity-40', 'pointer-events-none');
         }
     })
