@@ -93,7 +93,7 @@ foreach ($all_slots as &$s) {
     $is_res_area = (int)$s['is_reservation_only'] === 1;
     if ($is_res_area) {
         $s['display_label'] = "#RES " . $res_counter++;
-        $s['display_category'] = "VIP AREA";
+        $s['display_category'] = "RSV ZONE";
     } else {
         $s['display_label'] = "#" . $reg_counter++;
         $s['display_category'] = "REGULAR";
@@ -113,7 +113,7 @@ $page_subtitle = 'Visual slot mapping and inventory management system.';
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <style>
 /* Visual Map Styles */
@@ -249,7 +249,7 @@ include '../../includes/header.php';
                         <div id="categoryDropdown" class="hidden dropdown-menu absolute right-0 top-14 w-56 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                             <button onclick="setCategoryFilter('all', 'All Categories')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">All Categories</button>
                             <button onclick="setCategoryFilter('REGULAR', 'Standard Regular')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all border-t border-color">Standard Regular</button>
-                            <button onclick="setCategoryFilter('VIP AREA', 'VIP Reservation Area')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">VIP Reservation Area</button>
+                            <button onclick="setCategoryFilter('RSV ZONE', 'Reservation Only Zone')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">Reservation Only Zone</button>
                         </div>
                     </div>
                 </div>
@@ -403,7 +403,7 @@ include '../../includes/header.php';
                 <input type="text" name="slot_number" required placeholder="E.G. C-01" class="modal-input w-full border-2 border-color rounded-2xl px-6 py-5 text-base font-black font-manrope text-primary uppercase focus:outline-none focus:border-brand transition-all shadow-sm" oninput="this.value=this.value.toUpperCase()">
             </div>
             <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Vehicle Class</label><div class="relative"><select name="slot_type" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="car">🚗 Automobile</option><option value="motorcycle">🏍 Two-Wheeler</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
-            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Fleet Category</label><div class="relative"><select name="is_reservation_only" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="0">Standard Regular</option><option value="1">VIP Reservation Area</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
+            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Fleet Category</label><div class="relative"><select name="is_reservation_only" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="0">Standard Regular</option><option value="1">Reservation Only Zone</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
             <div class="flex gap-4 pt-6">
                 <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="flex-1 h-14 bg-surface-alt text-primary font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all border-2 border-color hover:bg-surface shadow-sm">Discard</button>
                 <button type="submit" class="flex-1 h-14 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-brand/40 hover:brightness-110 active:scale-95">Complete Sync</button>

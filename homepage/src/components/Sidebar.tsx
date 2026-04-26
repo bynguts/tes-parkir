@@ -74,9 +74,9 @@ export const Sidebar = ({ username, role, currentPath = "index.php" }: SidebarPr
       <div className="px-6 h-20 border-b border-slate-100 flex items-center gap-3">
         <motion.div 
           whileHover={{ rotate: 90 }}
-          className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg"
+          className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg overflow-hidden p-2"
         >
-          <i className="fa-solid fa-square-p text-white text-xl"></i>
+          <img src="assets/img/logo_p.png" alt="Logo" className="w-full h-full object-contain filter invert brightness-0" />
         </motion.div>
         <div>
           <h1 className="font-inter font-bold text-slate-900 text-base leading-tight tracking-tight">

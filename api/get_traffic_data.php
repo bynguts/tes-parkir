@@ -85,15 +85,15 @@ try {
         'labels' => $labels,
         'datasets' => [
             [
-                'label' => 'Cars',
-                'data' => $carData,
-                'backgroundColor' => '#1d4ed8', // blue-700
-                'borderRadius' => 4,
-            ],
-            [
                 'label' => 'Motorcycles',
                 'data' => $motoData,
                 'backgroundColor' => '#93c5fd', // blue-300
+                'borderRadius' => 4,
+            ],
+            [
+                'label' => 'Cars',
+                'data' => $carData,
+                'backgroundColor' => '#1d4ed8', // blue-700
                 'borderRadius' => 4,
             ]
         ]

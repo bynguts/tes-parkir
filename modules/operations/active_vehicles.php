@@ -14,7 +14,7 @@ $slot_mapping = [];
 $reg_idx = 1; $res_idx = 1;
 foreach ($all_slots_query as $s) {
     if ((int)$s['is_reservation_only'] === 1) {
-        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "VIP AREA"];
+        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "RSV ZONE"];
     } else {
         $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
     }
@@ -69,12 +69,12 @@ $active = $pdo->query("
 ")->fetchAll();
 
 $page_title = 'Live Fleet Status';
-$page_subtitle = "Actively monitoring " . count($active) . " occupied zones.";
+$page_subtitle = "Actively monitoring " . count($active) . " occupied slots";
 
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10">
 
@@ -86,7 +86,7 @@ include '../../includes/header.php';
         </div>
         <div class="flex items-center gap-3">
                 <button type="button" onclick="forceCheckoutAll(this)"
-                    class="btn-outline !text-red-500 hover:!bg-red-50 !border-red-100 hover:!border-red-200 gap-2">
+                    class="btn-danger-soft gap-2">
                 <i class="fa-solid fa-sign-out-alt"></i>
                 Force Checkout All
             </button>
@@ -108,25 +108,32 @@ include '../../includes/header.php';
 
             <!-- Integrated Filters -->
             <div class="flex items-center gap-4">
+                <!-- Sort -->
+                <button onclick="toggleSort()" id="sortBtn" 
+                        class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                    <i id="sortIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-primary">SORT</span>
+                </button>
+
                 <!-- Search -->
                 <div class="relative group">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs"></i>
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                           <input type="text" id="logSearch" placeholder="Search plate or ticket..." 
                               class="w-64 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
                 <!-- Vehicle Type Filter -->
-                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1">
+                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 h-[38px]">
                     <button onclick="setVehicleFilter('all')" data-filter="all" 
-                            class="vehicle-filter-btn px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm">
+                            class="vehicle-filter-btn px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm leading-none">
                         ALL
                     </button>
                     <button onclick="setVehicleFilter('car')" data-filter="car" 
-                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-car text-sm"></i>
                     </button>
                     <button onclick="setVehicleFilter('motorcycle')" data-filter="motorcycle" 
-                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                            class="vehicle-filter-btn px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-motorcycle text-sm"></i>
                     </button>
                 </div>
@@ -134,7 +141,7 @@ include '../../includes/header.php';
                 <!-- Category Filter -->
                 <div class="relative">
                     <button onclick="toggleCategoryDropdown(event)" 
-                            class="flex items-center gap-4 bg-surface-alt border border-color rounded-xl px-5 py-2.5 hover:border-brand/20 transition-all group">
+                            class="flex items-center gap-4 bg-surface-alt border border-color rounded-xl px-5 h-[38px] hover:border-brand/20 transition-all group">
                         <span id="activeCategoryLabel" class="text-[10px] font-bold uppercase tracking-wider text-primary">All Entries</span>
                         <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                     </button>
@@ -157,7 +164,7 @@ include '../../includes/header.php';
                         <th>Plate Number</th>
                         <th>Ticket Code</th>
                         <th>Slot</th>
-                        <th>Entry Time</th>
+                        <th>Entry</th>
                         <th>Duration</th>
                         <th>Est. Fee</th>
                         <th>Actions</th>
@@ -197,7 +204,8 @@ include '../../includes/header.php';
                     ?>
                     <tr class="group hover:bg-surface-alt/40 transition-colors fleet-row" 
                         data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
-                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
+                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
+                        data-timestamp="<?= strtotime($row['check_in_time']) ?>">
                         <td class="px-6 py-4">
                             <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary group-hover:text-brand group-hover:border-brand/20 transition-all">
                                 <i class="fa-solid fa-<?= strtolower($row['vehicle_type']) == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
@@ -249,12 +257,12 @@ include '../../includes/header.php';
                                     <button onclick="handleLostTicket('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>', <?= $is_res ? 0 : $calc['total_fee'] ?>)"
                                             class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-surface-alt transition-all group/item">
                                         <i class="fa-solid fa-print text-tertiary group-hover/item:text-brand text-xs"></i>
-                                        <span class="text-[11px] font-bold text-primary uppercase tracking-wider">Tiket Hilang</span>
+                                        <span class="text-[11px] font-bold text-primary uppercase tracking-wider">Lost Ticket</span>
                                     </button>
                                     <button onclick="handleForceDelete('<?= $row['ticket_code'] ?>', '<?= $row['plate_number'] ?>')"
-                                            class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-rose-50 transition-all group/item">
-                                        <i class="fa-solid fa-trash-can text-rose-300 group-hover/item:text-rose-500 text-xs"></i>
-                                        <span class="text-[11px] font-bold text-rose-500 uppercase tracking-wider">Hapus Paksa</span>
+                                            class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-rose-500/10 transition-all group/item">
+                                        <i class="fa-solid fa-trash-can text-rose-500/40 group-hover/item:text-rose-500 text-xs"></i>
+                                        <span class="text-[11px] font-bold text-rose-500 uppercase tracking-wider">Force Removal</span>
                                     </button>
                                 </div>
                             </div>
@@ -294,24 +302,24 @@ include '../../includes/header.php';
                 <h2 class="font-black text-lg uppercase tracking-tighter">SMARTPARK v2</h2>
                 <p class="text-[10px] uppercase tracking-widest text-slate-400">Digital Receipt</p>
                 <div class="border-b border-dashed border-slate-200 my-4"></div>
-                <p class="font-bold uppercase">KUITANSI DENDA HILANG</p>
+                <p class="font-bold uppercase">LOST TICKET FINE RECEIPT</p>
             </div>
 
             <div class="space-y-2 mb-6">
-                <div class="flex justify-between"><span>TANGGAL:</span> <span id="r-date" class="font-bold"></span></div>
-                <div class="flex justify-between"><span>TIKET:</span> <span id="r-ticket" class="font-bold"></span></div>
-                <div class="flex justify-between"><span>PLAT:</span> <span id="r-plate" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>DATE:</span> <span id="r-date" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>TICKET:</span> <span id="r-ticket" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>PLATE:</span> <span id="r-plate" class="font-bold"></span></div>
             </div>
 
             <div class="border-b border-dashed border-slate-200 my-4"></div>
 
             <div class="space-y-2 mb-6">
                 <div class="flex justify-between">
-                    <span>BIAYA PARKIR:</span>
+                    <span>PARKING FEE:</span>
                     <span id="r-fee" class="font-bold"></span>
                 </div>
                 <div class="flex justify-between text-rose-500">
-                    <span>DENDA HILANG:</span>
+                    <span>LOST TICKET FINE:</span>
                     <span class="font-bold">Rp 50.000</span>
                 </div>
             </div>
@@ -319,19 +327,19 @@ include '../../includes/header.php';
             <div class="border-b border-double border-slate-300 my-4"></div>
 
             <div class="flex justify-between items-end mb-8">
-                <span class="text-[10px] font-bold">TOTAL BAYAR:</span>
+                <span class="text-[10px] font-bold">TOTAL AMOUNT:</span>
                 <span id="r-total" class="text-xl font-black tracking-tighter"></span>
             </div>
 
             <div class="text-center text-[10px] text-slate-400 uppercase tracking-widest">
-                <p>Terima kasih atas kunjungan Anda</p>
-                <p>Utamakan Keselamatan!</p>
+                <p>Thank you for your visit</p>
+                <p>Drive Safely!</p>
             </div>
         </div>
 
         <button onclick="processCheckout()" class="w-full mt-8 py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-2">
             <i class="fa-solid fa-print"></i>
-            PROSES & CETAK
+            PROCESS & PRINT
         </button>
     </div>
 </div>
@@ -357,6 +365,18 @@ let currentPlate = '';
 let isLostMode = false;
 let currentVehicleFilter = 'all';
 let currentCategoryFilter = 'all';
+let currentSortOrder = 'desc'; // default to newest first
+
+function toggleSort() {
+    currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+    const icon = document.getElementById('sortIcon');
+    if (currentSortOrder === 'desc') {
+        icon.className = 'fa-solid fa-sort-down text-[12px] text-brand';
+    } else {
+        icon.className = 'fa-solid fa-sort-up text-[12px] text-brand';
+    }
+    applyFilters();
+}
 
 function handleLostTicket(ticket, plate, baseFee) {
     currentTicket = ticket;
@@ -367,7 +387,7 @@ function handleLostTicket(ticket, plate, baseFee) {
     const total = baseFee + fine;
     const fmt = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
     
-    document.getElementById('r-date').innerText = new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('r-date').innerText = new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     document.getElementById('r-ticket').innerText = ticket || 'N/A';
     document.getElementById('r-plate').innerText = plate || 'N/A';
     document.getElementById('r-fee').innerText = fmt(baseFee);
@@ -379,7 +399,7 @@ function handleLostTicket(ticket, plate, baseFee) {
 }
 
 function handleForceDelete(ticket, plate) {
-    if (confirm(`Peringatan: Anda akan menghapus paksa kendaraan ${plate || ticket} dari sistem. Lanjutkan?`)) {
+    if (confirm(`Warning: You are about to force removal of vehicle ${plate || ticket} from the system. Continue?`)) {
         currentTicket = ticket;
         currentPlate = plate;
         isLostMode = false;
@@ -388,7 +408,7 @@ function handleForceDelete(ticket, plate) {
 }
 
 function forceCheckoutAll(btn) {
-    if (!confirm('Peringatan Kritis: Tindakan ini akan memproses keluar paksa SEMUA kendaraan. Ini tidak dapat dibatalkan. Lanjutkan?')) return;
+    if (!confirm('Critical Warning: This action will force checkout ALL vehicles. This cannot be undone. Continue?')) return;
     
     if (!btn) {
         btn = document.querySelector('button[onclick="forceCheckoutAll(this)"]');
@@ -493,6 +513,19 @@ function applyFilters() {
             noData.classList.add('hidden');
         }
     }
+
+    // Sort the filtered rows
+    const tbody = document.getElementById('activeFleetBody');
+    const rowsArray = Array.from(document.querySelectorAll('.fleet-row'));
+    
+    rowsArray.sort((a, b) => {
+        const timeA = parseInt(a.dataset.timestamp);
+        const timeB = parseInt(b.dataset.timestamp);
+        return currentSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+
+    // Re-append sorted rows
+    rowsArray.forEach(row => tbody.appendChild(row));
 }
 
 function setVehicleFilter(type) {

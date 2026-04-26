@@ -10,47 +10,47 @@ $page_subtitle = 'Physical sensor simulation for entry/exit gates.';
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
 /* Barcode scanner viewport */
 #qrReader, #qrReader video, #qrReader__scan_region, #qrReader__canvas_border, #cameraReader, #cameraReader video, div[id*="html5-qrcode"] {
-    border-radius: 1.5rem !important;
+    border-radius: inherit !important;
 }
 #qrReader {
     width: 100% !important;
     height: 100% !important;
     max-width: 100%;
     overflow: hidden;
-    background: var(--surface) !important;
+    background: transparent !important;
     margin: 0;
     position: relative;
-    border: 2px solid var(--border-color) !important;
-    box-shadow: 0 15px 35px -5px var(--shadow-color) !important;
+    border: none !important;
+    box-shadow: none !important;
     box-sizing: border-box;
-    border-radius: 1.5rem !important;
 }
 #qrReader video {
-    border-radius: 1.5rem !important;
     object-fit: cover !important;
     width: 100% !important;
     height: 100% !important;
 }
-/* Barcode guide overlay */
+/* Barcode guide overlay — purely decorative, never intercepts clicks */
 .barcode-guide {
     position: absolute;
     inset: 16px;
     display: flex; align-items: center; justify-content: center;
-    pointer-events: none; z-index: 60;
+    pointer-events: none !important; z-index: 60;
+}
+.barcode-guide * {
+    pointer-events: none !important;
 }
 /* Simplified gate ticket buttons to use theme standards */
 .gate-ticket-btn {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .gate-ticket-btn:hover {
-    transform: translateY(-4px);
+    /* No movement on hover */
 }
 .action-switch-outline.brand {
     background-color: var(--surface-alt) !important;
@@ -67,11 +67,9 @@ include '../../includes/header.php';
     background-color: var(--brand) !important;
     border-color: var(--brand) !important;
     color: #ffffff !important;
-    transform: translateY(-2px);
 }
 .action-switch-outline.brand:hover i {
     color: #ffffff !important;
-    transform: scale(1.1);
 }
 .action-switch-input {
     height: 52px;
@@ -200,9 +198,28 @@ include '../../includes/header.php';
     box-shadow: none !important;
     outline: none !important;
 }
+/* Html5Qrcode direct API — hide any residual UI chrome */
 #qrReader * {
     outline: none !important;
     box-shadow: none !important;
+}
+#qrReader video {
+    object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: inherit;
+}
+/* Hide all library-generated UI elements (not needed with direct API) */
+#qrReader__dashboard,
+#qrReader__dashboard_section,
+#qrReader__status_span,
+#qrReader__header_message,
+#qrReader select,
+#qrReader img,
+#qrReader__filescan_input { display: none !important; }
+#qrReader__scan_region {
+    width: 100% !important;
+    height: 100% !important;
 }
 #qrReader__scan_region > div,
 #qrReader__scan_region div,
@@ -211,47 +228,16 @@ include '../../includes/header.php';
     box-shadow: none !important;
     background: transparent !important;
 }
-#qrReader__scan_region > img,
-#qrReader__scan_region img {
-    display: none !important;
-}
-#qrReader select { display: none !important; }
-#qrReader span { display: none !important; }
-#qrReader img { display: none !important; }
-#qrReader__header_message { display: none !important; }
-#html5-qrcode-button-camera-start,
-#html5-qrcode-button-camera-stop {
-    background: var(--brand) !important; 
-    color: white !important;
-    border: none !important;
-    padding: 12px 24px !important;
-    border-radius: 1rem !important;
-    margin: 16px auto 0 !important;
-    display: block !important;
-    font-family: 'Manrope', sans-serif !important; 
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.02em !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 8px 20px -6px var(--brand) !important;
-}
-#html5-qrcode-button-camera-start:hover,
-#html5-qrcode-button-camera-stop:hover {
-    background: var(--hover-border) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 12px 25px -8px var(--brand) !important;
-}
-#html5-qrcode-button-camera-start:active,
-#html5-qrcode-button-camera-stop:active {
-    transform: scale(0.98) !important;
-}
 
 /* Camera Modal */
 #cameraModal {
-    position: fixed;
-    inset: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     background: color-mix(in srgb, var(--bg-page) 88%, transparent);
-    z-index: 1000;
+    z-index: 99999 !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -267,23 +253,17 @@ include '../../includes/header.php';
     overflow: hidden;
     border: 1px solid var(--border-color);
     position: relative;
-    box-shadow: 0 20px 50px -20px var(--shadow-color);
+    box-shadow: 0 30px 80px -20px var(--shadow-color);
 }
 
 /* Ticket Display Modal */
 #ticketModal {
     position: fixed !important;
-    inset: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    min-width: 100vw;
-    width: 100dvw;
-    min-height: 100vh;
-    height: 100dvh;
-    z-index: 2000;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -401,7 +381,7 @@ include '../../includes/header.php';
 }
 </style>
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="px-10 py-10 max-w-[1300px] mx-auto space-y-6">
         
         <!-- Slot Availability -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -419,7 +399,7 @@ include '../../includes/header.php';
             ?>
             <div class="bento-card p-4 flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-<?= $icon ?> text-lg"></i>
+                    <i class="fa-solid fa-<?= $icon ?> fa-fw text-lg"></i>
                 </div>
                 <div class="flex flex-col min-w-0 flex-1">
                     <div class="flex items-end gap-2 mb-1">
@@ -428,8 +408,8 @@ include '../../includes/header.php';
                     </div>
                     <span class="text-[13px] font-inter text-tertiary truncate"><?= $label ?> Slots Available</span>
                     <div class="mt-3">
-                        <div class="w-full h-2 progress-track rounded-full overflow-hidden">
-                            <div class="h-full progress-fill rounded-full" style="width: <?= $pct ?>%"></div>
+                        <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                            <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $pct ?>%"></div>
                         </div>
                     </div>
                 </div>
@@ -438,118 +418,82 @@ include '../../includes/header.php';
         </div>
 
     <!-- Push Notification Container -->
-    <div id="push-notification-container" class="fixed top-[90px] right-10 z-[3000] flex flex-col gap-3 w-[380px] pointer-events-none"></div>
-    
-    <!-- Ticket Display Modal (Compact Receipt) -->
-    <div id="ticketModal" style="display: none;">
-        <div class="ticket-container">
-            <div class="ticket-content" id="ticketContent">
-                <!-- Content injected via JS -->
-            </div>
-        </div>
-    </div>
+    <div id="push-notification-container" class="fixed top-[90px] right-10 z-[200000] flex flex-col gap-3 w-[380px] pointer-events-none"></div>
+
     
     <!-- Gate Cards -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
 
         <!-- ENTRY GATE -->
-        <div class="bento-card p-0 flex flex-col min-h-[500px] relative overflow-hidden group">
+        <div class="bento-card p-0 flex flex-col relative overflow-hidden group">
 
             
             <!-- Card Header -->
             <div class="p-4 border-b border-color shrink-0 flex items-center justify-between bg-surface-alt/30 backdrop-blur-sm z-10">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0 shadow-lg shadow-brand/5">
-                        <i class="fa-solid fa-right-to-bracket text-brand text-lg"></i>
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-right-to-bracket text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-manrope font-extrabold text-primary leading-tight tracking-tight">Entry Terminal</h3>
+                        <h3 class="card-title leading-tight">Entry Terminal</h3>
                     </div>
                 </div>
-                <div class="status-badge status-badge-available">
-                    <span class="status-dot status-dot-available"></span>
+                <div class="status-badge status-badge-online">
+                    <span class="status-dot-online"></span>
                     Online
                 </div>
             </div>
 
-            <div class="flex-grow flex flex-col divide-y divide-color/50 z-10">
+            <div class="flex-grow flex flex-col z-10">
                 <!-- SECTION 01: REGULAR KIOSK -->
-                <div class="flex-1 p-10 flex flex-col justify-center relative">
-
-                    
-                    <div class="flex flex-col items-center mb-8 text-center">
-                        <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center mb-4">
-                            <i class="fa-solid fa-qrcode text-xl"></i>
+                <div class="flex-1 p-4 min-h-[340px] flex flex-col justify-center relative">
+                    <div class="flex flex-col items-center">
+                        <div class="grid grid-cols-1 grid-rows-2 gap-4 w-full max-w-[280px] h-[280px] mx-auto">
+                            <button class="gate-ticket-btn bento-card group/btn flex flex-row items-center justify-center gap-4 p-4 h-full"
+                                    onclick="cetakTiketOtomatis('car', this)">
+                                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-car text-lg"></i>
+                                </div>
+                                <div class="text-left">
+                                    <span class="block text-sm font-manrope font-bold text-primary leading-tight">Car Ticket</span>
+                                </div>
+                            </button>
+                            <button class="gate-ticket-btn bento-card group/btn flex flex-row items-center justify-center gap-4 p-4 h-full"
+                                    onclick="cetakTiketOtomatis('motorcycle', this)">
+                                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-motorcycle text-lg"></i>
+                                </div>
+                                <div class="text-left">
+                                    <span class="block text-sm font-manrope font-bold text-primary leading-tight">Motorcycle Ticket</span>
+                                </div>
+                            </button>
                         </div>
-                        <h2 class="text-lg font-manrope font-extrabold text-primary tracking-tight">Regular Entry</h2>
-                        <p class="text-[11px] text-tertiary font-medium">Generate guest parking ticket</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 max-w-[420px] mx-auto w-full">
-                        <button class="gate-ticket-btn bento-card group/btn flex flex-col items-center justify-center gap-4 p-6"
-                                onclick="cetakTiketOtomatis('car', this)">
-                            <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center group-hover/btn:bg-brand group-hover/btn:text-white transition-all">
-                                <i class="fa-solid fa-car text-2xl"></i>
-                            </div>
-                            <div class="text-center">
-                                <span class="block text-sm font-manrope font-bold text-primary leading-tight">Car Ticket</span>
-                                <span class="block text-[10px] font-inter text-tertiary uppercase tracking-widest mt-0.5">Issue Receipt</span>
-                            </div>
-                        </button>
-                        <button class="gate-ticket-btn bento-card group/btn flex flex-col items-center justify-center gap-4 p-6"
-                                onclick="cetakTiketOtomatis('motorcycle', this)">
-                            <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center group-hover/btn:bg-brand group-hover/btn:text-white transition-all">
-                                <i class="fa-solid fa-motorcycle text-2xl"></i>
-                            </div>
-                            <div class="text-center">
-                                <span class="block text-sm font-manrope font-bold text-primary leading-tight">Motor Ticket</span>
-                                <span class="block text-[10px] font-inter text-tertiary uppercase tracking-widest mt-0.5">Issue Receipt</span>
-                            </div>
-                        </button>
                     </div>
                 </div>
 
                 <!-- SECTION 02: VIP/RESERVATION -->
-                <div class="flex-1 p-10 flex flex-col justify-center bg-surface relative overflow-hidden">
+                <div class="flex-1 p-4 flex flex-col justify-center relative z-10 pointer-events-auto">
 
                     
-                    <div class="flex items-center gap-5 mb-8">
-                        <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-shield-halved text-xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-base font-manrope font-extrabold text-primary tracking-tight">VIP & Seamless</h2>
-                            <p class="text-[11px] text-tertiary font-medium">Automatic plate recognition</p>
-                        </div>
+                    <div class="flex justify-center mb-4">
+                        <span class="text-[13px] font-inter text-tertiary text-center block">Reservation Scan (ALPR)</span>
                     </div>
                     
-                    <div class="w-full max-w-[420px] mx-auto">
+                    <div class="w-full max-w-[320px] mx-auto">
                         <div class="relative group/input">
-                            <div class="absolute inset-0 bg-indigo-500/5 blur-xl rounded-full opacity-0 group-focus-within/input:opacity-100 transition-opacity pointer-events-none"></div>
-                            <div class="relative flex gap-3 p-2 bg-surface-alt/40 border border-color rounded-[2rem] focus-within:border-brand/30 transition-all shadow-inner">
-                                <input type="text" id="vipPlate" 
-                                       class="bg-transparent flex-1 px-4 text-center text-[15px] font-manrope font-bold text-primary placeholder:text-secondary uppercase tracking-[0.2em] focus:outline-none"
-                                       placeholder="B 1234 XYZ"
-                                       autocomplete="off">
-                                <button onclick="openCamera('entry')" 
-                                        class="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-md">
-                                    <i class="fa-solid fa-camera text-sm"></i>
+                            <div class="flex items-center gap-2 h-11 bg-[var(--surface-alt)] rounded-full p-1 border-2 border-color shadow-sm transition-all hover:border-brand/30">
+                                <button onclick="triggerALPRCamera('entry')" 
+                                        class="w-9 h-9 flex items-center justify-center rounded-full bg-page border border-color transition-all hover:scale-105 active:scale-95 group/cam"
+                                        title="Open Camera">
+                                    <i class="fa-solid fa-camera text-brand transition-colors group-hover/cam:text-brand-hover"></i>
                                 </button>
-                                <button onclick="simulateVIPEntry()" 
-                                        class="px-6 h-11 rounded-full bg-brand text-white font-bold text-[13px] hover:brightness-110 active:scale-95 transition-all shadow-md">
-                                    Process
+                                <input type="text" id="entry-manual-lp" 
+                                       placeholder="Plate Number..." 
+                                       class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
+                                <button onclick="processALPR('entry')"
+                                        class="h-9 px-4 rounded-full bg-brand text-white font-manrope font-bold text-[12px] transition-all hover:bg-brand-hover active:scale-95">
+                                    Verify
                                 </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Status Area -->
-                        <div id="alprStatus" class="mt-5 flex items-center justify-center h-5">
-                            <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-alt/30 border border-color/50 shadow-sm">
-                                <span class="flex h-2 w-2 relative">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                                </span>
-                                <span class="text-[10px] font-bold text-tertiary tracking-wide">Awaiting detection...</span>
                             </div>
                         </div>
                     </div>
@@ -558,160 +502,104 @@ include '../../includes/header.php';
         </div>
 
         <!-- EXIT GATE -->
-        <div class="bento-card p-0 flex flex-col min-h-[500px] relative overflow-hidden group">
+        <div class="bento-card p-0 flex flex-col relative overflow-hidden group">
 
 
             <!-- Card Header -->
             <div class="p-4 border-b border-color shrink-0 flex items-center justify-between bg-surface-alt/30 backdrop-blur-sm z-10">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/5">
-                        <i class="fa-solid fa-right-from-bracket text-rose-500 text-lg"></i>
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-right-from-bracket text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-manrope font-extrabold text-primary leading-tight tracking-tight">Exit Terminal</h3>
+                        <h3 class="card-title leading-tight">Exit Terminal</h3>
                     </div>
                 </div>
-                <div class="status-badge status-badge-available">
-                    <span class="status-dot status-dot-available"></span>
+                <div class="status-badge status-badge-online">
+                    <span class="status-dot-online"></span>
                     Online
                 </div>
             </div>
 
-            <div class="flex-grow flex flex-col p-10 justify-center bg-surface-alt/5 z-10 relative">
-
-
-                <!-- Scanner Container -->
-                <div class="flex flex-col items-center mb-10">
-                    <div class="relative w-full max-w-[240px] aspect-square group/scanner">
-                        <!-- Holographic Frame -->
-                        <div class="absolute inset-0 border-2 border-rose-500/20 rounded-[2.5rem] shadow-2xl transition-all group-hover/scanner:border-rose-500/40"></div>
-                        <div class="absolute -inset-2 border border-rose-500/10 rounded-[3rem] opacity-50"></div>
-                        
-                        <div class="relative w-full h-full rounded-[2.2rem] overflow-hidden bg-slate-900 shadow-inner">
-                            <div id="qrReader" class="w-full h-full opacity-80 group-hover/scanner:opacity-100 transition-opacity"></div>
+            <div class="flex-grow flex flex-col z-10">
+                <!-- EXIT SECTION 01: SCANNER -->
+                <div class="flex-1 p-4 min-h-[340px] flex flex-col justify-center relative">
+                    <!-- Scanner Container -->
+                    <div class="flex flex-col items-center">
+                        <div class="relative w-full max-w-[280px] h-[280px] group/scanner">
+                            <!-- Holographic Frame -->
+                            <div class="absolute inset-0 border-2 border-color rounded-[2.5rem] shadow-xl transition-all group-hover/scanner:border-brand/30"></div>
                             
-                            <!-- Enhanced Scanner UI -->
-                            <div class="barcode-guide !bg-transparent">
-                                <div class="barcode-frame !border-none">
-                                    <span class="scanner-sweep !bg-gradient-to-b !from-transparent !via-rose-500 !to-transparent !h-1 !opacity-40"></span>
-                                    
-                                    <!-- L-Corners -->
-                                    <span class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-rose-500 rounded-tl-2xl"></span>
-                                    <span class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-rose-500 rounded-tr-2xl"></span>
-                                    <span class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-rose-500 rounded-bl-2xl"></span>
-                                    <span class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-rose-500 rounded-br-2xl"></span>
+                            <div class="relative w-full h-full rounded-[2.2rem] overflow-hidden bg-slate-900 shadow-inner">
+                                <div id="qrReader" class="absolute inset-0"></div>
+                                
+                                <!-- Enhanced Scanner UI — pointer-events-none so scanner buttons remain clickable -->
+                                <div class="barcode-guide !bg-transparent" style="pointer-events:none;">
+                                    <div class="barcode-frame !border-none" style="pointer-events:none;">
+                                        <span class="scanner-sweep !bg-gradient-to-b !from-transparent !via-rose-500 !to-transparent !h-1 !opacity-40" style="pointer-events:none;"></span>
+                                        
+                                        <!-- L-Corners -->
+                                        <span class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-rose-500 rounded-tl-2xl" style="pointer-events:none;"></span>
+                                        <span class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-rose-500 rounded-tr-2xl" style="pointer-events:none;"></span>
+                                        <span class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-rose-500 rounded-bl-2xl" style="pointer-events:none;"></span>
+                                        <span class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-rose-500 rounded-br-2xl" style="pointer-events:none;"></span>
+                                    </div>
+                                </div>
+
+                                <!-- START PROMPT: Always in HTML, hidden after scanner starts -->
+                                <div id="qrStartPrompt" class="absolute inset-0 flex flex-col items-center justify-center gap-3" style="z-index:200; pointer-events:auto; background:rgba(15,23,42,0.5);">
+                                    <i class="fa-solid fa-qrcode text-white/20 text-4xl"></i>
+                                    <button onclick="startQRManually()"
+                                            style="pointer-events:auto; cursor:pointer;"
+                                            class="px-5 py-2.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-[12px] font-bold transition-all active:scale-95 shadow-lg">
+                                        <i class="fa-solid fa-camera mr-2"></i>Start Scanner
+                                    </button>
+                                    <p class="text-[10px] font-bold text-white/40 text-center">Tap to activate QR scanner</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div id="gateScanResult" class="mt-6 h-8 flex items-center justify-center">
-                         <div class="flex items-center gap-3 px-5 py-2 rounded-2xl bg-rose-500/5 border border-rose-500/10">
-                            <i class="fa-solid fa-qrcode text-rose-500 text-sm animate-pulse"></i>
-                            <span class="text-[11px] font-bold text-tertiary tracking-wide">Scanning for tickets...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Area -->
-                <div class="w-full max-w-[420px] mx-auto space-y-4">
-                    <!-- Manual Input -->
-                    <div class="relative group/manual">
-                        <div class="flex gap-3 p-2 bg-surface-alt/40 border border-color rounded-[2rem] focus-within:border-rose-500/30 transition-all shadow-inner">
-                            <div class="w-11 h-11 rounded-full bg-surface-alt flex items-center justify-center text-slate-400">
-                                <i class="fa-solid fa-keyboard text-sm"></i>
-                            </div>
-                            <input type="text" id="manualCode"
-                                   class="bg-transparent flex-1 px-2 text-center text-[15px] font-manrope font-bold text-primary placeholder:text-secondary uppercase tracking-[0.2em] focus:outline-none"
-                                   placeholder="CODE-XXXX"
-                                   autocomplete="off">
-                            <button onclick="processTicket(document.getElementById('manualCode').value)"
-                                    class="px-6 h-11 rounded-full bg-rose-600 text-white font-bold text-[13px] hover:bg-rose-700 active:scale-95 transition-all shadow-sm">
-                                Verify
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- ALPR Exit Button -->
-                    <button onclick="openCamera('exit')" class="w-full h-[52px] rounded-xl bg-surface-alt/40 border border-color flex items-center justify-center gap-3 text-secondary hover:text-rose-500 hover:bg-rose-500/5 hover:border-rose-500/30 transition-all group shadow-sm">
-                        <i class="fa-solid fa-camera text-sm"></i>
-                        <span class="text-[13px] font-manrope font-bold uppercase tracking-wider">ALPR Recognition</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CAMERA MODAL -->
-    <div id="cameraModal">
-        <div class="camera-container animate-bounce-in shadow-2xl">
-            <div class="p-6 border-b border-color flex items-center justify-between bg-surface-alt/20 backdrop-blur-md">
-                <div class="flex items-center gap-4">
-                    <div class="w-11 h-11 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20" id="camIconBg">
-                        <i class="fa-solid fa-camera text-indigo-500 text-lg" id="camIcon"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-[15px] font-manrope font-bold text-primary tracking-tight" id="camTitle">Live Plate Scanner</h3>
-                        <p class="text-[10px] text-tertiary font-bold tracking-wide">Artificial Intelligence Detection</p>
-                    </div>
-                </div>
-                <button onclick="closeCamera()" class="w-10 h-10 flex items-center justify-center hover:bg-rose-500/10 text-tertiary hover:text-rose-500 rounded-xl transition-all group">
-                    <i class="fa-solid fa-xmark text-sm group-hover:rotate-90 transition-transform"></i>
-                </button>
-            </div>
-
-            <div class="p-6">
-                <div class="scanner-viewport relative rounded-[1.5rem] overflow-hidden border border-color shadow-inner group min-h-[280px]">
-                    <div id="cameraReader" class="w-full h-full">
-                        <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover"></video>
-                    </div>
-                    
-                    <!-- Holographic Overlay -->
-                    <div class="absolute inset-0 pointer-events-none z-10">
-                        <!-- Corners -->
-                        <div class="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-indigo-500/40 rounded-tl-lg"></div>
-                        <div class="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-indigo-500/40 rounded-tr-lg"></div>
-                        <div class="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-indigo-500/40 rounded-bl-lg"></div>
-                        <div class="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-indigo-500/40 rounded-br-lg"></div>
                         
-                        <!-- Scanning Line -->
-                        <div class="scanner-sweep absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-                    </div>
 
-                    <!-- Status Pill (Floating) -->
-                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20" id="cameraScanStatus">
-                        <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl">
-                            <span class="flex h-2 w-2 relative">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span class="text-[10px] font-bold text-white tracking-widest uppercase">System Active</span>
-                        </div>
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-col gap-4">
-                    <div class="p-4 rounded-2xl bg-surface-alt/30 border border-color/60 flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                            <i class="fa-solid fa-expand text-indigo-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-[10px] text-tertiary font-bold tracking-wide uppercase mb-0.5">Scanner Status</p>
-                            <h4 class="text-[13px] font-bold text-primary tracking-tight" id="alprStatusRealtime">Awaiting vehicle capture...</h4>
+                <!-- EXIT SECTION 02: MANUAL/ALPR -->
+                <div class="flex-1 p-4 flex flex-col justify-center relative z-10 pointer-events-auto">
+                    <div class="flex justify-center mb-4">
+                        <span class="text-[13px] font-inter text-tertiary text-center block">Reservation Scan (ALPR)</span>
+                    </div>
+                    <div class="w-full max-w-[320px] mx-auto">
+                        <div class="relative group/manual">
+                            <div class="flex items-center gap-2 h-11 bg-[var(--surface-alt)] rounded-full p-1 border-2 border-color shadow-sm transition-all hover:border-brand/30">
+                                <button onclick="triggerALPRCamera('exit')" 
+                                        class="w-9 h-9 flex items-center justify-center rounded-full bg-page border border-color transition-all hover:scale-105 active:scale-95 group/cam"
+                                        title="Open Camera">
+                                    <i class="fa-solid fa-camera text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
+                                </button>
+                                <input type="text" id="exit-manual-lp" 
+                                       placeholder="Plate Number..." 
+                                       class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
+                                <button onclick="processALPR('exit')"
+                                        class="h-9 px-4 rounded-full bg-rose-600 text-white font-manrope font-bold text-[12px] transition-all hover:bg-rose-700 active:scale-95">
+                                    Verify
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    
-                    <button id="autoScanBtn" class="w-full h-14 rounded-2xl bg-brand text-white font-manrope font-extrabold text-[14px] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-95 shadow-md">
-                        <i class="fa-solid fa-circle-notch animate-spin text-xs"></i>
-                        Initializing Scanner...
-                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+    <!-- MODALS ARE AT THE END OF THE FILE -->
+
 
 
 <script>
+    // QR Scanner instance (declared at top to avoid TDZ errors)
+    let qrInstance = null;
+
     // PUSH NOTIFICATION SYSTEM
     function pushNotify(title, message, type = 'info', code = null) {
         const container = document.getElementById('push-notification-container');
@@ -757,12 +645,6 @@ include '../../includes/header.php';
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
-                ${code ? `
-                <div class="px-5 py-2.5 bg-surface-alt/40 border-t border-color flex items-center justify-between">
-                    <span class="text-[10px] font-extrabold text-tertiary/60 tracking-wider">Reference Code</span>
-                    <span class="text-[12px] font-code font-bold text-brand tracking-widest">${code}</span>
-                </div>
-                ` : ''}
                 <div class="h-[3px] bg-brand/5 w-full overflow-hidden">
                     <div class="h-full bg-brand notification-progress opacity-60"></div>
                 </div>
@@ -852,17 +734,14 @@ include '../../includes/header.php';
                             <span class="text-[10px] font-bold text-emerald-500 tracking-wide">VIP Matched: ${data.details.slot}</span>
                         </div>`;
                     
-                    pushNotify('VIP Access Granted', `Seamless entry for ${data.details.plate}`, 'vip', `Slot: ${data.details.slot}`);
+                    pushNotify('Reservation Access Granted', `Seamless entry for ${data.details.plate}`, 'vip', `Slot: ${data.details.slot}`);
                     
                     setTimeout(() => {
                         document.getElementById('vipPlate').value = '';
                         statusEl.innerHTML = `
-                            <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-alt/30 border border-color/50 shadow-sm">
-                                <span class="flex h-2 w-2 relative">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                                </span>
-                                <span class="text-[10px] font-bold text-tertiary tracking-wide">Awaiting detection...</span>
+                            <div class="status-badge status-badge-awaiting">
+                                <span class="status-dot-awaiting"></span>
+                                Awaiting detection...
                             </div>`;
                         refreshGateStats();
                     }, 2000);
@@ -893,6 +772,8 @@ include '../../includes/header.php';
         const title = document.getElementById('camTitle');
         const iconBg = document.getElementById('camIconBg');
         const icon = document.getElementById('camIcon');
+        const detIconBg = document.getElementById('detIconBg');
+        const detIcon = document.getElementById('detIcon');
         
         if (mode === 'exit') {
             title.innerText = 'Exit Plate Scanner';
@@ -900,12 +781,30 @@ include '../../includes/header.php';
             iconBg.classList.add('bg-rose-500/10');
             icon.classList.remove('text-indigo-500');
             icon.classList.add('text-rose-500');
+            
+            if (detIconBg) {
+                detIconBg.classList.remove('bg-indigo-500/10');
+                detIconBg.classList.add('bg-rose-500/10');
+            }
+            if (detIcon) {
+                detIcon.classList.remove('text-indigo-500');
+                detIcon.classList.add('text-rose-500');
+            }
         } else {
             title.innerText = 'Entry Plate Scanner';
             iconBg.classList.remove('bg-rose-500/10');
             iconBg.classList.add('bg-indigo-500/10');
             icon.classList.remove('text-rose-500');
             icon.classList.add('text-indigo-500');
+
+            if (detIconBg) {
+                detIconBg.classList.remove('bg-rose-500/10');
+                detIconBg.classList.add('bg-indigo-500/10');
+            }
+            if (detIcon) {
+                detIcon.classList.remove('text-rose-500');
+                detIcon.classList.add('text-indigo-500');
+            }
         }
 
         try {
@@ -974,9 +873,11 @@ include '../../includes/header.php';
         
         const file = input.files[0];
         const statusEl = document.getElementById('alprStatus');
-        const plateInput = document.getElementById('vipPlate');
+        // Use the correct input ID based on camera mode
+        const plateInputId = currentCameraMode === 'exit' ? 'exit-manual-lp' : 'entry-manual-lp';
+        const plateInput = document.getElementById(plateInputId);
 
-        if (!isAuto) {
+        if (!isAuto && statusEl) {
             statusEl.innerHTML = `
                 <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-alt/40 border border-color shadow-sm animate-pulse">
                     <i class="fa-solid fa-microchip ${currentCameraMode === 'exit' ? 'text-rose-500' : 'text-indigo-500'} text-[10px]"></i>
@@ -1014,30 +915,77 @@ include '../../includes/header.php';
                     .then(r => r.json())
                     .then(res => {
                         if (res.success) {
-                            pushNotify('Exit Verified', `Vehicle ${res.plate} is ready for checkout`, 'success', res.ticket_code);
-                            setTimeout(() => processTicket(res.ticket_code), 1500);
+                            const msg = `Vehicle ${res.plate} is ready for checkout`;
+                            processTicket(res.ticket_code, 'Exit Verified', msg);
                         } else {
                             pushNotify('Resolution Failed', res.error, 'error');
                         }
                     });
                 } else {
-                    // ENTRY MODE
-                    plateInput.value = plate;
-                    statusEl.innerHTML = `
-                        <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles text-emerald-500 text-[10px]"></i>
-                            <span class="text-[10px] font-bold text-emerald-500 tracking-wide">Plate Detected: ${plate}</span>
-                        </div>`;
-                    
+                    // ENTRY MODE: populate input and auto-verify
+                    if (plateInput) plateInput.value = plate;
+                    if (statusEl) {
+                        statusEl.innerHTML = `
+                            <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-sm">
+                                <i class="fa-solid fa-wand-magic-sparkles text-emerald-500 text-[10px]"></i>
+                                <span class="text-[10px] font-bold text-emerald-500 tracking-wide">Plate Detected: ${plate}</span>
+                            </div>`;
+                    }
                     closeCamera();
-                    setTimeout(simulateVIPEntry, 800);
+                    setTimeout(() => processALPR('entry'), 800);
                 }
             }
         })
         .catch(err => {
-            if (!isAuto) statusEl.innerHTML = `<span class="text-[11px] font-bold text-rose-500 flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> Network error</span>`;
+            if (!isAuto && statusEl) statusEl.innerHTML = `<span class="text-[11px] font-bold text-rose-500 flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> Network error</span>`;
         });
         input.value = '';
+    }
+
+    // ─── ALPR BRIDGE FUNCTIONS ───────────────────────────────────────────────
+    // These are called by the HTML buttons and bridge to the camera/verify logic
+
+    function triggerALPRCamera(mode) {
+        openCamera(mode);
+    }
+
+    function processALPR(mode) {
+        if (mode === 'entry') {
+            const plate = (document.getElementById('entry-manual-lp')?.value || '').trim().toUpperCase();
+            if (!plate) { pushNotify('Input Required', 'Please enter a plate number.', 'error'); return; }
+
+            const formData = new FormData();
+            formData.append('plate_number', plate);
+            fetch('<?= BASE_URL ?>api/validate_vip.php', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        pushNotify('Reservation Access Granted', `Seamless entry for ${data.details.plate}`, 'vip', `Slot: ${data.details.slot}`);
+                        document.getElementById('entry-manual-lp').value = '';
+                        refreshGateStats();
+                    } else {
+                        pushNotify('Access Denied', data.error || 'No active reservation found.', 'error');
+                    }
+                })
+                .catch(() => pushNotify('System Error', 'Could not validate reservation.', 'error'));
+
+        } else {
+            const plate = (document.getElementById('exit-manual-lp')?.value || '').trim().toUpperCase();
+            if (!plate) { pushNotify('Input Required', 'Please enter a plate number.', 'error'); return; }
+
+            const fd = new FormData();
+            fd.append('plate_number', plate);
+            fetch('<?= BASE_URL ?>api/get_ticket_by_plate.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        processTicket(res.ticket_code, 'Exit Verified', `Vehicle ${res.plate} is ready for checkout`);
+                    } else {
+                        pushNotify('Resolution Failed', res.error || 'Plate not found in active sessions.', 'error');
+                    }
+                })
+                .catch(() => pushNotify('System Error', 'Could not process exit by plate.', 'error'));
+        }
     }
 
     function refreshGateStats() {
@@ -1046,7 +994,7 @@ include '../../includes/header.php';
     }
 
 let scanned = false;
-function processTicket(code) {
+function processTicket(code, notifyTitle = null, notifyMsg = null) {
     if (scanned) return;
     code = (code || '').trim().toUpperCase();
     if (code.length < 4) { 
@@ -1066,17 +1014,21 @@ function processTicket(code) {
          </div>`;
     }
 
-    pushNotify('Exit Processing', `Ticket ${code} verified`, 'success');
+    const msg = notifyMsg || `Ticket ${code} verified`;
+    const title = notifyTitle || 'Exit Processing';
 
     setTimeout(() => {
+        const url = `gate_exit.php?kode_tiket=${encodeURIComponent(code)}&msg=${encodeURIComponent(msg)}&title=${encodeURIComponent(title)}&type=success&code=${encodeURIComponent(code)}`;
         try {
-            html5QrcodeScanner.clear().finally(() => {
-                window.location.href = `gate_exit.php?kode_tiket=${encodeURIComponent(code)}`;
-            });
+            if (qrInstance) {
+                qrInstance.stop().finally(() => { window.location.href = url; });
+            } else {
+                window.location.href = url;
+            }
         } catch (e) {
-            window.location.href = `gate_exit.php?kode_tiket=${encodeURIComponent(code)}`;
+            window.location.href = url;
         }
-    }, 1200);
+    }, 800);
 }
 
 document.getElementById('manualCode').addEventListener('keydown', e => {
@@ -1084,15 +1036,74 @@ document.getElementById('manualCode').addEventListener('keydown', e => {
     else e.target.value = e.target.value.toUpperCase();
 });
 
-const html5QrcodeScanner = new Html5QrcodeScanner(
-    "qrReader",
-    { fps: 20, aspectRatio: 1.0, rememberLastUsedCamera: true },
-    false
-);
-    html5QrcodeScanner.render(
-        decodedText => processTicket(decodedText),
-        () => {}
-    );
+// ─── QR SCANNER: Smart start with camera enumeration ────────────────────────
+
+function hideQRPrompt() {
+    const p = document.getElementById('qrStartPrompt');
+    if (p) p.style.display = 'none';
+}
+
+async function startQRManually() {
+    // Show loading state on button
+    const btn = document.querySelector('#qrStartPrompt button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Starting...'; }
+
+    try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras || cameras.length === 0) {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-camera mr-2"></i>No Camera Found'; }
+            return;
+        }
+        const backCam = cameras.find(c => /back|environment|rear/i.test(c.label));
+        const cam = backCam || cameras[cameras.length - 1];
+
+        // Clear any previous instance
+        if (qrInstance) {
+            try { await qrInstance.stop(); } catch(_) {}
+            qrInstance = null;
+        }
+        document.getElementById('qrReader').innerHTML = '';
+        qrInstance = new Html5Qrcode("qrReader");
+        await qrInstance.start(
+            cam.id,
+            { fps: 15, aspectRatio: 1.0 },
+            (decodedText) => processTicket(decodedText),
+            () => {}
+        );
+        // Success: hide the prompt overlay
+        hideQRPrompt();
+    } catch (err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-camera mr-2"></i>Retry Camera'; }
+        const lbl = document.querySelector('#qrStartPrompt p');
+        if (lbl) lbl.textContent = 'Error: ' + (err.message || 'Camera denied');
+    }
+}
+
+async function initQRScanner() {
+    // Silent auto-start attempt (no user gesture needed on localhost)
+    try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras || cameras.length === 0) return; // prompt stays visible
+        const frontCam = cameras.find(c => /front|user|face|integrated|webcam/i.test(c.label));
+        const cam = frontCam || cameras[0];
+
+        qrInstance = new Html5Qrcode("qrReader");
+        await qrInstance.start(
+            cam.id,
+            { fps: 15, aspectRatio: 1.0 },
+            (decodedText) => processTicket(decodedText),
+            () => {}
+        );
+        // Auto-start succeeded: hide prompt
+        hideQRPrompt();
+    } catch (_) {
+        // Silent fail — user will use the "Start Scanner" button in the prompt
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(initQRScanner, 800));
+
+
 
     // TICKET MODAL LOGIC
     function showTicketModal(data) {
@@ -1136,15 +1147,12 @@ const html5QrcodeScanner = new Html5QrcodeScanner(
                 <div class="bg-surface-alt/40 border border-color rounded-2xl p-4 mb-6 text-center relative group">
                     <div class="text-[9px] font-bold text-tertiary tracking-widest uppercase mb-1">Validation Code</div>
                     <div class="text-xl font-code font-bold text-primary tracking-[0.2em]">${data.ticket_code}</div>
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-indigo-500/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fa-solid fa-fingerprint text-[10px] text-indigo-500/30"></i>
-                    </div>
                 </div>
 
                 <!-- QR Area -->
                 <div class="relative flex justify-center mb-6">
                     <div class="relative p-2 rounded-3xl shadow-xl shadow-indigo-500/10 border border-indigo-500/10" style="background:#fff !important;">
-                        <img src="${barcodeUrl}" class="w-[140px] h-[140px] rounded-2xl" alt="QR Code">
+                        <img src="${barcodeUrl}" class="w-[140px] h-[140px] rounded-sm" alt="QR Code">
                         <!-- Scanning Corners -->
                         <div class="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-indigo-500/40 rounded-tl-xl"></div>
                         <div class="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-indigo-500/40 rounded-tr-xl"></div>
@@ -1198,5 +1206,94 @@ const html5QrcodeScanner = new Html5QrcodeScanner(
         document.getElementById('ticketModal').style.display = 'none';
         document.body.style.overflow = '';
     }
+
+    // Teleport modals to body to bypass stacking contexts
+    document.addEventListener('DOMContentLoaded', () => {
+        const modals = ['cameraModal', 'ticketModal'];
+        modals.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) document.body.appendChild(el);
+        });
+    });
     </script>
+
+    <!-- CAMERA MODAL -->
+    <div id="cameraModal" style="position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg-page) 90%, transparent); backdrop-filter: blur(12px);">
+        <div class="camera-container animate-bounce-in shadow-2xl">
+            <div class="p-6 border-b border-color flex items-center justify-between bg-surface-alt/20 backdrop-blur-md">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0" id="camIconBg">
+                        <i class="fa-solid fa-camera fa-fw text-lg" id="camIcon"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-[15px] font-manrope font-bold text-primary tracking-tight" id="camTitle">Live Plate Scanner</h3>
+                        <p class="text-[10px] text-tertiary font-bold tracking-wide uppercase">AI Neural Vision Active</p>
+                    </div>
+                </div>
+                <button onclick="closeCamera()" class="w-10 h-10 flex items-center justify-center hover:bg-rose-500/10 text-tertiary hover:text-rose-500 rounded-xl transition-all group">
+                    <i class="fa-solid fa-xmark text-sm group-hover:rotate-90 transition-transform"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="scanner-viewport relative rounded-[1.5rem] overflow-hidden border border-color shadow-inner group min-h-[280px]">
+                    <div id="cameraReader" class="w-full h-full">
+                        <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover"></video>
+                    </div>
+                    
+                    <!-- Holographic Overlay -->
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                        <!-- Corners -->
+                        <div class="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-brand/40 rounded-tl-lg"></div>
+                        <div class="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-brand/40 rounded-tr-lg"></div>
+                        <div class="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-brand/40 rounded-bl-lg"></div>
+                        <div class="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-brand/40 rounded-br-lg"></div>
+                        
+                        <!-- Scanning Line -->
+                        <div class="scanner-sweep absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand/50 to-transparent"></div>
+                    </div>
+
+                    <!-- Status Pill (Floating) -->
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20" id="cameraScanStatus">
+                        <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl">
+                            <span class="flex h-2 w-2 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span class="text-[10px] font-bold text-white tracking-widest uppercase">Core Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recognition Status -->
+                <div class="mt-6 p-4 rounded-2xl bg-surface-alt/40 border border-color flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0" id="detIconBg">
+                            <i class="fa-solid fa-expand text-lg" id="detIcon"></i>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-tertiary uppercase tracking-wider mb-0.5">Detection Log</p>
+                            <h4 class="text-[13px] font-bold text-primary" id="cameraStatusText">Awaiting vehicle capture...</h4>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Ticket Display Modal (Compact Receipt) -->
+    <div id="ticketModal" style="position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg-page) 75%, transparent); backdrop-filter: blur(8px);">
+        <div class="ticket-container">
+            <div class="ticket-content" id="ticketContent">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+
+
 <?php include '../../includes/footer.php'; ?>

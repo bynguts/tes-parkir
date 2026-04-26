@@ -15,7 +15,7 @@ foreach ($all_slots_query as $s) {
     $is_vip = (int)$s['is_reservation_only'] === 1;
     $slot_mapping[$s['slot_id']] = [
         "label"    => $s['slot_number'],
-        "category" => $is_vip ? "VIP AREA" : "REGULAR"
+        "category" => $is_vip ? "RSV ZONE" : "REGULAR"
     ];
 }
 
@@ -147,7 +147,7 @@ $page_subtitle = "Viewing security sensor events from " . date('d M', strtotime(
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="px-10 py-10">
@@ -161,7 +161,7 @@ include '../../includes/header.php';
         
         <div class="flex items-center gap-3">
             <button type="button" onclick="document.getElementById('modalDelete').classList.remove('hidden'); loadDates();"
-                    class="btn-outline !text-rose-500 !border-rose-100 hover:!bg-rose-50 hover:!border-rose-200 gap-2">
+                    class="btn-danger-soft gap-2">
                 <i class="fa-solid fa-broom"></i>
                 Purge Logs
             </button>
@@ -181,26 +181,31 @@ include '../../includes/header.php';
                 </div>
             </div>
             
-            <form id="filterForm" method="GET" class="flex items-center gap-3">
+            <form id="filterForm" method="GET" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
                 <div class="relative">
-                    <select name="range" onchange="this.form.submit()" 
-                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
-                        <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
-                        <option value="24h" <?= $range === '24h' ? 'selected' : '' ?>>Past 24 Hours</option>
-                        <option value="1week" <?= $range === '1week' ? 'selected' : '' ?>>Last 7 Days</option>
+                    <select name="range" id="range-select"
+                            class="appearance-none bg-surface-alt border-none px-6 py-3 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
+                        <option value="today"  <?= $range === 'today'  ? 'selected' : '' ?>>Today</option>
+                        <option value="24h"    <?= $range === '24h'    ? 'selected' : '' ?>>Past 24 Hours</option>
+                        <option value="1week"  <?= $range === '1week'  ? 'selected' : '' ?>>Last 7 Days</option>
                         <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>Last 30 Days</option>
                         <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
+                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[9px]"></i>
                 </div>
 
+                <!-- Hidden inputs for custom range -->
+                <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+                <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
+                <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
+
                 <?php if($range === 'custom'): ?>
-                <div class="flex items-center gap-2 bg-slate-50 border border-slate-100 p-1 rounded-xl">
-                    <input type="date" name="start_date" value="<?= $start_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
-                    <span class="text-slate-300">-</span>
-                    <input type="date" name="end_date" value="<?= $end_date ?>" class="bg-transparent border-none text-[10px] font-bold text-primary px-3 py-1 focus:ring-0">
-                    <button type="submit" class="bg-brand text-white w-8 h-8 rounded-lg flex items-center justify-center hover:brightness-110 transition-all">
-                        <i class="fa-solid fa-check text-[10px]"></i>
+                <div class="flex items-center gap-2 px-4 border-l border-color">
+                    <button type="button" id="change-range-btn" class="flex items-center gap-3 hover:text-brand transition-colors group">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-primary">
+                            <?= date('d M Y', strtotime($start_date)) ?> &mdash; <?= date('d M Y', strtotime($end_date)) ?>
+                        </span>
+                        <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
                     </button>
                 </div>
                 <?php endif; ?>
@@ -227,24 +232,31 @@ include '../../includes/header.php';
             </div>
 
             <div class="flex items-center gap-4">
+                <!-- Sort -->
+                <button onclick="toggleLogSort()" id="sortLogBtn" 
+                        class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                    <i id="sortLogIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-primary">SORT</span>
+                </button>
+
                 <!-- Search -->
                 <div class="relative group">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs"></i>
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                     <input type="text" id="searchLog" placeholder="Search plate or ticket..."
                            oninput="applyScanLogFilters()"
                            class="w-64 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
                 </div>
 
                 <!-- Vehicle Filter -->
-                <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1 gap-1">
+                <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1 gap-1 h-[38px]">
                     <button onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
-                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm">ALL</button>
+                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm leading-none">ALL</button>
                     <button onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
-                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-car text-sm pointer-events-none"></i>
                     </button>
                     <button onclick="setScanLogVehicleFilter('motorcycle')" id="btn-filter-motorcycle" 
-                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all">
+                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-motorcycle text-sm pointer-events-none"></i>
                     </button>
                 </div>
@@ -252,7 +264,7 @@ include '../../includes/header.php';
                 <!-- Type Filter -->
                 <div class="relative">
                     <select id="filterCategory" onchange="setScanLogTypeFilter(this.value)" 
-                            class="appearance-none bg-slate-50 border border-slate-100 px-6 py-2.5 pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
+                            class="appearance-none bg-slate-50 border border-slate-100 px-6 h-[38px] pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
                         <option value="all">All Entries</option>
                         <option value="reservation">Reservations</option>
                         <option value="regular">Regular</option>
@@ -271,8 +283,8 @@ include '../../includes/header.php';
                         <th>Plate Number</th>
                         <th>Ticket Code</th>
                         <th>Slot</th>
-                        <th>Time In</th>
-                        <th>Time Out</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
                         <th>Duration</th>
                         <th>Final Fee</th>
                         <th>Status</th>
@@ -315,7 +327,8 @@ include '../../includes/header.php';
                     ?>
                     <tr class="group hover:bg-slate-50/50 transition-colors log-row" 
                         data-vehicle="<?= trim(strtolower($row['vehicle_type'] ?? '')) ?>"
-                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>">
+                        data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
+                        data-timestamp="<?= strtotime($row['time_in']) ?>">
                         <td class="px-6 py-4">
                             <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand group-hover:border-brand/20 transition-all">
                                 <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
@@ -391,7 +404,7 @@ include '../../includes/header.php';
                         <td class="px-6 py-4 text-right">
                             <button type="button" 
                                     onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
-                                    class="btn-ghost !text-rose-400 hover:!text-rose-500 hover:!bg-rose-50">
+                                    class="btn-ghost-danger">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </td>
@@ -407,23 +420,23 @@ include '../../includes/header.php';
 <div id="modalDelete" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-        <div class="bento-card overflow-hidden">
-            <div class="px-8 py-5 border-b border-color flex justify-between items-center bg-white">
+        <div class="bento-card overflow-hidden modal-surface">
+            <div class="px-8 py-5 border-b border-color flex justify-between items-center">
                 <h3 class="font-manrope font-extrabold text-primary text-base">Purge Operational Logs</h3>
                 <button onclick="document.getElementById('modalDelete').classList.add('hidden')" class="btn-ghost">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="p-8 bg-white">
-                <div class="flex gap-2 mb-6 bg-slate-50 border border-slate-100 p-1 rounded-2xl">
+            <div class="p-8">
+                <div class="flex gap-2 mb-6 bg-surface-alt border border-color p-1 rounded-2xl">
                     <button id="tabBtnDate" onclick="switchTab('date')"
                             class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all">By Date</button>
                     <button id="tabBtnAll" onclick="switchTab('all')"
-                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all">Wipe All</button>
+                            class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-all">Wipe All</button>
                 </div>
 
                 <div id="tabDate">
-                    <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-slate-50 p-2 mb-6 space-y-1 border border-slate-100"></div>
+                    <div id="dateList" class="max-h-52 overflow-y-auto no-scrollbar rounded-2xl bg-surface-alt p-2 mb-6 space-y-1 border border-color"></div>
                     <button id="btnDeleteDate" disabled onclick="deleteLog('by_date')"
                             class="w-full py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-3">
                         <i class="fa-solid fa-calendar-xmark"></i> Purge Selected Date
@@ -431,13 +444,13 @@ include '../../includes/header.php';
                 </div>
 
                 <div id="tabAll" class="hidden">
-                    <div class="bg-rose-50 rounded-2xl p-6 mb-6 text-center border border-rose-100">
+                    <div class="bg-rose-500/5 rounded-2xl p-6 mb-6 text-center border border-rose-500/20">
                         <i class="fa-solid fa-triangle-exclamation text-rose-500 text-3xl block mb-4"></i>
-                        <p class="text-rose-600 font-extrabold text-sm font-manrope uppercase tracking-tight">Full System Purge</p>
-                        <p class="text-slate-500 text-[11px] font-inter mt-3 leading-relaxed">This will permanently delete all gate sensor history. <span class="text-slate-700 font-bold block mt-1">Transaction and financial records remain secure.</span></p>
+                        <p class="text-rose-500 font-extrabold text-sm font-manrope uppercase tracking-tight">Full System Purge</p>
+                        <p class="text-secondary text-[11px] font-inter mt-3 leading-relaxed">This will permanently delete all gate sensor history. <span class="text-primary font-bold block mt-1">Transaction and financial records remain secure.</span></p>
                     </div>
                     <button onclick="deleteLog('all')"
-                            class="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3">
+                            class="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3 shadow-lg shadow-rose-500/20">
                         <i class="fa-solid fa-fire"></i> Execute Wipe
                     </button>
                 </div>
@@ -451,6 +464,18 @@ include '../../includes/header.php';
 const CSRF = '<?= htmlspecialchars(csrf_token()) ?>';
 let currentLogVehicleFilter = 'all';
 let currentLogCategoryFilter = 'all';
+let currentLogSortOrder = 'desc'; // newest first
+
+function toggleLogSort() {
+    currentLogSortOrder = currentLogSortOrder === 'desc' ? 'asc' : 'desc';
+    const icon = document.getElementById('sortLogIcon');
+    if (currentLogSortOrder === 'desc') {
+        icon.className = 'fa-solid fa-sort-down text-[12px] text-brand';
+    } else {
+        icon.className = 'fa-solid fa-sort-up text-[12px] text-brand';
+    }
+    applyScanLogFilters();
+}
 let selectedDate = null;
 
 // --- CHART INITIALIZATION ---
@@ -469,28 +494,42 @@ new Chart(ctx, {
             hoverBackgroundColor: '#4f46e5'
         }]
     },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index',
+        },
         plugins: { 
             legend: { display: false }, 
             tooltip: { 
-                backgroundColor: '#1e293b', 
-                titleFont: { family: 'Manrope', weight: '800' },
-                bodyFont: { family: 'Inter' },
-                padding: 12, 
-                displayColors: false 
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
+                titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+                borderWidth: 1,
+                titleFont: { weight: 'bold', size: 12 },
+                bodyFont: { size: 11 },
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: true,
+                usePointStyle: true,
+                boxPadding: 8
             } 
         },
         scales: {
             y: { 
                 beginAtZero: true, 
-                grid: { color: 'rgba(241, 245, 249, 1)', drawBorder: false }, 
-                ticks: { stepSize: 1, color: '#94a3b8', font: { size: 10, weight: '700' } } 
+                grid: { 
+                    display: true,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+                    drawBorder: false,
+                    borderDash: [5, 5]
+                }, 
+                border: { display: false },
+                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' }, padding: 10 } 
             },
             x: { 
                 grid: { display: false }, 
-                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' } } 
+                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' }, padding: 10 } 
             }
         }
     }
@@ -502,11 +541,11 @@ function switchTab(tab) {
     const dateBtn = document.getElementById('tabBtnDate');
     const allBtn = document.getElementById('tabBtnAll');
     if (tab === 'date') {
-        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg transition-all";
-        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 transition-all";
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-brand text-white shadow-lg shadow-brand/20 transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-all";
     } else {
-        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:bg-slate-100 transition-all";
-        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-lg transition-all";
+        dateBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-secondary hover:bg-surface-alt transition-all";
+        allBtn.className = "flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-lg shadow-rose-500/20 transition-all";
     }
 }
 
@@ -643,9 +682,60 @@ function applyScanLogFilters() {
     if (noData) {
         noData.classList.toggle('hidden', filteredCount > 0);
     }
+
+    // Sort the filtered rows
+    const tbody = document.querySelector('#logTable tbody');
+    const rowsArray = Array.from(document.querySelectorAll('.log-row'));
+    
+    rowsArray.sort((a, b) => {
+        const timeA = parseInt(a.dataset.timestamp);
+        const timeB = parseInt(b.dataset.timestamp);
+        return currentLogSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+
+    // Re-append sorted rows
+    rowsArray.forEach(row => tbody.appendChild(row));
 }
 
-document.addEventListener('DOMContentLoaded', applyScanLogFilters);
+document.addEventListener('DOMContentLoaded', function() {
+    applyScanLogFilters();
+
+    // --- FLATPICKR QUICK CALENDAR ---
+    const rangeSelect = document.getElementById('range-select');
+    const trigger     = document.getElementById('range-picker-trigger');
+    const form        = document.getElementById('filterForm');
+
+    if (rangeSelect && trigger && form) {
+        const fp = flatpickr(trigger, {
+            mode: 'range',
+            monthSelectorType: 'dropdown',
+            dateFormat: 'Y-m-d',
+            defaultDate: ['<?= $start_date ?>', '<?= $end_date ?>'],
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    document.getElementById('start_date').value = instance.formatDate(selectedDates[0], 'Y-m-d');
+                    document.getElementById('end_date').value   = instance.formatDate(selectedDates[1], 'Y-m-d');
+                    form.submit();
+                } else {
+                    if (rangeSelect.value === 'custom' && '<?= $range ?>' !== 'custom') {
+                        rangeSelect.value = '<?= $range ?>';
+                    }
+                }
+            }
+        });
+
+        rangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                fp.open();
+            } else {
+                form.submit();
+            }
+        });
+
+        const changeBtn = document.getElementById('change-range-btn');
+        if (changeBtn) changeBtn.addEventListener('click', () => fp.open());
+    }
+});
 </script>
 
 <?php include '../../includes/footer.php'; ?>

@@ -2,28 +2,48 @@
 require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 
+// --- DATE FILTER LOGIC ---
+$range = $_GET['range'] ?? '1week';
+$start_date = $_GET['start_date'] ?? null;
+$end_date   = $_GET['end_date']   ?? null;
+
+if ($range !== 'custom') {
+    $end_date = date('Y-m-d');
+    switch ($range) {
+        case 'today':  $start_date = date('Y-m-d'); break;
+        case '1week':  $start_date = date('Y-m-d', strtotime('-7 days')); break;
+        case '1month': $start_date = date('Y-m-d', strtotime('-30 days')); break;
+        case '1year':  $start_date = date('Y-m-d', strtotime('-365 days')); break;
+        default:       $start_date = date('Y-m-d', strtotime('-7 days')); break;
+    }
+}
+$db_start = $start_date . ' 00:00:00';
+$db_end   = $end_date   . ' 23:59:59';
+
 // --- DATA FETCHING (TRAFFIC FLOW) ---
-$hourly_flow = $pdo->query("
+$stmt = $pdo->prepare("
     SELECT 
         HOUR(check_in_time) as hour,
         COUNT(*) as entries
     FROM `transaction`
-    WHERE check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    WHERE check_in_time BETWEEN ? AND ?
     GROUP BY hour
     ORDER BY hour ASC
-")->fetchAll();
+");
+$stmt->execute([$db_start, $db_end]);
+$hourly_flow = $stmt->fetchAll();
 
 $max_entries = 0;
 foreach($hourly_flow as $hf) { if($hf['entries'] > $max_entries) $max_entries = $hf['entries']; }
 $max_entries = $max_entries ?: 1;
 
-$page_title = 'Traffic Flow';
-$page_subtitle = 'Hourly entry volume analysis for the past 7 days.';
+$page_title    = 'Traffic Flow';
+$page_subtitle = 'Hourly entry volume analysis — select a date range to explore.';
 
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <style>
 .hour-card {
@@ -77,10 +97,34 @@ include '../../includes/header.php';
             </div>
         </div>
         
-        <div class="flex items-center gap-4 bg-surface border border-color rounded-2xl px-6 py-3 shadow-sm">
-            <i class="fa-solid fa-calendar-days text-brand text-sm"></i>
-            <span class="text-[11px] font-black uppercase tracking-widest text-primary">Last 7 Days Data Set</span>
-        </div>
+        <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
+            <div class="relative">
+                <select name="range" id="range-select" class="appearance-none bg-surface-alt border-none px-6 py-3 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
+                    <option value="today"  <?= $range === 'today'  ? 'selected' : '' ?>>Today</option>
+                    <option value="1week"  <?= $range === '1week'  ? 'selected' : '' ?>>1 Week</option>
+                    <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>1 Month</option>
+                    <option value="1year"  <?= $range === '1year'  ? 'selected' : '' ?>>1 Year</option>
+                    <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[9px]"></i>
+            </div>
+
+            <!-- Hidden inputs for custom range -->
+            <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+            <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
+            <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
+
+            <?php if($range === 'custom'): ?>
+            <div class="flex items-center gap-2 px-4 border-l border-color">
+                <button type="button" id="change-range-btn" class="flex items-center gap-3 hover:text-brand transition-colors group">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-primary">
+                        <?= date('d M Y', strtotime($start_date)) ?> &mdash; <?= date('d M Y', strtotime($end_date)) ?>
+                    </span>
+                    <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
+                </button>
+            </div>
+            <?php endif; ?>
+        </form>
     </div>
 
     <!-- Main Distribution Card -->
@@ -164,6 +208,42 @@ document.addEventListener('DOMContentLoaded', () => {
             bar.style.width = bar.dataset.width;
         });
     }, 300);
+
+    // --- FLATPICKR QUICK CALENDAR ---
+    const rangeSelect = document.getElementById('range-select');
+    const trigger     = document.getElementById('range-picker-trigger');
+    const form        = document.getElementById('filter-form');
+
+    if (rangeSelect && trigger && form) {
+        const fp = flatpickr(trigger, {
+            mode: 'range',
+            monthSelectorType: 'dropdown',
+            dateFormat: 'Y-m-d',
+            defaultDate: ['<?= $start_date ?>', '<?= $end_date ?>'],
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    document.getElementById('start_date').value = instance.formatDate(selectedDates[0], 'Y-m-d');
+                    document.getElementById('end_date').value   = instance.formatDate(selectedDates[1], 'Y-m-d');
+                    form.submit();
+                } else {
+                    if (rangeSelect.value === 'custom' && '<?= $range ?>' !== 'custom') {
+                        rangeSelect.value = '<?= $range ?>';
+                    }
+                }
+            }
+        });
+
+        rangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                fp.open();
+            } else {
+                form.submit();
+            }
+        });
+
+        const changeBtn = document.getElementById('change-range-btn');
+        if (changeBtn) changeBtn.addEventListener('click', () => fp.open());
+    }
 });
 </script>
 

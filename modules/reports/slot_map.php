@@ -22,7 +22,7 @@ foreach ($all_slots as &$slot) {
     $is_res_area = (int)$slot['is_reservation_only'] === 1;
     if ($is_res_area) {
         $slot['display_label'] = "#RES " . $res_counter++;
-        $slot['display_category'] = "VIP Reservation Area";
+        $slot['display_category'] = "Reservation Only Zone";
     } else {
         $slot['display_label'] = "#" . $reg_counter++;
         $slot['display_category'] = "Standard Regular Area";
@@ -46,7 +46,7 @@ $page_subtitle = 'Real-time visualization of vehicle slot mapping and availabili
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <style>
 /* Visual Map Styles */
@@ -154,7 +154,7 @@ include '../../includes/header.php';
         <div class="px-8 py-6 flex justify-between items-center border-b border-color bg-surface-alt/30">
             <div class="flex items-center gap-5">
                 <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center shadow-lg">
-                    <i class="fa-solid <?= str_contains($cat_name, 'VIP') ? 'fa-crown text-amber-500' : 'fa-layer-group' ?> text-2xl"></i>
+                    <i class="fa-solid <?= str_contains($cat_name, 'Reservation') ? 'fa-shield-halved text-brand' : 'fa-layer-group' ?> text-2xl"></i>
                 </div>
                 <div>
                     <h2 class="font-manrope font-extrabold text-2xl text-primary tracking-tight"><?= htmlspecialchars($cat_name) ?></h2>

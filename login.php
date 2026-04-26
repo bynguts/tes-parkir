@@ -156,9 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <div class="relative z-10">
             <div class="flex items-center gap-4 group">
-                <div class="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-square-p text-white text-2xl"></i>
-                </div>
+                <img src="assets/img/logo_p.png" alt="Logo" class="w-14 h-14 object-contain group-hover:scale-110 transition-transform">
                 <h1 class="text-3xl font-manrope font-black text-white tracking-tight">SmartParking</h1>
             </div>
         </div>
@@ -203,9 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="w-full max-w-[420px] animate-slide">
             <!-- Mobile Brand Header -->
             <div class="lg:hidden flex flex-col items-center mb-12">
-                <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-2xl mb-6">
-                    <i class="fa-solid fa-square-p text-white text-3xl"></i>
-                </div>
+                <img src="assets/img/logo_p.png" alt="Logo" class="w-16 h-16 object-contain mb-6 filter invert brightness-0">
                 <h1 class="text-3xl font-manrope font-black text-[#0f172a] tracking-tight">SmartParking</h1>
             </div>
 

@@ -32,7 +32,7 @@ $page_subtitle = 'Financial parameter settings for the parking auto-billing syst
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
@@ -95,14 +95,15 @@ include '../../includes/header.php';
                     <div>
                         <h2 class="text-2xl font-manrope font-black text-primary tracking-tight"><?= $label ?></h2>
                         <p class="text-tertiary mt-1 text-sm font-medium">Algorithmic pricing parameters for <?= $r['vehicle_type'] ?> vehicles.</p>
-                    </div>
+
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <!-- Parameters Card -->
                 <div class="lg:col-span-7 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
-                    <form method="POST" class="space-y-12">
+                    <div class="absolute -right-16 -top-16 w-48 h-48 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-700"></div>
+                    <form method="POST" class="relative z-10 space-y-12">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="rate_id" value="<?= $r['rate_id'] ?>">
@@ -147,15 +148,22 @@ include '../../includes/header.php';
                 </div>
 
                 <!-- Simulation Card -->
-                <div class="lg:col-span-5 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl overflow-hidden">
-                    <div class="flex items-center justify-between mb-10">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-surface-alt border border-color flex items-center justify-center shadow-sm">
-                                <i class="fa-solid fa-microchip text-brand text-lg"></i>
+                <div class="lg:col-span-5 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+                    <div class="absolute -right-16 -top-16 w-48 h-48 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-700"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-10">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-surface-alt border border-color flex items-center justify-center shadow-sm">
+                                    <i class="fa-solid fa-microchip text-brand text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Simulation</p>
+                                    <p class="text-[9px] font-bold text-tertiary uppercase mt-0.5">Live Engine Response</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Simulation</p>
-                                <p class="text-[9px] font-bold text-tertiary uppercase mt-0.5">Live Engine Response</p>
+                            <div class="px-3 py-1 rounded-full bg-brand/10 border border-brand/20 flex items-center gap-1.5">
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></div>
+                                <span class="text-[9px] font-black text-brand uppercase tracking-widest">Active</span>
                             </div>
                         </div>
                     </div>

@@ -21,7 +21,7 @@ $page_subtitle = date('l, d F Y — H:i');
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     

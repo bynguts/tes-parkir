@@ -123,8 +123,41 @@ if (!in_array($theme, ['light', 'dark'], true)) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/theme.css">
+    
+    <script>
+        // CRITICAL: Prevent theme flicker
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        })();
+    </script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        darkMode: ['selector', '[data-theme="dark"]'],
+        theme: {
+            extend: {
+                fontFamily: {
+                    'manrope': ['Manrope', 'sans-serif'],
+                    'inter': ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    'brand': 'var(--brand)',
+                    'surface': 'var(--surface)',
+                    'surface-alt': 'var(--surface-alt)',
+                    'bg-page': 'var(--bg-page)',
+                    'primary': 'var(--text-primary)',
+                    'secondary': 'var(--text-secondary)',
+                    'border-color': 'var(--border-color)',
+                },
+            }
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="../../assets/css/theme.css">
     <style>
         * { font-family: 'Inter', sans-serif; }
         .font-code { font-family: 'Courier Prime', monospace !important; letter-spacing: 0.05em; }
@@ -146,15 +179,33 @@ if (!in_array($theme, ['light', 'dark'], true)) {
         .receipt-primary-btn:hover {
             background-color: var(--hover-border) !important;
         }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes progressShrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .animate-slide-in { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-out { animation: slideOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .notification-progress { animation: progressShrink 5s linear forwards; }
     </style>
 </head>
 <body class="h-screen overflow-hidden bg-page flex items-center justify-center px-4 py-3 font-inter antialiased">
 
-<div class="receipt-shell w-full max-w-sm fade-up">
+    <!-- Push Notification Container -->
+    <div id="push-notification-container" class="fixed top-10 right-10 z-[999999] flex flex-col gap-3 w-[380px] pointer-events-none"></div>
+
+<div class="receipt-shell w-full max-w-sm fade-up relative z-10">
 
     <!-- Status Header -->
     <div class="flex flex-col items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl icon-container flex items-center justify-center">
+        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center">
             <i class="fa-solid fa-check text-lg text-brand"></i>
         </div>
         <h1 class="text-[38px] font-manrope font-bold text-primary tracking-tight leading-none">Checkout Success</h1>
@@ -179,7 +230,7 @@ if (!in_array($theme, ['light', 'dark'], true)) {
 
         <!-- Vehicle Info (Dashboard List Style) -->
         <div class="bg-surface-alt rounded-2xl p-3.5 flex flex-col items-center justify-center mb-4 border border-color">
-            <div class="w-11 h-11 rounded-xl icon-container flex items-center justify-center mb-2">
+            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center mb-2">
                 <i class="fa-solid <?= $trx['vehicle_type'] === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
             </div>
             <span class="text-lg font-manrope font-bold text-primary leading-none mb-1"><?= $plate ?></span>
@@ -229,7 +280,6 @@ if (!in_array($theme, ['light', 'dark'], true)) {
         Auto-redirect in <span id="cnt" class="text-primary">8</span>s
     </p>
 </div>
-
 <script>
 (() => {
     const savedTheme = localStorage.getItem('theme');
@@ -238,9 +288,82 @@ if (!in_array($theme, ['light', 'dark'], true)) {
     }
 })();
 
+// PUSH NOTIFICATION SYSTEM
+function pushNotify(title, message, type = 'info', code = null) {
+    const container = document.getElementById('push-notification-container');
+    const id = 'notif-' + Date.now();
+    
+    let iconBg = 'bg-indigo-500/10';
+    let iconColor = 'text-indigo-500';
+    let icon = 'fa-info-circle';
+    
+    if (type === 'success') {
+        iconBg = 'bg-emerald-500/10';
+        iconColor = 'text-emerald-500';
+        icon = 'fa-circle-check';
+    } else if (type === 'error') {
+        iconBg = 'bg-rose-500/10';
+        iconColor = 'text-rose-500';
+        icon = 'fa-circle-exclamation';
+    } else if (type === 'ticket') {
+        iconBg = 'bg-brand/10';
+        iconColor = 'text-brand';
+        icon = 'fa-ticket';
+    }
+
+    const html = `
+        <div id="${id}" class="notification-item bento-card !p-0 flex flex-col animate-slide-in pointer-events-auto shadow-2xl border border-color overflow-hidden w-[380px] bg-surface/80 backdrop-blur-xl">
+            <div class="flex items-center gap-4 p-4">
+                <div class="w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shrink-0">
+                    <i class="fa-solid ${icon} text-xl ${iconColor}"></i>
+                </div>
+                <div class="flex flex-col min-w-0 flex-1">
+                    <h4 class="text-[15px] font-manrope font-extrabold text-primary truncate tracking-tight">${title}</h4>
+                    <p class="text-[12px] font-medium text-tertiary leading-snug">${message}</p>
+                </div>
+                <button onclick="this.closest('.notification-item').remove()" class="w-8 h-8 rounded-full hover:bg-rose-500/10 text-tertiary/30 hover:text-rose-500 transition-all flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            <div class="h-[3px] bg-brand/5 w-full overflow-hidden">
+                <div class="h-full bg-brand notification-progress opacity-60"></div>
+            </div>
+        </div>
+    `;
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    const el = temp.firstElementChild;
+    container.appendChild(el);
+    
+    setTimeout(() => {
+        el.classList.add('animate-slide-out');
+        setTimeout(() => el.remove(), 400);
+    }, 5000);
+}
+
+// Trigger notification from URL if exists with slight delay for sync
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const msg = urlParams.get('msg');
+        const type = urlParams.get('type') || 'info';
+        const title = urlParams.get('title') || 'Notification';
+        const code = urlParams.get('code');
+        
+        if (msg) {
+            pushNotify(title, msg, type, code);
+        }
+    }, 500);
+});
+
 let s = 8;
 const c = document.getElementById('cnt');
-setInterval(() => { s--; if(c) c.textContent = s; if (s <= 0) window.location.href = 'gate_simulator.php'; }, 1000);
+setInterval(() => { 
+    if (s > 0) s--; 
+    if(c) c.textContent = s; 
+    if (s <= 0) window.location.href = 'gate_simulator.php'; 
+}, 1000);
 </script>
 </body>
 </html>

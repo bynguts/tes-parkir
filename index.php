@@ -228,10 +228,10 @@ include 'includes/header.php';
 
                     <div class="w-full mt-auto pt-4">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-available text-[11px] font-medium font-inter">
+                            <span class="status-badge status-badge-available">
                                 Available: <?= $car_avail + $moto_avail ?>
                             </span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full status-badge-reserved text-[11px] font-medium font-inter">
+                            <span class="status-badge status-badge-reserved">
                                 Reserved: <?= $res_count ?>
                             </span>
                         </div>
@@ -277,10 +277,10 @@ include 'includes/header.php';
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $car_avail ?></span>
-                        <span class="text-[13px] font-inter text-tertiary truncate">Car Slots Available</span>
+                        <span class="text-[13px] font-inter text-tertiary truncate">Car Slot Available</span>
                         <div class="mt-3">
                             <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
-                                <div class="h-full progress-fill rounded-full" style="width: <?= $car_pct ?>%"></div>
+                                <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $car_pct ?>%"></div>
                             </div>
                         </div>
                     </div>
@@ -293,10 +293,10 @@ include 'includes/header.php';
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $moto_avail ?></span>
-                        <span class="text-[13px] font-inter text-tertiary truncate">Motorcycle Slots Available</span>
+                        <span class="text-[13px] font-inter text-tertiary truncate">Motorcycle Slot Available</span>
                         <div class="mt-3">
                             <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
-                                <div class="h-full progress-fill rounded-full" style="width: <?= $moto_pct ?>%"></div>
+                                <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $moto_pct ?>%"></div>
                             </div>
                         </div>
                     </div>
@@ -340,8 +340,12 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">CCTV Check</h3>
                             </div>
                         </div>
-                        <div class="flex items-center px-2 py-0.5 status-badge-over rounded-full">
-                            <span class="text-[11px] font-inter font-medium">Live</span>
+                        <div class="status-badge status-badge-over gap-2">
+                            <span class="flex h-2 w-2 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                            <span class="text-primary">Live</span>
                         </div>
                     </div>
 
@@ -372,12 +376,17 @@ include 'includes/header.php';
             <!-- 2: Parking Intensity Chart (Swapped to Row 2) -->
             <div class="col-span-12 lg:col-span-8">
                 <div class="bento-card p-4 flex flex-col h-full overflow-hidden transition-all duration-300">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-chart-line text-lg"></i>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-chart-line text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="card-title leading-tight">Parking Intensity</h3>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="card-title leading-tight">Parking Intensity</h3>
+                        <div class="flex items-center px-2.5 py-1 bg-surface-alt border border-color rounded-full shrink-0">
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Today</span>
                         </div>
                     </div>
  
@@ -478,7 +487,7 @@ include 'includes/header.php';
                                 <tr class="group hover:bg-surface-alt/50 transition-colors">
                                     <td class="py-2 text-left align-middle">
                                         <div class="flex items-center">
-                                            <div class="w-9 h-9 rounded-lg icon-container flex items-center justify-center shrink-0 transition-all">
+                                            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
                                                 <i class="fa-solid <?= $log['vehicle_type'] === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
                                             </div>
                                         </div>
@@ -517,15 +526,15 @@ include 'includes/header.php';
                                     <td class="py-2 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-reserved">
+                                                <span class="status-badge status-badge-reserved">
                                                     Reserved
                                                 </span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-parked">
+                                                <span class="status-badge status-badge-parked">
                                                     Parked
                                                 </span>
                                             <?php else: ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-inter status-badge-departed">
+                                                <span class="status-badge status-badge-departed">
                                                     Departed
                                                 </span>
                                             <?php endif; ?>
@@ -556,9 +565,9 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <div class="flex items-center px-2 py-0.5 status-badge-available rounded-full">
-                            <span class="text-[11px] font-inter font-medium"><?= count($active_staff) ?> Active</span>
-                        </div>
+                        <span class="status-badge status-badge-available">
+                            <?= count($active_staff) ?> Active
+                        </span>
                     </div>
 
                     <div class="space-y-2 flex-grow overflow-y-auto custom-scrollbar pr-1">
@@ -764,8 +773,8 @@ function initChart(data) {
                 y: {
                     stacked: true,
                     beginAtZero: true,
-                    max: 60,
                     grid: { 
+                        display: true,
                         color: borderColor,
                         drawBorder: false,
                         borderDash: [5, 5]
@@ -774,14 +783,29 @@ function initChart(data) {
                     ticks: {
                         font: { family: 'Inter', size: 10 },
                         color: secondaryColor,
-                        stepSize: 10,
                         padding: 8
                     }
                 }
             },
             animation: {
-                duration: 1000,
+                duration: 800,
                 easing: 'easeOutQuart'
+            },
+            animations: {
+                y: {
+                    from: (ctx) => ctx.chart.scales.y.getPixelForValue(0),
+                    delay: (ctx) => {
+                        if (ctx.type !== 'data') return 0;
+                        return (ctx.dataIndex * 30) + (ctx.datasetIndex * 800);
+                    }
+                },
+                base: {
+                    from: (ctx) => ctx.chart.scales.y.getPixelForValue(0),
+                    delay: (ctx) => {
+                        if (ctx.type !== 'data') return 0;
+                        return (ctx.dataIndex * 30) + (ctx.datasetIndex * 800);
+                    }
+                }
             }
         }
     });

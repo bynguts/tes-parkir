@@ -66,7 +66,7 @@ $page_subtitle = 'Management of gate operators and administrative staff profiles
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10">
     

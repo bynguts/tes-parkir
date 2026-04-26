@@ -77,7 +77,7 @@ $totals = $totals_stmt->fetch();
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
@@ -93,9 +93,9 @@ include '../../includes/header.php';
             </div>
         </div>
 
-        <form method="GET" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
+        <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
             <div class="relative">
-                <select name="range" onchange="this.form.submit()" class="appearance-none bg-surface-alt border-none px-6 py-3 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
+                <select name="range" id="range-select" class="appearance-none bg-surface-alt border-none px-6 py-3 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
                     <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
                     <option value="24h" <?= $range === '24h' ? 'selected' : '' ?>>24 Hours</option>
                     <option value="1week" <?= $range === '1week' ? 'selected' : '' ?>>1 Week</option>
@@ -106,13 +106,18 @@ include '../../includes/header.php';
                 <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[9px]"></i>
             </div>
 
+            <!-- Hidden inputs for custom range -->
+            <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+            <input type="hidden" name="end_date" id="end_date" value="<?= $end_date ?>">
+            <input type="text" id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
+
             <?php if($range === 'custom'): ?>
             <div class="flex items-center gap-2 px-4 border-l border-color animate-in slide-in-from-right-4">
-                <input type="date" name="start_date" value="<?= $start_date ?>" class="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest text-primary focus:ring-0">
-                <span class="text-tertiary font-bold">/</span>
-                <input type="date" name="end_date" value="<?= $end_date ?>" class="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest text-primary focus:ring-0">
-                <button type="submit" class="bg-brand text-white w-10 h-10 rounded-xl flex items-center justify-center hover:brightness-110 shadow-lg shadow-brand/20">
-                    <i class="fa-solid fa-sync text-xs"></i>
+                <button type="button" id="change-range-btn" class="flex items-center gap-3 hover:text-brand transition-colors group">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-primary">
+                        <?= date('d M Y', strtotime($start_date)) ?> — <?= date('d M Y', strtotime($end_date)) ?>
+                    </span>
+                    <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
                 </button>
             </div>
             <?php endif; ?>
@@ -123,6 +128,7 @@ include '../../includes/header.php';
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Net Revenue -->
         <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
             </div>
@@ -137,6 +143,7 @@ include '../../includes/header.php';
 
         <!-- Total Transactions -->
         <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-receipt text-6xl"></i>
             </div>
@@ -155,6 +162,7 @@ include '../../includes/header.php';
 
         <!-- Car Revenue -->
         <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-car text-6xl"></i>
             </div>
@@ -171,6 +179,7 @@ include '../../includes/header.php';
 
         <!-- Moto Revenue -->
         <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-motorcycle text-6xl"></i>
             </div>
@@ -269,5 +278,46 @@ include '../../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rangeSelect = document.getElementById('range-select');
+    const trigger = document.getElementById('range-picker-trigger');
+    const form = document.getElementById('filter-form');
+    
+    if (!rangeSelect || !trigger || !form) return;
+
+    const fp = flatpickr(trigger, {
+        mode: "range",
+        monthSelectorType: "dropdown",
+        dateFormat: "Y-m-d",
+        defaultDate: ["<?= $start_date ?>", "<?= $end_date ?>"],
+        onClose: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                document.getElementById('start_date').value = instance.formatDate(selectedDates[0], "Y-m-d");
+                document.getElementById('end_date').value = instance.formatDate(selectedDates[1], "Y-m-d");
+                form.submit();
+            } else {
+                if (rangeSelect.value === 'custom' && "<?= $range ?>" !== 'custom') {
+                    rangeSelect.value = "<?= $range ?>";
+                }
+            }
+        }
+    });
+
+    rangeSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            fp.open();
+        } else {
+            form.submit();
+        }
+    });
+
+    const changeBtn = document.getElementById('change-range-btn');
+    if (changeBtn) {
+        changeBtn.addEventListener('click', () => fp.open());
+    }
+});
+</script>
 
 <?php include '../../includes/footer.php'; ?>

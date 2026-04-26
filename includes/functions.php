@@ -254,7 +254,7 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     // Group slots by Category (is_reservation_only)
     $slots = $pdo->query("
         SELECT 
-            CASE WHEN ps.is_reservation_only = 1 THEN 'VIP Reservation' ELSE 'Standard Regular' END AS zone_name,
+            CASE WHEN ps.is_reservation_only = 1 THEN 'Reservation Only' ELSE 'Standard Regular' END AS zone_name,
             ps.slot_type,
             COUNT(*) AS total,
             SUM(ps.status='available') AS available,

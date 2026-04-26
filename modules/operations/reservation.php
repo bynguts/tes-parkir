@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $vid  = $pdo->query("SELECT vehicle_id FROM vehicle WHERE plate_number='".addslashes($plate)."'")->fetchColumn();
                 $code = generate_reservation_code($pdo);
 
-                $pdo->prepare("INSERT INTO reservation (vehicle_id, plate_number, slot_id, reservation_code, reserved_from, reserved_until, status)
-                                VALUES (?,?,?,?,?,?,'confirmed')")
+                $pdo->prepare("INSERT INTO reservation (vehicle_id, plate_number, slot_id, reservation_code, reserved_from, reserved_until, status, is_public)
+                                VALUES (?,?,?,?,?,?,'confirmed', 0)")
                     ->execute([$vid, $plate, $slot['slot_id'], $code, $date_from, $date_until]);
 
                 $msg = "Reservation successful! Code: <strong class='font-mono'>{$code}</strong>";
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $reservations = $pdo->query("
-    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.reserved_until, r.status, r.slot_id,
+    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.reserved_until, r.status, r.slot_id, r.is_public,
            v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
            ps.slot_number, f.floor_code AS floor
     FROM reservation r
@@ -169,57 +169,11 @@ $page_actions = '
 include '../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 <!-- Flatpickr -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-/* =====================================
-   FLATPICKR THEME — INDIGO NIGHT
-   ===================================== */
-.flatpickr-calendar {
-    font-family: 'Inter', sans-serif !important;
-    background: var(--surface) !important;
-    border-radius: 24px !important;
-    border: 1px solid var(--border-color) !important;
-    box-shadow: 0 25px 50px -12px var(--shadow-color) !important;
-    padding: 16px !important;
-    width: 388px !important;
-}
-
-.flatpickr-day.selected { background: var(--brand) !important; border-color: var(--brand) !important; }
-.flatpickr-day.today { border-color: var(--brand) !important; }
-.flatpickr-day:hover { background: var(--surface-alt) !important; }
-.flatpickr-day.flatpickr-disabled { opacity: 0.1 !important; pointer-events: none; }
-
-.flatpickr-months, .flatpickr-weekday, .flatpickr-day {
-    color: var(--text-primary) !important; fill: var(--text-primary) !important;
-}
-
-.flatpickr-weekday { color: var(--text-secondary) !important; opacity: 0.5; font-size: 10px !important; font-weight: 800 !important; text-transform: uppercase; }
-
-.flatpickr-time {
-    border-top: 1px solid var(--border-color) !important;
-    background: var(--surface) !important;
-}
-
-.fp-inject {
-    background: var(--surface-alt); color: var(--text-primary); font-weight: 700; font-size: 14px;
-    padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color);
-    cursor: pointer; font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s;
-}
-.fp-inject:hover { border-color: var(--brand); }
-
-.flatpickr-custom-btn {
-    display: flex; justify-content: space-between;
-    padding: 16px 8px 4px; border-top: 1px solid var(--border-color); margin-top: 12px;
-}
-.flatpickr-custom-btn button {
-    background: transparent; border: none; color: var(--text-secondary);
-    font-size: 11px; cursor: pointer; font-family: 'Inter', sans-serif;
-    font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; transition: color .15s;
-}
-.flatpickr-custom-btn button:hover { color: var(--brand); }
-.flatpickr-custom-btn button.ok { color: var(--brand); }
+/* Vtype Selector */
 
 /* Vtype Selector */
 .vtype-btn {
@@ -297,7 +251,7 @@ include '../../includes/header.php';
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col">
                                         <span class="font-manrope font-black text-[13px] text-brand tracking-widest leading-none mb-1"><?= htmlspecialchars($r['reservation_code']) ?></span>
-                                        <?php if ($r['status'] === 'used'): ?>
+                                         <?php if ($r['status'] === 'used'): ?>
                                             <div class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-md w-fit">
                                                 <span class="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></span>
                                                 Inside
@@ -306,6 +260,13 @@ include '../../includes/header.php';
                                             <div class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md w-fit">
                                                 <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
                                                 Waiting
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($r['is_public']): ?>
+                                            <div class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-brand bg-brand/10 px-2 py-0.5 rounded-md w-fit mt-1">
+                                                <i class="fa-solid fa-earth-americas text-[8px]"></i>
+                                                Public
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -327,7 +288,7 @@ include '../../includes/header.php';
                                             $display_slot = "#RES " . $res_counter++;
                                         ?>
                                         <span class="text-[13px] font-manrope font-black text-primary leading-none mb-1"><?= $display_slot ?></span>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase">VIP AREA</span>
+                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase">RSV ZONE</span>
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
@@ -531,24 +492,8 @@ include '../../includes/header.php';
 
     function buildDropdowns(instance) {
         var cal = instance.calendarContainer;
-        Array.prototype.forEach.call(cal.querySelectorAll('.fp-inject'), function(el) { el.remove(); });
-        var builtinMonth = cal.querySelector('.flatpickr-monthDropdown-months');
-        if (builtinMonth) {
-            var monthSel = makeSelect(
-                MONTHS.map(function(l, i) { return {v: i, l: l}; }),
-                instance.currentMonth,
-                function(val) { instance.changeMonth(val - instance.currentMonth, true); }
-            );
-            builtinMonth.parentNode.insertBefore(monthSel, builtinMonth.nextSibling);
-        }
-        var yearWrapper = cal.querySelector('.flatpickr-current-month .numInputWrapper');
-        if (yearWrapper) {
-            var curY = new Date().getFullYear();
-            var yearOpts = [];
-            for (var y = curY - 1; y <= curY + 10; y++) yearOpts.push({v: y, l: y});
-            var yearSel = makeSelect(yearOpts, instance.currentYear, function(val) { instance.changeYear(val); });
-            yearWrapper.parentNode.insertBefore(yearSel, yearWrapper.nextSibling);
-        }
+        // We now use native monthSelectorType: "dropdown"
+        // but keep the hour/minute overrides below
         var hourInput = cal.querySelector('input.flatpickr-hour');
         if (hourInput) {
             var hw = hourInput.closest('.numInputWrapper');
@@ -602,14 +547,21 @@ include '../../includes/header.php';
 
     var minDate = new Date("<?= date('Y-m-d\TH:i', strtotime('+5 minutes')) ?>");
     var fromPicker = flatpickr("#from_dt", {
-        enableTime: true, dateFormat: "Y-m-d\\TH:i",
-        minDate: minDate, time_24hr: true, minuteIncrement: 15,
+        enableTime: true, 
+        dateFormat: "Y-m-d\\TH:i",
+        monthSelectorType: "dropdown",
+        minDate: minDate, 
+        time_24hr: true, 
+        minuteIncrement: 15,
         onReady: onReady
     });
 
     var editPicker = flatpickr("#edit_from_dt", {
-        enableTime: true, dateFormat: "Y-m-d\\TH:i",
-        time_24hr: true, minuteIncrement: 15,
+        enableTime: true, 
+        dateFormat: "Y-m-d\\TH:i",
+        monthSelectorType: "dropdown",
+        time_24hr: true, 
+        minuteIncrement: 15,
         onReady: onReady
     });
 

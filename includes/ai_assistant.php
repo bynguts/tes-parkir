@@ -1,11 +1,11 @@
-<!-- Cereza: Floating Assistant UI -->
+<!-- SmartParking: Floating Assistant UI -->
 <!-- Marked.js for Markdown → HTML rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 
-<div id="archive-ai-root" class="z-[9999]">
+<div id="archive-ai-root" class="relative z-[999999]">
     
     <!-- Chat Window (Glassmorphism) -->
-    <div id="ai-chat-window" class="hidden fixed bottom-8 right-8 flex flex-col w-[420px] h-[580px] bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-color overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
+    <div id="ai-chat-window" class="hidden fixed bottom-24 right-8 flex flex-col w-[360px] h-[520px] bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-color overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right z-[999999]">
         <!-- Header -->
         <div class="px-5 py-4 flex items-center justify-between flex-shrink-0 bg-brand">
             <div class="flex items-center gap-3">
@@ -52,15 +52,28 @@
                 <form id="ai-chat-form" class="relative group flex items-center gap-2">
                     <input type="text" id="ai-user-input" 
                            placeholder="Ask something about SmartParking..." 
-                           class="flex-1 bg-surface border border-color rounded-xl px-4 py-2.5 text-sm font-inter text-primary placeholder-secondary focus:outline-none focus:border-brand transition-colors"
+                           class="flex-1 bg-surface border border-color rounded-xl px-4 py-2.5 text-[13px] font-inter text-primary placeholder-secondary focus:outline-none focus:border-brand transition-colors"
                            autocomplete="off">
                     <button type="submit" class="w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all flex-shrink-0 bg-brand">
-                        <i class="fa-solid fa-paper-plane text-[13px]"></i>
+                        <i class="fa-solid fa-paper-plane text-lg"></i>
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- Cereza FAB: Fixed circular button at bottom-right -->
+    <button id="cereza-fab" onclick="toggleAIChat()"
+            title="Ask Cereza"
+            style="position:fixed; bottom:28px; right:28px; z-index:999999; width:52px; height:52px; border-radius:50%; background:var(--brand); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px -4px color-mix(in srgb, var(--brand) 60%, transparent); transition: transform 0.2s ease, box-shadow 0.2s ease;"
+            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 12px 32px -4px color-mix(in srgb, var(--brand) 70%, transparent)';"
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 24px -4px color-mix(in srgb, var(--brand) 60%, transparent)';">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" style="width:22px; height:22px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        </svg>
+    </button>
 
 <script>
 // Configure marked.js for safe rendering
@@ -71,8 +84,8 @@ marked.setOptions({
 });
 
 let aiChatVisible = false;
-const ACTIVE_KEY = 'cereza_active_session';
-const HISTORY_KEY = 'cereza_chat_history';
+const ACTIVE_KEY = 'smartparking_active_session';
+const HISTORY_KEY = 'smartparking_chat_history';
 
 function formatWIB(dateString) {
     const date = new Date(dateString);
@@ -104,7 +117,7 @@ function switchView(view) {
         chatArea.classList.remove('hidden');
         historyArea.classList.add('hidden');
         title.textContent = 'Cereza';
-        status.textContent = 'SmartParking Assistant';
+        status.textContent = 'Cereza Assistant';
         btnBack.classList.add('hidden');
         btnHist.classList.remove('hidden');
     }
@@ -210,10 +223,16 @@ function loadAISession() {
     if (session) {
         area.innerHTML = '';
         const messages = JSON.parse(session);
-        messages.forEach(msg => appendMessage(msg.role, msg.text, false, msg.ts));
+        messages.forEach(msg => appendMessage(msg.role, msg.text, false, msg.ts, false));
+        
+        // Restore scroll position after loading messages
+        const savedScroll = localStorage.getItem('smartparking_scroll_pos');
+        if (savedScroll !== null) {
+            area.scrollTop = parseInt(savedScroll);
+        }
     } else {
-        const initialText = "Hello, I'm **Cereza**. How can I assist you with SmartParking operations today? I can analyze revenue data, slot availability, or provide strategic advice.";
-        appendMessage('bot', initialText, true);
+        const initialText = "Hello, I'm **Cereza**. I manage the unified parking data for your enterprise network. Currently analyzing live feeds from **Berserk Mall**. How can I assist you today?";
+        appendMessage('bot', initialText, true, null, true);
     }
 }
 
@@ -227,19 +246,32 @@ function saveAISession(role, text, ts) {
 function toggleAIChat() {
     const win = document.getElementById('ai-chat-window');
     const input = document.getElementById('ai-user-input');
+    const area = document.getElementById('ai-message-area');
 
     if (aiChatVisible) {
+        // Save scroll position before closing
+        localStorage.setItem('smartparking_scroll_pos', area.scrollTop);
+        
         win.classList.add('scale-95', 'opacity-0');
         setTimeout(() => win.classList.add('hidden'), 280);
     } else {
         win.classList.remove('hidden');
+        
+        // Restore scroll position before showing
+        const savedScroll = localStorage.getItem('smartparking_scroll_pos');
+        if (savedScroll !== null) {
+            area.scrollTop = savedScroll;
+        } else {
+            area.scrollTop = area.scrollHeight;
+        }
+        
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => win.classList.remove('scale-95', 'opacity-0'));
+            win.classList.remove('scale-95', 'opacity-0');
         });
         
         setTimeout(() => {
             if (input) input.focus();
-        }, 300);
+        }, 100);
     }
     aiChatVisible = !aiChatVisible;
 }
@@ -276,7 +308,7 @@ document.getElementById('ai-chat-form').addEventListener('submit', async functio
     }
 });
 
-function appendMessage(role, text, save = true, ts = null) {
+function appendMessage(role, text, save = true, ts = null, shouldScroll = true) {
     const area = document.getElementById('ai-message-area');
     const wrapper = document.createElement('div');
     wrapper.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-1 ai-msg-anim`;
@@ -308,7 +340,10 @@ function appendMessage(role, text, save = true, ts = null) {
     wrapper.appendChild(bubble);
     wrapper.appendChild(tsEl);
     area.appendChild(wrapper);
-    area.scrollTop = area.scrollHeight;
+    
+    if (shouldScroll) {
+        area.scrollTop = area.scrollHeight;
+    }
 
     if (save) saveAISession(role, text, timestamp);
 }
@@ -336,9 +371,20 @@ function removeTyping(id) {
 
 document.addEventListener('click', function(e) {
     const win = document.getElementById('ai-chat-window');
-    const isToggle = e.target.closest('button[onclick="toggleAIChat()"]');
+    const area = document.getElementById('ai-message-area');
+    const isToggle = e.target.closest('#cereza-fab') || e.target.closest('button[onclick="toggleAIChat()"]');
     if (aiChatVisible && !win.contains(e.target) && !isToggle) {
+        // Save scroll position before auto-closing
+        localStorage.setItem('smartparking_scroll_pos', area.scrollTop);
         toggleAIChat();
+    }
+});
+
+// Also save scroll position on window unload to be safe
+window.addEventListener('beforeunload', () => {
+    const area = document.getElementById('ai-message-area');
+    if (area) {
+        localStorage.setItem('smartparking_scroll_pos', area.scrollTop);
     }
 });
 </script>
@@ -395,8 +441,8 @@ document.addEventListener('click', function(e) {
     line-height: 1.3;
     color: var(--text-primary);
 }
-.ai-bubble-bot h1 { font-size: 15px; }
-.ai-bubble-bot h2 { font-size: 14px; padding-bottom: 4px; }
+.ai-bubble-bot h1 { font-size: 13px; font-weight: 800; }
+.ai-bubble-bot h2 { font-size: 13px; font-weight: 800; padding-bottom: 2px; }
 .ai-bubble-bot h3 { font-size: 13px; color: var(--text-primary); font-weight: 800; }
 .ai-bubble-bot p { margin-bottom: 0.75rem; }
 .ai-bubble-bot em { font-style: italic; color: var(--text-secondary); }
@@ -420,9 +466,6 @@ document.addEventListener('click', function(e) {
 .ai-msg-anim { animation: aiBubbleIn 0.3s cubic-bezier(.16,1,.3,1) forwards; }
 @keyframes aiBubbleIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-@keyframes gemini-idle { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+/* Star icon — no animation */
 .star-path { transform-origin: center; transform-box: fill-box; }
-.star-1 { animation: gemini-idle 2.5s ease-in-out infinite; }
-.star-2 { animation: gemini-idle 2.5s ease-in-out infinite 0.8s; }
-.star-3 { animation: gemini-idle 2.5s ease-in-out infinite 1.6s; }
 </style>

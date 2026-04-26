@@ -2,16 +2,46 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+if (!defined('BASE_URL')) {
+    define('BASE_URL', ''); 
+}
 $username  = htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'User');
 $role      = $_SESSION['role'] ?? 'operator';
 $page_title = $page_title ?? 'Parking System';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<?php $sidebar_collapsed = ($_COOKIE['sidebar_collapsed'] ?? 'false') === 'true'; ?>
+<html lang="en" class="<?= $sidebar_collapsed ? 'sidebar-collapsed' : '' ?>" data-theme="<?= htmlspecialchars($_COOKIE['theme'] ?? 'light') ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($page_title) ?> — SmartParking</title>
+
+    <script>
+        // CRITICAL: Prevent theme, sidebar, and layout flicker by applying state before ANY render
+        (function() {
+            // 1. Theme State (Priority: localStorage > system preference)
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+
+            // 2. Sidebar state
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            if (isCollapsed) {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+            
+            // 3. Readiness Signal
+            window.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    document.documentElement.classList.add('sidebar-ready');
+                }, 50);
+            });
+        })();
+    </script>
 
     <!-- Google Fonts: Manrope + Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +50,10 @@ $page_title = $page_title ?? 'Parking System';
 
     <!-- Font Awesome 6.5.1 (Free) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Flatpickr (Date Picker) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,7 +80,7 @@ $page_title = $page_title ?? 'Parking System';
     }
     </script>
     <!-- Custom Indigo Night Theme -->
-    <link rel="stylesheet" href="<?= (isset($is_module) && $is_module) ? '../../' : '' ?>assets/css/theme.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/theme.css?v=<?= time() ?>">
 
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -116,73 +150,118 @@ $page_title = $page_title ?? 'Parking System';
             scrollbar-width: none !important;
         }
 
-        /* Sidebar active link */
-        .nav-active {
-            background-color: #0f172a !important;
-            color: #ffffff !important;
-        }
-        .nav-active i { color: #ffffff !important; }
 
-        /* Sidebar collapse/expand animation */
-        aside {
-            transition: width 0.3s ease, margin-left 0.3s ease;
-            width: 256px;
+        /* 1. Sidebar Base Widths (Immediate, no transition on load) */
+        aside { 
+            width: 256px; 
+            overflow-x: hidden;
         }
-        aside.collapsed {
-            width: 80px;
-        }
-        aside.collapsed .sidebar-label {
-            display: none;
-        }
-        aside.collapsed .sidebar-brand-text {
-            display: none;
-        }
-        aside.collapsed .sidebar-badge {
-            display: none;
-        }
-        aside.collapsed .sidebar-icon-only {
-            justify-content: center;
-        }
-        aside.collapsed nav {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
-        aside.collapsed #sidebar-toggle {
-            width: 100%;
-            border-radius: 0;
-        }
-        main {
-            transition: padding-left 0.3s ease;
-            padding-left: 256px;
-        }
-        main.sidebar-collapsed {
-            padding-left: 80px;
+        main { padding-left: 256px; }
+        header {
+            left: 256px;
+            right: 0;
+            width: auto !important;
         }
 
-        /* Status badge dot */
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-        .animate-pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+        /* Enable transitions ONLY after load (prevents jump on refresh) */
+        html.sidebar-ready aside, 
+        html.sidebar-ready main,
+        html.sidebar-ready header,
+        html.sidebar-ready .sidebar-label,
+        html.sidebar-ready .sidebar-brand-text,
+        html.sidebar-ready .sidebar-badge,
+        html.sidebar-ready .sidebar-label-text,
+        html.sidebar-ready .sidebar-link,
+        html.sidebar-ready aside nav {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
 
-        /* Progress bar */
-        .progress-bar-fill { transition: width 0.8s ease; }
+        /* 2. Sidebar Collapsed State (Single Source of Truth) */
+        html.sidebar-collapsed aside { width: 80px; }
+        html.sidebar-collapsed main { padding-left: 80px; }
+        html.sidebar-collapsed header { left: 80px; }
+
+        /* 3. Element Visibility & Centering */
+        .sidebar-label,
+        .sidebar-brand-text,
+        .sidebar-badge,
+        .sidebar-label-text {
+            opacity: 1;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+            width: auto;
+        }
+
+        html.sidebar-collapsed .sidebar-label,
+        html.sidebar-collapsed .sidebar-brand-text,
+        html.sidebar-collapsed .sidebar-badge,
+        html.sidebar-collapsed .sidebar-label-text {
+            opacity: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            pointer-events: none !important;
+            overflow: hidden;
+        }
+
+        html.sidebar-collapsed aside .sidebar-link {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            width: 48px !important;
+            height: 48px !important;
+            gap: 0 !important;
+        }
+
+        .sidebar-link i {
+            min-width: 24px;
+            text-align: center;
+        }
+
+        html.sidebar-collapsed aside .sidebar-link i {
+            margin: 0 !important;
+            font-size: 1.25rem !important;
+        }
+
+        /* Brand Box Centering */
+        html.sidebar-collapsed .sidebar-brand-box {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            justify-content: center !important;
+        }
+
+        html.sidebar-collapsed .sidebar-brand-box > div {
+            gap: 0 !important;
+            justify-content: center !important;
+        }
+
     </style>
 </head>
 <body class="bg-page text-primary overflow-hidden">
 <?php
+$sidebar_collapsed = ($_COOKIE['sidebar_collapsed'] ?? 'false') === 'true';
 if (!isset($hide_sidebar) || !$hide_sidebar) {
     include 'sidebar.php';
 }
 ?>
 
 <!-- Main Content Wrapper & Scroll Container -->
-<main class="pl-64 min-h-screen bg-page text-primary">
+<main class="min-h-screen bg-page text-primary">
 
     <!-- Global Top Bar (Sticky) -->
     <?php if (!isset($hide_header) || !$hide_header): ?>
-    <header class="flex justify-between items-center px-10 h-20 sticky top-0 z-30 bg-page border-b border-color">
-        <!-- Search Bar (Left Aligned) -->
+    <header class="flex items-center pl-10 pr-10 h-20 sticky top-0 z-30 bg-page border-b border-color gap-3">
+        <button id="sidebar-toggle" class="w-11 h-11 bento-card flex items-center justify-center transition-all shrink-0 group hover:scale-105 active:scale-95" title="Toggle sidebar">
+            <i class="fa-solid fa-bars text-lg text-secondary group-hover:text-brand transition-colors"></i>
+        </button>
+
+        <!-- Search Bar -->
         <div id="global-search-wrap" class="group relative h-11 bento-card flex items-center px-4 gap-3 transition-all">
-            <i class="fa-solid fa-magnifying-glass text-brand transition-all pointer-events-none"></i>
+            <div class="w-5 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-magnifying-glass text-brand text-lg transition-all pointer-events-none"></i>
+            </div>
             <input id="global-search-input" type="text" 
                    placeholder="Search anything about website..." 
                    class="w-[340px] h-full bg-transparent text-[13px] font-inter font-medium text-primary placeholder:text-secondary transition-colors focus:outline-none"
@@ -191,32 +270,89 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             <div id="global-search-results" class="hidden absolute left-0 top-[calc(100%+8px)] w-[540px] max-h-[360px] overflow-y-auto rounded-2xl border border-color bg-page shadow-xl z-50 p-2"></div>
         </div>
 
-        <div class="flex items-center gap-3 ml-auto">
-            <!-- Cereza AI Assistant Toggle -->
-            <button onclick="toggleAIChat()" class="flex items-center gap-2.5 h-11 bento-card px-4 font-inter font-medium text-[13px] text-primary transition-all group hover:border-brand">
-                <div class="relative flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-brand transition-all group-hover:scale-110">
-                        <path class="star-path star-1" stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                        <path class="star-path star-2" stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-                        <path class="star-path star-3" stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                    </svg>
+
+
+            <!-- Visit Public Site -->
+            <a href="<?= BASE_URL ?>home.php" class="flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
+                <div class="w-5 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-earth-americas text-brand text-lg transition-colors"></i>
                 </div>
-                <span>Ask Cereza</span>
-            </button>
+                <span>Public Site</span>
+            </a>
 
             <!-- Theme Toggle Switch -->
-            <div class="flex items-center gap-3 h-11 bento-card px-4 flex items-center transition-all">
-                <span id="theme-label" class="text-[13px] font-inter font-medium text-primary">Light</span>
+            <div class="flex items-center gap-3 h-11 bento-card px-4 transition-all min-w-[104px]">
+                <span id="theme-label" class="w-10 text-[13px] font-manrope font-bold text-primary">Light</span>
                 <div id="theme-toggle" class="w-10 h-5 bg-slate-200 dark:bg-brand/30 rounded-full p-1 cursor-pointer transition-all relative flex items-center">
                     <div id="theme-thumb" class="w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0 shadow-sm"></div>
                 </div>
             </div>
 
             <!-- Universal Export -->
-            <button class="flex items-center gap-3 h-11 bento-card px-4 font-inter font-medium text-[13px] text-primary transition-all group">
-                <i class="fa-solid fa-file-export text-brand text-lg transition-colors"></i>
+            <button class="flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
+                <div class="w-5 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-file-export text-brand text-lg transition-colors"></i>
+                </div>
                 <span>Export</span>
             </button>
+
+            <!-- User Profile Dropdown -->
+            <div class="relative" id="profile-dropdown-container">
+                <button id="profile-dropdown-toggle" class="w-11 h-11 rounded-full bento-card flex items-center justify-center transition-all group overflow-hidden">
+                    <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center border border-white/10 shrink-0">
+                        <span class="text-white text-xs font-bold font-inter"><?= strtoupper(substr($username, 0, 1)) ?></span>
+                    </div>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="profile-menu" class="absolute right-0 mt-2 w-56 bento-card opacity-0 invisible scale-95 origin-top-right transition-all z-50 overflow-hidden shadow-2xl">
+                    <div class="px-5 py-4 border-b border-color bg-surface-alt/30">
+                        <div class="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] mb-2">Logged in as</div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-brand flex items-center justify-center border border-white/10 shadow-lg">
+                                <span class="text-white text-sm font-bold"><?= strtoupper(substr($username, 0, 1)) ?></span>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <div class="text-sm font-bold text-primary truncate"><?= $username ?></div>
+                                <div class="text-[10px] text-secondary font-bold uppercase tracking-wider"><?= $role ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-1.5">
+                        <a href="<?= BASE_URL ?>logout.php" class="flex items-center gap-3 px-4 py-3 text-[13px] text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors group">
+                            <i class="fa-solid fa-power-off text-sm group-hover:rotate-12 transition-transform"></i>
+                            <span class="font-bold">Logout System</span>
+                        </a>
+                    </div>
+                </div>
+        </div>
+
+            <script>
+            // Profile Dropdown Toggle
+            (function initProfileDropdown() {
+                const toggle = document.getElementById('profile-dropdown-toggle');
+                const menu = document.getElementById('profile-menu');
+                const container = document.getElementById('profile-dropdown-container');
+
+                if (!toggle || !menu) return;
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = !menu.classList.contains('invisible');
+                    if (isOpen) {
+                        menu.classList.add('opacity-0', 'invisible', 'scale-95');
+                    } else {
+                        menu.classList.remove('opacity-0', 'invisible', 'scale-95');
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!container.contains(e.target)) {
+                        menu.classList.add('opacity-0', 'invisible', 'scale-95');
+                    }
+                });
+            })();
+            </script>
 
             <script>
             const themeToggle = document.getElementById('theme-toggle');
@@ -257,24 +393,22 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             // Sidebar toggle functionality
             (function initSidebarToggle() {
                 const toggleBtn = document.getElementById('sidebar-toggle');
-                const sidebar = document.querySelector('aside');
-                const main = document.querySelector('main');
-                if (!toggleBtn || !sidebar || !main) return;
+                const root = document.documentElement;
 
-                // Restore collapse state from localStorage
-                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-                if (isCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    main.classList.add('sidebar-collapsed');
-                }
+                if (!toggleBtn) return;
 
-                toggleBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('collapsed');
-                    main.classList.toggle('sidebar-collapsed');
-                    
-                    const nowCollapsed = sidebar.classList.contains('collapsed');
-                    localStorage.setItem('sidebar-collapsed', nowCollapsed);
-                });
+                const toggleSidebar = () => {
+                    const isNowCollapsed = root.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebar-collapsed', isNowCollapsed);
+                    document.cookie = "sidebar_collapsed=" + isNowCollapsed + "; path=/; max-age=" + (30*24*60*60) + "; path=/";
+                };
+
+                toggleBtn.addEventListener('click', toggleSidebar);
+
+                // Enable transitions after a tiny delay to avoid load jump
+                setTimeout(() => {
+                    root.classList.add('sidebar-ready');
+                }, 100);
             })();
 
             // Global search: index all accessible sidebar links and provide quick navigation.

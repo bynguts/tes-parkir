@@ -113,8 +113,8 @@ include '../../includes/header.php';
                     <?php if (empty($slots)): ?>
                     <tr>
                         <td colspan="5" class="py-32 text-center">
-                            <div class="w-20 h-20 rounded-[2rem] bg-surface-alt flex items-center justify-center mx-auto mb-6 text-tertiary/20">
-                                <i class="fa-solid fa-square-p text-4xl"></i>
+                            <div class="w-20 h-20 rounded-[2rem] bg-surface-alt flex items-center justify-center mx-auto mb-6 overflow-hidden p-4">
+                                <img src="../../assets/img/logo_p.png" alt="Logo" class="w-full h-full object-contain opacity-20">
                             </div>
                             <h3 class="font-manrope font-black text-xl text-primary mb-1">Zero Assets Detected</h3>
                             <p class="text-tertiary text-sm font-inter">Initialize your first parking slot to begin management.</p>
@@ -137,7 +137,7 @@ include '../../includes/header.php';
                                 </div>
                                 <div>
                                     <div class="font-manrope font-black text-lg text-primary tracking-tight"><?= htmlspecialchars($s['slot_number']) ?></div>
-                                    <div class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-0.5"><?= (int)$s['is_reservation_only'] === 1 ? 'VIP Reservation Area' : 'Standard Regular Area' ?></div>
+                                    <div class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-0.5"><?= (int)$s['is_reservation_only'] === 1 ? 'Reservation Only Zone' : 'Standard Regular Area' ?></div>
                                 </div>
                             </div>
                         </td>
@@ -196,8 +196,8 @@ include '../../includes/header.php';
     <div class="modal-surface bento-card rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         <div class="flex items-center justify-between px-10 py-8 border-b border-color">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                    <i class="fa-solid fa-square-plus text-xl"></i>
+                <div class="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand overflow-hidden p-2">
+                    <img src="../../assets/img/logo_p.png" alt="Logo" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h2 class="font-manrope font-black text-2xl text-primary tracking-tight">Initialize Slot</h2>
@@ -231,7 +231,7 @@ include '../../includes/header.php';
                     <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Area Category</label>
                     <select name="is_reservation_only" class="w-full modal-input border border-color rounded-2xl px-6 py-4 text-sm font-black font-inter text-primary focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all appearance-none">
                         <option value="0">Standard Regular Area</option>
-                        <option value="1">VIP Reservation Area</option>
+                        <option value="1">Reservation Only Zone</option>
                     </select>
                 </div>
             </div>

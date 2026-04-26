@@ -82,7 +82,7 @@ $displayMsg = $msg ?: ($_GET['msg'] ?? '');
 $displayError = $error ?: ($_GET['error'] ?? '');
 ?>
 
-<link rel="stylesheet" href="../../assets/css/theme.css">
+
 
 <div class="px-10 py-10">
     
