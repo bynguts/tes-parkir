@@ -45,7 +45,22 @@ $db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
 
 // Fetch scan logs with transaction and vehicle details
 $query = "
-    SELECT * FROM (
+    SELECT 
+        combined.ticket_code,
+        MAX(combined.plate_number) as plate_number,
+        MAX(combined.vehicle_type) as vehicle_type,
+        MAX(combined.slot_id) as slot_id,
+        MIN(combined.time_in) as time_in,
+        MAX(combined.time_out) as time_out,
+        MAX(combined.final_fee) as final_fee,
+        MAX(combined.duration_hours) as duration_hours,
+        MAX(combined.payment_status) as payment_status,
+        MAX(combined.is_lost_ticket) as is_lost_ticket,
+        MAX(combined.is_force_checkout) as is_force_checkout,
+        MAX(combined.reservation_id) as reservation_id,
+        MAX(combined.scan_id) as scan_id,
+        MAX(combined.scan_time) as scan_time
+    FROM (
         (SELECT 
             x.scan_id, 
             x.scan_time, 
@@ -55,7 +70,7 @@ $query = "
             COALESCE(t.check_in_time, r_existing.reserved_from) as time_in,
             t.check_out_time as time_out,
             t.total_fee as final_fee,
-            t.duration_hours,
+            (TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) as duration_hours,
             t.payment_status,
             t.is_lost_ticket,
             t.is_force_checkout,
@@ -64,7 +79,8 @@ $query = "
             COALESCE(v.vehicle_type, r_v_existing.vehicle_type) as vehicle_type,
             COALESCE(s.slot_id, r_s_existing.slot_id) as slot_id
         FROM plate_scan_log x
-        LEFT JOIN `transaction` t ON x.ticket_code = t.ticket_code
+        LEFT JOIN ticket tk ON x.ticket_code = tk.ticket_code
+        LEFT JOIN `transaction` t ON tk.transaction_id = t.transaction_id
         LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
         LEFT JOIN parking_slot s ON t.slot_id = s.slot_id
         LEFT JOIN floor f ON s.floor_id = f.floor_id
@@ -101,6 +117,7 @@ $query = "
           AND NOT EXISTS (SELECT 1 FROM plate_scan_log psl WHERE psl.ticket_code = res.reservation_code)
           AND NOT EXISTS (SELECT 1 FROM `transaction` t WHERE t.reservation_id = res.reservation_id))
     ) combined
+    GROUP BY combined.ticket_code
     ORDER BY scan_time DESC
 ";
 

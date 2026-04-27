@@ -5,12 +5,13 @@ require_once '../../config/connection.php';
 $stmt = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status, ps.is_reservation_only,
            f.floor_code AS floor, f.floor_name,
-           t.check_in_time, t.ticket_code,
+           t.check_in_time, tk.ticket_code,
            v.plate_number, v.owner_name,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
     FROM parking_slot ps
     JOIN floor f ON ps.floor_id = f.floor_id
     LEFT JOIN `transaction` t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
+    LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
     LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
     ORDER BY ps.is_reservation_only, f.floor_code, ps.slot_type, ps.slot_number
 ");

@@ -29,9 +29,10 @@ try {
     // 0. Check if the plate already has an active reservation
     $stmt = $pdo->prepare("
         SELECT COUNT(*) 
-        FROM reservation 
-        WHERE plate_number = ? 
-          AND status IN ('pending', 'confirmed')
+        FROM reservation r
+        JOIN vehicle v ON r.vehicle_id = v.vehicle_id
+        WHERE v.plate_number = ? 
+          AND r.status IN ('pending', 'confirmed')
     ");
     $stmt->execute([$plate_number]);
     if ($stmt->fetchColumn() > 0) {
@@ -84,14 +85,13 @@ try {
     // 4. Insert reservation
     $stmt = $pdo->prepare("
         INSERT INTO reservation (
-            vehicle_id, plate_number, slot_id, reservation_code, 
+            vehicle_id, slot_id, reservation_code, 
             reserved_from, reserved_until, status, is_public
-        ) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 1)
+        ) VALUES (?, ?, ?, ?, ?, 'confirmed', 1)
     ");
     
     $stmt->execute([
         $vehicle_id,
-        $plate_number,
         $slot_id,
         $reservation_code,
         $reserved_from,

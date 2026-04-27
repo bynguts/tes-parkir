@@ -84,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $slot_id = $new_slot['slot_id'];
                 }
 
-                $pdo->prepare("UPDATE reservation SET plate_number=?, slot_id=?, reserved_from=?, reserved_until=? WHERE reservation_id=?")
-                    ->execute([$plate, $slot_id, $date_from, $date_until, $res_id]);
+                $pdo->prepare("UPDATE reservation SET slot_id=?, reserved_from=?, reserved_until=? WHERE reservation_id=?")
+                    ->execute([$slot_id, $date_from, $date_until, $res_id]);
 
                 $pdo->commit();
                 $msg = "Reservation updated successfully.";

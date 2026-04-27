@@ -24,15 +24,15 @@ $res_count = ($summary['car']['reserved'] ?? 0) + ($summary['motorcycle']['reser
 
 $mnt_count = $pdo->query("SELECT COUNT(*) FROM parking_slot WHERE status='maintenance'")->fetchColumn();
 
-$today_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
-$month_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND MONTH(check_out_time)=MONTH(CURDATE()) AND YEAR(check_out_time)=YEAR(CURDATE())")->fetchColumn();
-$year_rev  = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND YEAR(check_out_time)=YEAR(CURDATE())")->fetchColumn();
+$today_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
+$month_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND MONTH(check_out_time)=MONTH(CURDATE()) AND YEAR(check_out_time)=YEAR(CURDATE())")->fetchColumn();
+$year_rev  = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND YEAR(check_out_time)=YEAR(CURDATE())")->fetchColumn();
 
-$yesterday_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=DATE_SUB(CURDATE(), INTERVAL 1 DAY)")->fetchColumn();
-$last_month_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND MONTH(check_out_time) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(check_out_time) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))")->fetchColumn();
-$last_year_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND YEAR(check_out_time) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 YEAR))")->fetchColumn();
+$yesterday_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=DATE_SUB(CURDATE(), INTERVAL 1 DAY)")->fetchColumn();
+$last_month_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND MONTH(check_out_time) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(check_out_time) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))")->fetchColumn();
+$last_year_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid' AND YEAR(check_out_time) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 YEAR))")->fetchColumn();
 
-$all_time_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid'")->fetchColumn();
+$all_time_rev = $pdo->query("SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` WHERE payment_status='paid'")->fetchColumn();
 
 // Today vs Yesterday Revenue Logic
 $rev_pct_today = calc_trend($today_rev, $yesterday_rev);
@@ -423,16 +423,11 @@ include 'includes/header.php';
                         t.check_out_time as exit_time,
                         v.plate_number,
                         v.vehicle_type,
-                        t.ticket_code as code,
-                        COALESCE(t.total_fee, 
-                            LEAST(
-                                pr.first_hour_rate + (GREATEST(0, CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) / 60) - 1) * pr.next_hour_rate),
-                                pr.daily_max_rate
-                            )
-                        ) as total_fee
+                        tk.ticket_code as code,
+                        COALESCE(t.total_fee, CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, COALESCE(t.check_out_time, NOW())) / 60) * t.applied_rate) as total_fee
                      FROM `transaction` t
                      JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-                     JOIN parking_rate pr ON t.rate_id = pr.rate_id
+                     LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
                     )
                     UNION ALL
                     (SELECT 
@@ -1047,6 +1042,11 @@ function initStatusDoughnut() {
 document.addEventListener('DOMContentLoaded', () => {
     updateChart('today');
     initStatusDoughnut();
+
+    // Auto-refresh dashboard every 30 seconds to keep metrics updated
+    setTimeout(() => {
+        location.reload();
+    }, 30000);
 });
 </script>
 

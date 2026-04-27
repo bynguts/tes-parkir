@@ -30,17 +30,22 @@ try {
         $res_id = $_POST['reservation_id'] ?? '';
         $ticket = $_POST['ticket'] ?? '';
         
-        if (!empty($scan_id) && $scan_id !== 'null') {
+        if (!empty($ticket)) {
+            // Delete all scan logs associated with this ticket (Entry + Exit)
+            $stmt = $pdo->prepare("DELETE FROM plate_scan_log WHERE ticket_code = ?");
+            $stmt->execute([$ticket]);
+            
+            // Also cleanup reservation if it exists and has no transaction
+            if (!empty($res_id) && $res_id !== 'null') {
+                $stmt = $pdo->prepare("DELETE FROM reservation WHERE reservation_id = ? AND NOT EXISTS (SELECT 1 FROM `transaction` WHERE reservation_id = ?)");
+                $stmt->execute([$res_id, $res_id]);
+            }
+        } elseif (!empty($scan_id) && $scan_id !== 'null') {
             $stmt = $pdo->prepare("DELETE FROM plate_scan_log WHERE scan_id = ?");
             $stmt->execute([$scan_id]);
         } elseif (!empty($res_id) && $res_id !== 'null') {
-            // Delete reservation if it has no associated transaction
             $stmt = $pdo->prepare("DELETE FROM reservation WHERE reservation_id = ? AND NOT EXISTS (SELECT 1 FROM `transaction` WHERE reservation_id = ?)");
             $stmt->execute([$res_id, $res_id]);
-        } elseif (!empty($ticket)) {
-            // Last resort: delete by ticket code from scan log
-            $stmt = $pdo->prepare("DELETE FROM plate_scan_log WHERE ticket_code = ?");
-            $stmt->execute([$ticket]);
         }
         
         $pdo->commit();

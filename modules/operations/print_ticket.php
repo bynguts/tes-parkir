@@ -32,7 +32,7 @@ if (isset($_GET['auto'])) {
         echo json_encode(['error' => 'All slots are full!']); exit;
     }
 
-    $plate   = null;
+    $plate   = isset($_GET['plate']) ? strtoupper(trim($_GET['plate'])) : null;
     $code    = generate_ticket_code($pdo);
     $slot_id = (int)$slot['slot_id'];
 
@@ -50,22 +50,26 @@ if (isset($_GET['auto'])) {
     }
 
     // Rate lookup
-    $rate = $pdo->prepare("SELECT rate_id FROM parking_rate WHERE vehicle_type = ?");
+    $rate = $pdo->prepare("SELECT rate_id, next_hour_rate FROM parking_rate WHERE vehicle_type = ?");
     $rate->execute([$vtype]);
-    $rate_id = (int)$rate->fetchColumn();
+    $rdata = $rate->fetch();
+    $rate_id = (int)$rdata['rate_id'];
+    $applied_rate = (float)$rdata['next_hour_rate'];
 
-    // Insert vehicle
-    $pdo->prepare("INSERT INTO vehicle (plate_number, vehicle_type, owner_name) VALUES (?,?,?)")
+    // Insert vehicle (or get existing guest-like vehicle)
+    $pdo->prepare("INSERT INTO vehicle (plate_number, vehicle_type, owner_name) 
+                   VALUES (?,?,?) 
+                   ON DUPLICATE KEY UPDATE vehicle_id=LAST_INSERT_ID(vehicle_id)")
         ->execute([$plate, $vtype, 'Guest']);
     $vid = (int)$pdo->lastInsertId();
 
-    // Insert transaction
-    $pdo->prepare("INSERT INTO `transaction` (vehicle_id, slot_id, operator_id, rate_id, ticket_code, payment_status)
-                   VALUES (?,?,1,?,?,'unpaid')")
-        ->execute([$vid, $slot_id, $rate_id, $code]);
+    // Insert transaction (3NF Fix: Remove ticket_code, add applied_rate)
+    $pdo->prepare("INSERT INTO `transaction` (vehicle_id, slot_id, operator_id, rate_id, applied_rate, payment_status)
+                   VALUES (?,?,1,?,?, 'unpaid')")
+        ->execute([$vid, $slot_id, $rate_id, $applied_rate]);
     $trx_id = (int)$pdo->lastInsertId();
 
-    // [3NF FIX] INSERT ticket tanpa plate_number (kolom dihapus dari schema)
+    // Insert ticket (3NF: ticket_code resides here)
     $pdo->prepare("INSERT INTO ticket (ticket_code, transaction_id) VALUES (?,?)")
         ->execute([$code, $trx_id]);
 

@@ -54,11 +54,12 @@ $totals = $pdo->query("
     SELECT COUNT(*) AS grand_total,
            SUM(v.vehicle_type='car') AS total_cars,
            SUM(v.vehicle_type='motorcycle') AS total_motos,
-           SUM(t.total_fee) AS grand_revenue,
-           SUM(CASE WHEN v.vehicle_type='car' THEN t.total_fee ELSE 0 END) AS rev_car,
-           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN t.total_fee ELSE 0 END) AS rev_moto,
-           AVG(t.duration_hours) AS avg_duration, AVG(t.total_fee) AS avg_fee,
-           MAX(t.total_fee) AS max_fee,
+           SUM(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS grand_revenue,
+           SUM(CASE WHEN v.vehicle_type='car' THEN (CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) ELSE 0 END) AS rev_car,
+           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN (CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) ELSE 0 END) AS rev_moto,
+           AVG(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) AS avg_duration, 
+           AVG(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS avg_fee,
+           MAX(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS max_fee,
            SUM(CASE WHEN t.payment_method='cash' THEN 1 ELSE 0 END) AS pay_cash,
            SUM(CASE WHEN t.payment_method='card' THEN 1 ELSE 0 END) AS pay_card,
            SUM(CASE WHEN t.payment_method='e-wallet' THEN 1 ELSE 0 END) AS pay_ewallet
@@ -71,9 +72,11 @@ $daily = $pdo->query("
            DAYNAME(t.check_out_time) AS day_name,
            SUM(v.vehicle_type='car') AS cars, SUM(v.vehicle_type='motorcycle') AS motos,
            COUNT(*) AS total_count,
-           SUM(CASE WHEN v.vehicle_type='car' THEN t.total_fee ELSE 0 END) AS rev_car,
-           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN t.total_fee ELSE 0 END) AS rev_moto,
-           SUM(t.total_fee) AS total_revenue, AVG(t.total_fee) AS avg_fee, MAX(t.total_fee) AS max_fee
+           SUM(CASE WHEN v.vehicle_type='car' THEN (CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) ELSE 0 END) AS rev_car,
+           SUM(CASE WHEN v.vehicle_type='motorcycle' THEN (CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) ELSE 0 END) AS rev_moto,
+           SUM(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS total_revenue, 
+           AVG(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS avg_fee, 
+           MAX(CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS max_fee
     FROM `transaction` t JOIN vehicle v ON t.vehicle_id=v.vehicle_id
     WHERE t.payment_status='paid' AND t.check_out_time IS NOT NULL
     GROUP BY CAST(t.check_out_time AS DATE), DAYNAME(t.check_out_time)
@@ -81,24 +84,28 @@ $daily = $pdo->query("
 ")->fetchAll();
 
 $transactions = $pdo->query("
-    SELECT t.transaction_id, t.ticket_code, v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
+    SELECT t.transaction_id, tk.ticket_code, v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
            ps.slot_id, o.full_name AS operator_name, o.shift,
-           t.check_in_time, t.check_out_time, ROUND(t.duration_hours,2) AS duration_hours,
-           t.payment_method, t.total_fee
+           t.check_in_time, t.check_out_time, 
+           ROUND(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60, 2) AS duration_hours,
+           t.payment_method, 
+           (CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time) / 60) * t.applied_rate) AS total_fee
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id=v.vehicle_id JOIN parking_slot ps ON t.slot_id=ps.slot_id
     JOIN operator o ON t.operator_id=o.operator_id
+    LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
     WHERE t.payment_status='paid' AND t.check_out_time IS NOT NULL
     ORDER BY t.check_out_time DESC LIMIT 3000
 ")->fetchAll();
 
 $active = $pdo->query("
-    SELECT t.ticket_code, v.plate_number, v.vehicle_type, v.owner_name,
+    SELECT tk.ticket_code, v.plate_number, v.vehicle_type, v.owner_name,
            ps.slot_id, o.full_name AS operator_name, t.check_in_time,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_elapsed
     FROM `transaction` t
     JOIN vehicle v ON t.vehicle_id=v.vehicle_id JOIN parking_slot ps ON t.slot_id=ps.slot_id
     JOIN operator o ON t.operator_id=o.operator_id
+    LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
     WHERE t.payment_status='unpaid' AND t.check_out_time IS NULL ORDER BY t.check_in_time
 ")->fetchAll();
 

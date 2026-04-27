@@ -28,11 +28,13 @@ function csrf_verify(): void {
 // ── Fee calculation ───────────────────────────────────────────────────────
 function calculate_fee(int $minutes, float $first_rate, float $next_rate, float $max_rate): array {
     $minutes = max(1, $minutes);
-    $hours   = max(1, (int)ceil($minutes / 60));
-    $fee     = $hours <= 1
-        ? $first_rate
-        : $first_rate + ($hours - 1) * $next_rate;
+    $hours   = (int)ceil($minutes / 60);
+    $hours   = max(1, $hours);
+    
+    // 3NF Multiplier Logic: All hours * snapshotted rate (next_rate is used as the snapshot)
+    $fee = $hours * $next_rate;
     $fee = min($fee, $max_rate);
+    
     return [
         'hours'          => $hours,
         'duration_hours' => round($minutes / 60, 2),
@@ -223,7 +225,7 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
 
     $range_stats = $pdo->query("
         SELECT 
-            COALESCE(SUM(total_fee), 0) AS revenue,
+            COALESCE(SUM(t.total_fee), 0) AS revenue,
             COUNT(*) AS transactions,
             SUM(v.vehicle_type = 'car') AS cars,
             SUM(v.vehicle_type = 'motorcycle') AS motos
@@ -295,7 +297,8 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     // ── 6. VEHICLE & OPERATOR METRICS ──────────────────────────────────────
     $vehicle_stats = $pdo->query("
         SELECT v.vehicle_type, COUNT(DISTINCT v.vehicle_id) AS total_registered,
-               COUNT(t.transaction_id) AS total_count, COALESCE(SUM(t.total_fee),0) AS total_revenue
+               COUNT(t.transaction_id) AS total_count, 
+               COALESCE(SUM(t.total_fee),0) AS total_revenue
         FROM vehicle v
         LEFT JOIN `transaction` t ON v.vehicle_id = t.vehicle_id AND t.payment_status='paid'
         GROUP BY v.vehicle_type
@@ -327,11 +330,13 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     ")->fetchAll();
 
     $recent_transactions = $pdo->query("
-        SELECT t.ticket_code, v.plate_number, v.vehicle_type, ps.slot_number, t.check_in_time, t.check_out_time, t.total_fee, t.payment_status,
+        SELECT tk.ticket_code, v.plate_number, v.vehicle_type, ps.slot_number, t.check_in_time, t.check_out_time, 
+               t.total_fee, t.payment_status,
                CASE WHEN ps.is_reservation_only = 1 THEN 'VIP Reservation' ELSE 'Standard Regular' END AS zone
         FROM `transaction` t 
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id 
         LEFT JOIN parking_slot ps ON t.slot_id = ps.slot_id
+        LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
         ORDER BY t.transaction_id DESC LIMIT 10
     ")->fetchAll();
 

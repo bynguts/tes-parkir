@@ -21,10 +21,10 @@ foreach ($all_slots_query as $s) {
 }
 
 $active = $pdo->query("
-    (SELECT 
+    SELECT 
         t.transaction_id, 
         t.reservation_id, 
-        t.ticket_code, 
+        tk.ticket_code, 
         v.plate_number, 
         v.vehicle_type, 
         s.slot_id, 
@@ -39,33 +39,9 @@ $active = $pdo->query("
     JOIN vehicle v ON t.vehicle_id = v.vehicle_id
     JOIN parking_slot s ON t.slot_id = s.slot_id
     JOIN parking_rate r ON t.rate_id = r.rate_id
-    WHERE t.check_out_time IS NULL)
-    
-    UNION ALL
-    
-    (SELECT 
-        NULL as transaction_id, 
-        res.reservation_id, 
-        res.reservation_code as ticket_code, 
-        v.plate_number, 
-        v.vehicle_type, 
-        s.slot_id, 
-        res.reserved_from as check_in_time, 
-        res.reserved_until as exit_time,
-        TIMESTAMPDIFF(MINUTE, res.reserved_from, NOW()) as minutes_parked,
-        r.first_hour_rate, 
-        r.next_hour_rate, 
-        r.daily_max_rate,
-        'unpaid' as payment_status
-    FROM `reservation` res
-    JOIN vehicle v ON res.vehicle_id = v.vehicle_id
-    JOIN parking_slot s ON res.slot_id = s.slot_id
-    LEFT JOIN parking_rate r ON r.vehicle_type = v.vehicle_type
-    WHERE res.status = 'confirmed' 
-      AND DATE(res.reserved_from) = CURDATE()
-      AND NOT EXISTS (SELECT 1 FROM `transaction` t2 WHERE t2.reservation_id = res.reservation_id))
-      
-    ORDER BY check_in_time DESC
+    LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
+    WHERE t.check_out_time IS NULL
+    ORDER BY t.check_in_time DESC
 ")->fetchAll();
 
 $page_title = 'Live Fleet Status';

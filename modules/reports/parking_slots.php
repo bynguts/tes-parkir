@@ -63,13 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_manage) {
 $stmt = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status, ps.floor_id, ps.is_reservation_only,
            f.floor_code, f.floor_name,
-           t.check_in_time, t.ticket_code, t.reservation_id AS trans_res_id,
+           t.check_in_time, tk.ticket_code, t.reservation_id AS trans_res_id,
            v.plate_number, v.owner_name,
            TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked,
            res.reservation_id AS future_res_id
     FROM parking_slot ps
     JOIN floor f ON ps.floor_id = f.floor_id
     LEFT JOIN `transaction` t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
+    LEFT JOIN ticket tk ON t.transaction_id = tk.transaction_id
     LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
     LEFT JOIN `reservation` res ON res.slot_id = ps.slot_id 
          AND res.status = 'confirmed' 

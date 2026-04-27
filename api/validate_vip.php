@@ -36,37 +36,19 @@ try {
         SELECT r.reservation_id, r.vehicle_id, r.slot_id, r.reservation_code, 
                ps.slot_number, ps.slot_type
         FROM reservation r
+        JOIN vehicle v ON r.vehicle_id = v.vehicle_id
         JOIN parking_slot ps ON r.slot_id = ps.slot_id
-        WHERE (REPLACE(r.plate_number, ' ', '') = ? 
-            OR REPLACE(r.plate_number, ' ', '') = ?
-            OR REPLACE(r.plate_number, ' ', '') LIKE ?)
+        WHERE (REPLACE(v.plate_number, ' ', '') = ? 
+            OR REPLACE(v.plate_number, ' ', '') = ?
+            OR REPLACE(v.plate_number, ' ', '') LIKE ?
+            OR r.reservation_code = ?)
           AND r.status IN ('pending', 'confirmed')
-          AND r.reserved_from <= (NOW() + INTERVAL 30 MINUTE)
+          AND r.reserved_from <= (NOW() + INTERVAL 60 MINUTE)
           AND r.reserved_until >= NOW()
         LIMIT 1
     ");
-    $stmt->execute([$normalizedPlate, $corePlate, '%' . $corePlate . '%']);
+    $stmt->execute([$normalizedPlate, $corePlate, '%' . $corePlate . '%', $plate]);
     $res = $stmt->fetch();
-
-    if (!$res) {
-        // Fallback: Check if there's a reservation for this plate but maybe joined via vehicle table
-        $stmt = $pdo->prepare("
-            SELECT r.reservation_id, r.vehicle_id, r.slot_id, r.reservation_code, 
-                   ps.slot_number, ps.slot_type
-            FROM reservation r
-            JOIN vehicle v ON r.vehicle_id = v.vehicle_id
-            JOIN parking_slot ps ON r.slot_id = ps.slot_id
-            WHERE (REPLACE(v.plate_number, ' ', '') = ? 
-                OR REPLACE(v.plate_number, ' ', '') = ?
-                OR REPLACE(v.plate_number, ' ', '') LIKE ?)
-              AND r.status IN ('pending', 'confirmed')
-              AND r.reserved_from <= (NOW() + INTERVAL 30 MINUTE)
-              AND r.reserved_until >= NOW()
-            LIMIT 1
-        ");
-        $stmt->execute([$normalizedPlate, $corePlate, '%' . $corePlate . '%']);
-        $res = $stmt->fetch();
-    }
 
     if (!$res) {
         echo json_encode(['error' => 'No active reservation found for plate: ' . $plate . '. Note: System allows entry up to 30 min before schedule.']);
@@ -84,13 +66,15 @@ try {
     $updateSlot->execute([$res['slot_id']]);
 
     // 4. Rate lookup
-    $rate = $pdo->prepare("SELECT rate_id FROM parking_rate WHERE vehicle_type = ?");
+    $rate = $pdo->prepare("SELECT rate_id, next_hour_rate FROM parking_rate WHERE vehicle_type = ?");
     $rate->execute([$res['slot_type']]);
-    $rate_id = (int)$rate->fetchColumn();
+    $rdata = $rate->fetch();
+    $rate_id = (int)$rdata['rate_id'];
+    $applied_rate = (float)$rdata['next_hour_rate'];
 
-    // 5. Create Transaction
+    // 5. Create Transaction (3NF Fix: Remove ticket_code, add applied_rate)
     $insertTrx = $pdo->prepare("
-        INSERT INTO `transaction` (vehicle_id, slot_id, operator_id, rate_id, reservation_id, ticket_code, payment_status)
+        INSERT INTO `transaction` (vehicle_id, slot_id, operator_id, rate_id, reservation_id, applied_rate, payment_status)
         VALUES (?, ?, 1, ?, ?, ?, 'unpaid')
     ");
     $insertTrx->execute([
@@ -98,7 +82,7 @@ try {
         $res['slot_id'], 
         $rate_id, 
         $res['reservation_id'], 
-        $res['reservation_code'] // VIPs use reservation code as ticket code
+        $applied_rate
     ]);
     
     $trx_id = $pdo->lastInsertId();

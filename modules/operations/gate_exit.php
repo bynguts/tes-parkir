@@ -51,23 +51,18 @@ if (!$trx) {
     exit;
 }
 
-// ── 3. Calculate fee ──────────────────────────────────────────────────────
-$result       = calculate_fee(
-    (int)$trx['minutes_parked'],
-    (float)$trx['first_hour_rate'],
-    (float)$trx['next_hour_rate'],
-    (float)$trx['daily_max_rate']
-);
-$total_fee    = $result['total_fee'];
-$hours_total  = $result['hours'];
-$duration_hrs = $result['duration_hours'];
+// ── 3. Calculate fee & Prepare Snapshot ──────────────────────────────────
+// 3NF v3: Use the snapshot rate from entry if available, otherwise fallback to current rate
+$applied_rate = !empty($trx['applied_rate']) ? (float)$trx['applied_rate'] : (float)$trx['next_hour_rate'];
+$total_fee    = ceil($trx['minutes_parked'] / 60) * $applied_rate;
 $slot_id      = (int)$trx['slot_id'];
 
 // ── 4. DB updates (atomic) ────────────────────────────────────────────────
 $pdo->beginTransaction();
 try {
-    $pdo->prepare("UPDATE `transaction` SET check_out_time=NOW(), duration_hours=?, total_fee=?, payment_status='paid' WHERE transaction_id=?")
-        ->execute([$duration_hrs, $total_fee, $trx_id]);
+    // 3NF v3: We already have applied_rate from entry, but we update check_out_time and status
+    $pdo->prepare("UPDATE `transaction` SET check_out_time=NOW(), applied_rate=?, total_fee=?, payment_status='paid' WHERE transaction_id=?")
+        ->execute([$applied_rate, $total_fee, $trx_id]);
 
     $pdo->prepare("UPDATE ticket SET status='used' WHERE ticket_code=?")
         ->execute([$code]);

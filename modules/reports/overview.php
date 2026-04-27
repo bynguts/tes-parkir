@@ -13,7 +13,7 @@ $car_pct  = $car_total  > 0 ? round(($car_avail  / $car_total)  * 100) : 100;
 $moto_pct = $moto_total > 0 ? round(($moto_avail / $moto_total) * 100) : 100;
 
 $active    = $pdo->query("SELECT COUNT(*) FROM `transaction` WHERE payment_status='unpaid'")->fetchColumn();
-$today_rev = $pdo->query("SELECT COALESCE(SUM(total_fee),0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
+$today_rev = $pdo->query("SELECT COALESCE(SUM(CEIL(TIMESTAMPDIFF(MINUTE, check_in_time, check_out_time) / 60) * applied_rate), 0) FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time)=CURDATE()")->fetchColumn();
 
 $page_title = 'Operational Intelligence';
 $page_subtitle = date('l, d F Y — H:i');

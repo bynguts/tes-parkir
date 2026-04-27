@@ -489,6 +489,7 @@ include '../../includes/header.php';
                                     <i class="fa-solid fa-camera text-brand transition-colors group-hover/cam:text-brand-hover"></i>
                                 </button>
                                 <input type="text" id="entry-manual-lp" 
+                                       onkeydown="if(event.key==='Enter') processALPR('entry')"
                                        placeholder="Plate Number..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('entry')"
@@ -588,6 +589,7 @@ include '../../includes/header.php';
                                     <i class="fa-solid fa-camera text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
                                 </button>
                                 <input type="text" id="exit-manual-lp" 
+                                       onkeydown="if(event.key==='Enter') processALPR('exit')"
                                        placeholder="Plate or Ticket Code..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('exit')"
@@ -629,14 +631,17 @@ include '../../includes/header.php';
     });
 
     // REGULAR ENTRY
-    async function cetakTiketOtomatis(type, btn) {
+    async function cetakTiketOtomatis(type, btn, plate = null) {
         const orig = btn.innerHTML;
         
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch text-xs animate-spin"></i>';
 
         try {
-            const res = await fetch(`<?= BASE_URL ?>modules/operations/print_ticket.php?auto=1&vtype=${type}`);
+            let url = `<?= BASE_URL ?>modules/operations/print_ticket.php?auto=1&vtype=${type}`;
+            if (plate) url += `&plate=${encodeURIComponent(plate)}`;
+            
+            const res = await fetch(url);
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             
@@ -915,7 +920,10 @@ include '../../includes/header.php';
                         document.getElementById('entry-manual-lp').value = '';
                         refreshGateStats();
                     } else {
-                        pushNotify('Access Denied', data.error || 'No active reservation found.', 'error');
+                        // AUTO-FALLBACK: If not VIP, process as regular entry immediately
+                        pushNotify('No Reservation', 'Processing as Regular Car...', 'info');
+                        cetakTiketOtomatis('car', document.getElementById('btn-entry-car'), plate);
+                        document.getElementById('entry-manual-lp').value = '';
                     }
                 })
                 .catch(() => pushNotify('System Error', 'Could not validate reservation.', 'error'));
@@ -1086,6 +1094,20 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         setTimeout(initQRScanner, 800);
     }
+
+    // Keyboard listeners for Auto-Enter
+    document.getElementById('entry-manual-lp')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            processALPR('entry');
+        }
+    });
+    document.getElementById('exit-manual-lp')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            processALPR('exit');
+        }
+    });
 });
 
 

@@ -8,12 +8,12 @@ $range = isset($_GET['range']) ? $_GET['range'] : 'today';
 
 try {
     if ($range === 'today') {
-        // Hourly view for today - 2-hour intervals
+        // Hourly view for today - 3-hour intervals covering the full day
         $stmt = $pdo->prepare("
             WITH RECURSIVE hours AS (
-                SELECT 7 as h
+                SELECT 0 as h
                 UNION ALL
-                SELECT h + 3 FROM hours WHERE h < 22
+                SELECT h + 3 FROM hours WHERE h < 21
             )
             SELECT 
                 h.h as period,
@@ -31,7 +31,6 @@ try {
                 JOIN `parking_slot` ps ON r.slot_id = ps.slot_id 
                 WHERE DATE(r.reserved_from) = CURDATE() 
                   AND r.status = 'confirmed' 
-                  AND ps.status = 'available'
             ) combined ON HOUR(combined.t_time) >= h.h AND HOUR(combined.t_time) < (h.h + 3)
             GROUP BY h.h
             ORDER BY h.h ASC
@@ -85,16 +84,18 @@ try {
         'labels' => $labels,
         'datasets' => [
             [
-                'label' => 'Motorcycles',
-                'data' => $motoData,
-                'backgroundColor' => '#93c5fd', // blue-300
-                'borderRadius' => 4,
-            ],
-            [
                 'label' => 'Cars',
                 'data' => $carData,
-                'backgroundColor' => '#1d4ed8', // blue-700
-                'borderRadius' => 4,
+                'backgroundColor' => '#6366f1', // Indigo Brand
+                'borderRadius' => 6,
+                'barThickness' => 24,
+            ],
+            [
+                'label' => 'Motorcycles',
+                'data' => $motoData,
+                'backgroundColor' => '#93c5fd', // Soft Blue
+                'borderRadius' => 6,
+                'barThickness' => 24,
             ]
         ]
     ]);

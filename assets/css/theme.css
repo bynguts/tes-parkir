@@ -60,7 +60,7 @@ html { scroll-behavior: smooth; }
     --accent-glow-hover: rgba(15, 23, 42, 0.1);
     --trend-up: #10b981;    /* Vibrant Green */
     --trend-down: #ef4444;  /* Vibrant Red (Merah Merona) */
-    --traffic-car: #1d4ed8;
+    --traffic-car: #6366f1;
     --traffic-moto: #93c5fd;
 
     /* Scrollbar Variables (Light) - High visibility */
