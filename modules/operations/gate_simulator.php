@@ -489,7 +489,6 @@ include '../../includes/header.php';
                                     <i class="fa-solid fa-camera text-brand transition-colors group-hover/cam:text-brand-hover"></i>
                                 </button>
                                 <input type="text" id="entry-manual-lp" 
-                                       onkeydown="if(event.key==='Enter') processALPR('entry')"
                                        placeholder="Plate Number..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('entry')"
@@ -589,7 +588,6 @@ include '../../includes/header.php';
                                     <i class="fa-solid fa-camera text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
                                 </button>
                                 <input type="text" id="exit-manual-lp" 
-                                       onkeydown="if(event.key==='Enter') processALPR('exit')"
                                        placeholder="Plate or Ticket Code..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('exit')"
@@ -920,9 +918,8 @@ include '../../includes/header.php';
                         document.getElementById('entry-manual-lp').value = '';
                         refreshGateStats();
                     } else {
-                        // AUTO-FALLBACK: If not VIP, process as regular entry immediately
-                        pushNotify('No Reservation', 'Processing as Regular Car...', 'info');
-                        cetakTiketOtomatis('car', document.getElementById('btn-entry-car'), plate);
+                        // REMOVED AUTO-FALLBACK: Non-reservations must press manual button
+                        pushNotify('Access Denied', 'No active reservation found for this plate. Regular vehicles must use the ticket button.', 'error');
                         document.getElementById('entry-manual-lp').value = '';
                     }
                 })
