@@ -283,7 +283,8 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
         SELECT HOUR(check_in_time) AS hour, 
                COUNT(*) AS total_entries,
                SUM(v.vehicle_type = 'car') AS cars,
-               SUM(v.vehicle_type = 'motorcycle') AS motos
+               SUM(v.vehicle_type = 'motorcycle') AS motos,
+               SUM(t.reservation_id IS NOT NULL) AS reservations
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
         WHERE check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)

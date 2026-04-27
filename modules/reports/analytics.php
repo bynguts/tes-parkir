@@ -57,10 +57,10 @@ $dwell_avg = $dwell_avg->fetchAll();
 $dwell_period = $pdo->prepare("
     SELECT 
         CASE 
-            WHEN HOUR(check_in_time) BETWEEN 6 AND 11 THEN 'Morning'
-            WHEN HOUR(check_in_time) BETWEEN 12 AND 17 THEN 'Afternoon'
-            WHEN HOUR(check_in_time) BETWEEN 18 AND 23 THEN 'Evening'
-            ELSE 'Night'
+            WHEN HOUR(check_in_time) BETWEEN 7 AND 11 THEN 'Morning'
+            WHEN HOUR(check_in_time) BETWEEN 12 AND 16 THEN 'Afternoon'
+            WHEN HOUR(check_in_time) BETWEEN 17 AND 22 THEN 'Evening'
+            ELSE 'Closed'
         END as period,
         AVG(TIMESTAMPDIFF(MINUTE, check_in_time, check_out_time)) as avg_min
     FROM `transaction`
@@ -70,17 +70,19 @@ $dwell_period = $pdo->prepare("
 $dwell_period->execute([$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
 $dwell_period = $dwell_period->fetchAll();
 
-// Anomalies
-$avg_rev_val = $pdo->query("SELECT AVG(daily_rev) FROM (SELECT SUM(total_fee) as daily_rev FROM `transaction` WHERE payment_status='paid' GROUP BY DATE(check_out_time)) as sub")->fetchColumn() ?: 0;
-$anomalies = $pdo->prepare("
-    SELECT DATE(check_out_time) as date, SUM(total_fee) as revenue
-    FROM `transaction`
-    WHERE payment_status='paid' AND DATE(check_out_time) BETWEEN ? AND ?
-    GROUP BY DATE(check_out_time)
-    HAVING revenue < ($avg_rev_val * 0.5)
-");
-$anomalies->execute([$start_date, $end_date]);
-$anomalies = $anomalies->fetchAll();
+
+
+// --- TURNOVER CALCULATION ---
+$total_slot_count = count($slots) ?: 1;
+$turnover_trend = [];
+foreach ($rev_daily as $day) {
+    $turnover_trend[] = [
+        'date' => date('d M', strtotime($day['date'])),
+        'ratio' => round($day['volume'] / $total_slot_count, 2)
+    ];
+}
+$avg_turnover = count($turnover_trend) ? array_sum(array_column($turnover_trend, 'ratio')) / count($turnover_trend) : 0;
+$turnover_score = ($avg_turnover > 5) ? 'High Efficiency' : (($avg_turnover > 2) ? 'Moderate' : 'Low Utilization');
 
 include '../../includes/header.php';
 ?>
@@ -113,18 +115,13 @@ include '../../includes/header.php';
     .heatmap-slot.reserved { background: var(--status-reserved-bg); border-color: var(--status-reserved-border); color: var(--status-reserved-text); }
 </style>
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="px-10 py-10 max-w-[1750px] mx-auto space-y-10">
     
     <!-- TOP FILTER BAR -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-3xl icon-container flex items-center justify-center shadow-xl shrink-0">
-                <i class="fa-solid fa-brain text-3xl"></i>
-            </div>
-            <div>
-                <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Analytics Dashboard</h2>
-                <p class="text-tertiary mt-1 text-sm font-medium">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
-            </div>
+        <div>
+            <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Analytics Dashboard</h2>
+            <p class="text-tertiary mt-1 text-sm font-medium">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
         </div>
 
         <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
@@ -166,10 +163,11 @@ include '../../includes/header.php';
                 ['id' => 'heatmap', 'icon' => 'fa-fire', 'label' => 'Heatmap'],
                 ['id' => 'revenue', 'icon' => 'fa-money-bill-trend-up', 'label' => 'Revenue'],
                 ['id' => 'traffic', 'icon' => 'fa-car-side', 'label' => 'Traffic'],
+                ['id' => 'turnover', 'icon' => 'fa-arrows-spin', 'label' => 'Turnover'],
                 ['id' => 'dwell', 'icon' => 'fa-hourglass-half', 'label' => 'Duration'],
                 ['id' => 'reservations', 'icon' => 'fa-calendar-check', 'label' => 'Booking'],
                 ['id' => 'operators', 'icon' => 'fa-users-gear', 'label' => 'Operators'],
-                ['id' => 'anomalies', 'icon' => 'fa-shield-heart', 'label' => 'Predictive']
+
             ];
             foreach($sections as $s): ?>
             <a href="#<?= $s['id'] ?>" class="jump-link flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-tertiary hover:bg-surface border border-transparent hover:border-color shadow-sm transition-all">
@@ -190,9 +188,6 @@ include '../../includes/header.php';
                     <p class="text-tertiary mt-1 text-sm font-medium">Critical performance metrics for the active window.</p>
                 </div>
             </div>
-            <div class="px-5 py-2 bg-status-available-bg text-status-available-text rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-status-available-border">
-                <span class="w-2 h-2 rounded-full bg-status-online animate-pulse"></span> Intelligence Sync Active
-            </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -203,7 +198,10 @@ include '../../includes/header.php';
                 </div>
                 <div class="relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Revenue Today' : 'Total Revenue' ?></p>
-                    <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr($data['summary']['revenue_today']) ?></p>
+                    <div class="flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-xl font-black text-tertiary">Rp</span>
+                        <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= number_format((float)$data['summary']['revenue_today'], 0, ',', '.') ?></p>
+                    </div>
                     <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-secondary uppercase tracking-widest">
                         <i class="fa-solid fa-arrow-trend-up text-brand"></i> Intelligence Sync Active
                     </div>
@@ -230,10 +228,8 @@ include '../../includes/header.php';
 
             <div class="bento-card p-8 relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
-                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-brand/10 mb-6 overflow-hidden">
-                    <img src="../../assets/img/logo_p.png" alt="Logo" class="w-10 h-10 object-contain opacity-50 group-hover:opacity-100 transition-opacity">
-                </div>
+                <div class="absolute top-0 right-0 p-8 opacity-15 group-hover:opacity-25 transition-opacity">
+                    <img src="../../assets/img/logo_p.png" alt="Logo" class="w-16 h-16 object-contain grayscale brightness-0">
                 </div>
                 <div class="relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Intake Capacity</p>
@@ -243,8 +239,8 @@ include '../../includes/header.php';
                     </div>
                     <div class="mt-8 flex items-center gap-3">
                         <div class="flex -space-x-3">
-                            <div class="w-8 h-8 rounded-full bg-status-reserved-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-clock text-[8px] text-status-reserved-text"></i></div>
-                            <div class="w-8 h-8 rounded-full bg-status-available-bg border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-check text-[8px] text-status-available-text"></i></div>
+                            <div class="w-8 h-8 rounded-full status-badge-reserved border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-clock text-[8px]"></i></div>
+                            <div class="w-8 h-8 rounded-full status-badge-available border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-check text-[8px]"></i></div>
                         </div>
                         <span class="text-[10px] font-black text-tertiary uppercase tracking-widest"><?= $data['summary']['total_reservations'] ?> RSV Today</span>
                     </div>
@@ -292,10 +288,16 @@ include '../../includes/header.php';
                             <span class="text-[10px] font-black text-tertiary uppercase tracking-[0.2em]">ZONE ID: <?= $area['code'] ?></span>
                         </div>
                     </div>
-                    <div class="flex gap-4 sm:gap-6">
-                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-available-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Available</span></div>
-                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-parked-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Occupied</span></div>
-                        <div class="flex items-center gap-2.5"><div class="w-3 h-3 rounded-full bg-status-reserved-text"></div><span class="text-[9px] font-black text-tertiary uppercase">Reserved</span></div>
+                    <div class="flex gap-4">
+                        <div class="status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                            <span class="status-dot-available"></span> Available
+                        </div>
+                        <div class="status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                            <span class="status-dot-parked"></span> Occupied
+                        </div>
+                        <div class="status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                            <span class="status-dot-reserved"></span> Reserved
+                        </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
@@ -328,7 +330,7 @@ include '../../includes/header.php';
             <div class="bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Daily Trajectory</h4>
-                    <span class="text-[10px] font-black text-brand uppercase tracking-widest bg-brand/5 px-4 py-2 rounded-xl">14-Day View</span>
+                    <span class="badge-soft badge-soft-indigo px-4 py-2">14-Day View</span>
                 </div>
                 <div class="h-[280px] w-full">
                     <canvas id="revDailyChart"></canvas>
@@ -337,7 +339,7 @@ include '../../includes/header.php';
             <div class="bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Monthly Performance</h4>
-                    <span class="text-[10px] font-black text-tertiary uppercase tracking-widest bg-surface-alt px-4 py-2 rounded-xl">H1 Analysis</span>
+                    <span class="badge-soft badge-soft-slate px-4 py-2">H1 Analysis</span>
                 </div>
                 <div class="h-[280px] w-full">
                     <canvas id="revMonthlyChart"></canvas>
@@ -365,14 +367,14 @@ include '../../includes/header.php';
                 <div class="mt-12 grid grid-cols-2 gap-8 w-full text-center border-t border-color pt-10">
                     <div>
                         <div class="flex items-center justify-center gap-2 mb-2">
-                            <div class="w-2 h-2 rounded-full bg-[#1d4ed8]"></div>
+                            <div class="w-2 h-2 rounded-full bg-[#6366f1]"></div>
                             <span class="text-[9px] font-black text-tertiary uppercase tracking-widest">Automobiles</span>
                         </div>
                         <span class="text-2xl font-black text-primary"><?= array_sum(array_column($rev_daily, 'cars')) ?></span>
                     </div>
                     <div>
                         <div class="flex items-center justify-center gap-2 mb-2">
-                            <div class="w-2 h-2 rounded-full bg-[#93c5fd]"></div>
+                            <div class="w-2 h-2 rounded-full bg-[#f43f5e]"></div>
                             <span class="text-[9px] font-black text-tertiary uppercase tracking-widest">Two-Wheelers</span>
                         </div>
                         <span class="text-2xl font-black text-primary"><?= array_sum(array_column($rev_daily, 'motos')) ?></span>
@@ -389,6 +391,50 @@ include '../../includes/header.php';
                 </div>
                 <div class="h-[280px] w-full">
                     <canvas id="peakChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. TURNOVER SECTION -->
+    <section id="turnover" class="scroll-section space-y-10">
+        <div class="flex items-center gap-5">
+            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
+            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Turnover Intelligence</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="bento-card p-8 border-color shadow-xl">
+                <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Utilization Velocity</p>
+                <div class="flex items-baseline gap-3 mb-8">
+                    <p class="text-6xl font-manrope font-black text-primary tracking-tighter"><?= number_format($avg_turnover, 1) ?></p>
+                    <div class="flex flex-col">
+                        <span class="text-[11px] font-black text-tertiary uppercase">Turnover</span>
+                        <span class="text-[11px] font-black text-brand uppercase">Ratio</span>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-surface-alt border border-color mb-8">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black text-tertiary uppercase tracking-widest">Efficiency Status</span>
+                        <span class="text-[10px] font-black text-brand uppercase"><?= $turnover_score ?></span>
+                    </div>
+                    <div class="h-2 w-full bg-surface rounded-full overflow-hidden">
+                        <div class="h-full bg-brand" style="width: <?= min(100, $avg_turnover * 10) ?>%"></div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-tertiary leading-relaxed">
+                    Each parking slot is used by an average of <span class="text-primary font-bold"><?= number_format($avg_turnover, 1) ?> different vehicles</span> per day. 
+                    The ideal target for commercial areas is <span class="text-brand font-bold">4.0 - 6.0</span>.
+                </p>
+            </div>
+
+            <div class="lg:col-span-2 bento-card p-8 border-color shadow-xl">
+                <div class="flex items-center justify-between mb-10">
+                    <h4 class="font-manrope font-black text-lg text-primary">Turnover Trend Analysis</h4>
+                    <span class="badge-soft badge-soft-indigo px-4 py-2">Velocity Tracking</span>
+                </div>
+                <div class="h-[280px] w-full">
+                    <canvas id="turnoverChart"></canvas>
                 </div>
             </div>
         </div>
@@ -432,11 +478,11 @@ include '../../includes/header.php';
                     <p class="text-tertiary text-[10px] font-black uppercase tracking-[0.25em] mb-12">System Efficiency</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-12">
                         <div class="space-y-3">
-                            <span class="block text-status-available-text text-4xl font-manrope font-black">89.4%</span>
+                            <span class="block status-text-available text-4xl font-manrope font-black">89.4%</span>
                             <span class="text-secondary text-[10px] font-black uppercase tracking-widest leading-relaxed">Utilization via Pre-booking</span>
                         </div>
                         <div class="space-y-3">
-                            <span class="block text-status-lost-text text-4xl font-manrope font-black">4.2%</span>
+                            <span class="block status-text-lost text-4xl font-manrope font-black">4.2%</span>
                             <span class="text-secondary text-[10px] font-black uppercase tracking-widest leading-relaxed">No-show Variance Impact</span>
                         </div>
                     </div>
@@ -449,16 +495,19 @@ include '../../includes/header.php';
     <section id="operators" class="scroll-section space-y-10">
         <div class="flex items-center gap-5">
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
+            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center">
+                <i class="fa-solid fa-users-gear text-xs"></i>
+            </div>
             <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Personnel Intelligence</h3>
         </div>
         <div class="bento-card overflow-hidden shadow-xl border-color">
             <table class="w-full activity-table font-inter border-separate border-spacing-0">
                 <thead>
                     <tr class="bg-surface-alt/50">
-                        <th class="text-left px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operator</th>
+                        <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operator</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Shift</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Throughput</th>
-                        <th class="text-right px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Total Handled</th>
+                        <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Total Handled</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color">
@@ -468,20 +517,27 @@ include '../../includes/header.php';
                         $opInitial = strtoupper(substr($opName, 0, 1));
                     ?>
                     <tr class="hover:bg-surface-alt/30 transition-all group">
-                        <td class="px-10 py-6">
+                        <td class="px-8 py-5">
                             <div class="flex items-center gap-5">
-                                <div class="w-11 h-11 rounded-2xl bg-surface-alt border border-color flex items-center justify-center text-primary text-xs font-black shadow-sm"><?= $opInitial ?: 'U' ?></div>
+                                <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-white text-base font-black shadow-lg shadow-brand/20 group-hover:scale-110 transition-all duration-300"><?= $opInitial ?: 'U' ?></div>
                                 <div>
                                     <span class="text-base font-extrabold text-primary block leading-tight"><?= htmlspecialchars($opName) ?></span>
                                     <span class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-1 block">ID: OP-<?= (int)($op['operator_id'] ?? 0) ?></span>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-6 text-center">
-                            <span class="px-5 py-2 rounded-xl bg-surface-alt text-[10px] font-black text-tertiary uppercase tracking-widest border border-color"><?= htmlspecialchars((string)($op['shift'] ?? 'N/A')) ?></span>
+                        <td class="px-6 py-5 text-center">
+                            <?php 
+                                $shift = (string)($op['shift'] ?? 'N/A');
+                                $shiftBadge = 'badge-soft-slate';
+                                if (strpos($shift, '1') !== false || strpos($shift, 'Day') !== false) $shiftBadge = 'badge-soft-emerald';
+                                elseif (strpos($shift, '2') !== false) $shiftBadge = 'badge-soft-indigo';
+                                elseif (strpos($shift, '3') !== false || strpos($shift, 'Night') !== false) $shiftBadge = 'badge-soft-rose';
+                            ?>
+                            <span class="badge-soft <?= $shiftBadge ?> px-5 py-2"><?= htmlspecialchars($shift) ?></span>
                         </td>
                         <td class="px-6 py-6 text-center font-manrope font-black text-primary text-xl"><?= (int)($op['total_transactions'] ?? 0) ?></td>
-                        <td class="px-10 py-6 text-right font-manrope font-black text-status-available-text text-xl"><?= fmt_idr((float)($op['total_revenue_handled'] ?? 0)) ?></td>
+                        <td class="px-8 py-5 text-right font-manrope font-black status-text-available text-xl"><?= fmt_idr((float)($op['total_revenue_handled'] ?? 0)) ?></td>
                     </tr>
                     <?php endforeach; ?>
                     <?php else: ?>
@@ -494,42 +550,7 @@ include '../../includes/header.php';
         </div>
     </section>
 
-    <!-- 10. ANOMALIES -->
-    <section id="anomalies" class="scroll-section space-y-10 pb-32">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <div>
-                <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Predictive Guardianship</h3>
-                <p class="text-tertiary mt-1 text-sm font-medium">Statistical variance detection algorithms.</p>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 gap-6">
-            <?php if (empty($anomalies)): ?>
-                <div class="p-20 text-center bg-surface border-2 border-dashed border-color rounded-[3rem] shadow-sm">
-                    <div class="w-20 h-20 bg-status-available-bg text-status-available-text rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-lg border border-status-available-border">
-                        <i class="fa-solid fa-shield-halved text-3xl"></i>
-                    </div>
-                    <h4 class="font-manrope font-black text-2xl text-primary mb-3">Eco-System Stable</h4>
-                    <p class="text-tertiary text-sm max-w-md mx-auto leading-relaxed">No significant statistical deviations detected. All operational parameters are within the 95th percentile confidence interval.</p>
-                </div>
-            <?php else: ?>
-                <?php foreach($anomalies as $low): ?>
-                <div class="p-8 bg-status-lost-bg border border-status-lost-border rounded-[2.5rem] flex items-center justify-between group hover:shadow-2xl hover:shadow-status-lost-text/5 transition-all">
-                    <div class="flex items-center gap-8">
-                        <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl border border-status-lost-border">
-                            <i class="fa-solid fa-triangle-exclamation text-status-lost-text text-3xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-manrope font-black text-xl text-status-lost-text">Revenue Variance Detected</h4>
-                            <p class="text-status-lost-text/70 text-sm font-bold mt-1">Date: <?= date('d M Y', strtotime($low['date'])) ?> — Performance: <?= fmt_idr($low['revenue']) ?></p>
-                        </div>
-                    </div>
-                    <button class="bg-surface-alt border border-color text-primary px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:brightness-110 active:scale-95 transition-all">Investigate Node</button>
-                </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </section>
+
 
 </div>
 
@@ -606,6 +627,13 @@ const commonOptions = {
     }
 };
 
+const createChartGradient = (ctx, color) => {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, color.replace('0.1)', '0.5)').replace('0.03)', '0.5)'));
+    gradient.addColorStop(1, color.replace('0.1)', '0.01)').replace('0.03)', '0.01)'));
+    return gradient;
+};
+
 function initChart(id, config) {
     const ctx = document.getElementById(id);
     if (ctx) return new Chart(ctx, config);
@@ -620,8 +648,9 @@ initChart('revDailyChart', {
         labels: <?= json_encode(array_map(fn($d) => date('d M', strtotime($d['date'])), $rev_daily)) ?>,
         datasets: [{
             data: <?= json_encode(array_column($rev_daily, 'revenue')) ?>,
-            borderColor: chartColors.brand, borderWidth: 5, tension: 0.4, fill: true, 
-            backgroundColor: 'rgba(99, 102, 241, 0.04)', pointRadius: 0, pointHoverRadius: 8, pointHoverBackgroundColor: chartColors.brand, pointHoverBorderWidth: 4, pointHoverBorderColor: '#fff'
+            borderColor: chartColors.brand, borderWidth: 4, tension: 0.4, fill: true, 
+            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(99, 102, 241, 0.05)'), 
+            pointRadius: 0, pointHoverRadius: 8, pointHoverBackgroundColor: chartColors.brand, pointHoverBorderWidth: 4, pointHoverBorderColor: '#fff'
         }]
     },
     options: commonOptions
@@ -643,22 +672,75 @@ initChart('vehicleMixChart', {
         labels: ['Cars', 'Motos'],
         datasets: [{ 
             data: [<?= array_sum(array_column($rev_daily, 'cars')) ?>, <?= array_sum(array_column($rev_daily, 'motos')) ?>], 
-            backgroundColor: [chartColors.car, chartColors.moto], borderWidth: 4, borderColor: '#fff', hoverOffset: 15 
+            backgroundColor: ['#6366f1', '#f43f5e'], 
+            borderWidth: 0, 
+            hoverOffset: 20 
         }]
     },
-    options: { cutout: '82%', plugins: { legend: { display: false } } }
+    options: { 
+        cutout: '72%', 
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                enabled: true,
+                padding: 12,
+                cornerRadius: 12,
+                titleFont: { weight: 'bold', size: 14 },
+                bodyFont: { size: 13 }
+            }
+        } 
+    }
 });
 
 initChart('peakChart', {
     type: 'line',
     data: {
         labels: <?= json_encode(array_map(fn($h) => sprintf("%02d:00", $h['hour']), $data['hourly_distribution'])) ?>,
-        datasets: [{
-            data: <?= json_encode(array_column($data['hourly_distribution'], 'total_entries')) ?>,
-            borderColor: chartColors.brand, fill: true, backgroundColor: 'rgba(99, 102, 241, 0.03)', tension: 0.5, borderWidth: 5, pointRadius: 0
-        }]
+        datasets: [
+            {
+                label: 'Cars',
+                data: <?= json_encode(array_column($data['hourly_distribution'], 'cars')) ?>,
+                borderColor: '#6366f1',
+                backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(99, 102, 241, 0.1)'),
+                fill: true, tension: 0.4, borderWidth: 4, pointRadius: 0, stacked: true
+            },
+            {
+                label: 'Motorcycles',
+                data: <?= json_encode(array_column($data['hourly_distribution'], 'motos')) ?>,
+                borderColor: '#f43f5e',
+                backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(244, 63, 94, 0.1)'),
+                fill: true, tension: 0.4, borderWidth: 4, pointRadius: 0, stacked: true
+            },
+            {
+                label: 'Reservations',
+                data: <?= json_encode(array_column($data['hourly_distribution'], 'reservations')) ?>,
+                borderColor: '#f59e0b',
+                backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(245, 158, 11, 0.1)'),
+                fill: true, tension: 0.4, borderWidth: 4, pointRadius: 0, stacked: true
+            }
+        ]
     },
-    options: commonOptions
+    options: {
+        ...commonOptions,
+        plugins: {
+            ...commonOptions.plugins,
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: { weight: '800', size: 10 },
+                    color: chartTextColor
+                }
+            }
+        },
+        scales: {
+            ...commonOptions.scales,
+            y: { ...commonOptions.scales.y, stacked: true },
+            x: { ...commonOptions.scales.x, stacked: true }
+        }
+    }
 });
 
 // 3. Dwell Charts
@@ -678,6 +760,24 @@ initChart('dwellPeriodChart', {
         datasets: [{ data: <?= json_encode(array_column($dwell_period, 'avg_min')) ?>, borderColor: chartColors.brand, borderWidth: 5, tension: 0.5, pointRadius: 0 }]
     },
     options: commonOptions
+});
+
+initChart('turnoverChart', {
+    type: 'line',
+    data: {
+        labels: <?= json_encode(array_column($turnover_trend, 'date')) ?>,
+        datasets: [{
+            label: 'Turnover Ratio',
+            data: <?= json_encode(array_column($turnover_trend, 'ratio')) ?>,
+            borderColor: chartColors.brand,
+            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(99, 102, 241, 0.1)'),
+            fill: true, tension: 0.4, borderWidth: 4, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 3
+        }]
+    },
+    options: {
+        ...commonOptions,
+        plugins: { ...commonOptions.plugins, legend: { display: false } }
+    }
 });
 
 // 4. Misc Charts
@@ -758,43 +858,59 @@ document.getElementById('theme-toggle')?.addEventListener('click', () => {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- DATE RANGE PICKER ---
     const rangeSelect = document.getElementById('range-select');
     const trigger = document.getElementById('range-picker-trigger');
     const form = document.getElementById('filter-form');
     
-    if (!rangeSelect || !trigger || !form) return;
-
-    const fp = flatpickr(trigger, {
-        mode: "range",
-        monthSelectorType: "dropdown",
-        dateFormat: "Y-m-d",
-        defaultDate: ["<?= $start_date ?>", "<?= $end_date ?>"],
-        onClose: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length === 2) {
-                document.getElementById('start_date').value = instance.formatDate(selectedDates[0], "Y-m-d");
-                document.getElementById('end_date').value = instance.formatDate(selectedDates[1], "Y-m-d");
-                form.submit();
-            } else {
-                // Reset select if cancelled without full range
-                if (rangeSelect.value === 'custom' && "<?= $range ?>" !== 'custom') {
+    if (rangeSelect && trigger && form) {
+        const fp = flatpickr(trigger, {
+            mode: "range",
+            monthSelectorType: "dropdown",
+            dateFormat: "Y-m-d",
+            defaultDate: ["<?= $start_date ?>", "<?= $end_date ?>"],
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    document.getElementById('start_date').value = instance.formatDate(selectedDates[0], "Y-m-d");
+                    document.getElementById('end_date').value = instance.formatDate(selectedDates[1], "Y-m-d");
+                    form.submit();
+                } else if (rangeSelect.value === 'custom' && "<?= $range ?>" !== 'custom') {
                     rangeSelect.value = "<?= $range ?>";
                 }
             }
-        }
-    });
+        });
 
-    rangeSelect.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            fp.open();
-        } else {
-            form.submit();
-        }
-    });
+        rangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') fp.open();
+            else form.submit();
+        });
 
-    const changeBtn = document.getElementById('change-range-btn');
-    if (changeBtn) {
-        changeBtn.addEventListener('click', () => fp.open());
+        const changeBtn = document.getElementById('change-range-btn');
+        if (changeBtn) changeBtn.addEventListener('click', () => fp.open());
     }
+
+    // --- SCROLLSPY LOGIC ---
+    const sections = document.querySelectorAll('section.scroll-section');
+    const navLinks = document.querySelectorAll('.jump-link');
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(section => observer.observe(section));
 });
 </script>
 <?php include '../../includes/footer.php'; ?>

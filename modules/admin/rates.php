@@ -34,6 +34,18 @@ include '../../includes/header.php';
 
 
 
+<style>
+    /* Prevent number spin buttons from appearing and potentially cutting off text */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+
 <div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
     
     <!-- HEADER -->
@@ -61,7 +73,7 @@ include '../../includes/header.php';
         </div>
     </div>
 
-    <div class="space-y-24">
+    <div class="space-y-12">
         
         <?php if ($msg): ?>
         <div class="flex items-center gap-4 status-badge-paid rounded-2xl px-6 py-5 border shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
@@ -81,27 +93,30 @@ include '../../includes/header.php';
         </div>
         <?php endif; ?>
 
-        <?php foreach ($rates as $r):
+        <?php foreach ($rates as $r) {
             $is_car = $r['vehicle_type'] === 'car';
             $section_id = $is_car ? 'car-rates' : 'moto-rates';
             $icon   = $is_car ? 'fa-car' : 'fa-motorcycle';
             $label  = $is_car ? 'Car Class (Type 1)' : 'Motorcycle Class (Type 2)';
         ?>
         <!-- SECTION: <?= strtoupper($r['vehicle_type']) ?> -->
-        <section id="<?= $section_id ?>" class="scroll-section space-y-10">
-            <div class="flex items-end justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-                    <div>
-                        <h2 class="text-2xl font-manrope font-black text-primary tracking-tight"><?= $label ?></h2>
-                        <p class="text-tertiary mt-1 text-sm font-medium">Algorithmic pricing parameters for <?= $r['vehicle_type'] ?> vehicles.</p>
-
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <!-- Section Identity (Sticky Anchor) -->
+        <div class="space-y-8">
+            <div id="<?= $section_id ?>" class="scroll-section -mt-20 pt-20"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <!-- Parameters Card -->
-                <div class="lg:col-span-7 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+                <div class="lg:col-span-7 bento-card bg-surface border-color rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+                    <!-- Section Header moved inside Card -->
+                    <div class="relative z-10 mb-12 flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shadow-inner">
+                            <i class="fa-solid <?= $icon ?> text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight"><?= $label ?></h3>
+                            <p class="text-tertiary text-[10px] font-bold uppercase tracking-widest mt-1">Pricing Configuration Strategy</p>
+                        </div>
+                    </div>
+
                     <div class="absolute -right-16 -top-16 w-48 h-48 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-700"></div>
                     <form method="POST" class="relative z-10 space-y-12">
                         <?= csrf_field() ?>
@@ -123,15 +138,15 @@ include '../../includes/header.php';
                                     <?= $flabel ?>
                                 </label>
                                 <div class="relative group/input flex items-center bg-surface-alt border border-color rounded-2xl px-5 py-4 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/5 transition-all duration-300">
-                                    <div class="flex flex-col border-r border-color/50 pr-4 mr-1">
-                                        <span class="text-[8px] font-black text-tertiary/40 uppercase leading-none mb-1">UNIT</span>
-                                        <span class="text-[10px] font-black text-primary/70 leading-none">IDR</span>
+                                    <div class="flex flex-col border-r border-color/50 pr-3 mr-2 shrink-0">
+                                        <span class="text-[7px] font-black text-tertiary/40 uppercase leading-none mb-1">UNIT</span>
+                                        <span class="text-[9px] font-black text-primary/70 leading-none">IDR</span>
                                     </div>
                                     <input type="number" name="<?= $fname ?>"
                                            value="<?= $fval ?>" min="0" step="<?= $step ?>" required
                                            id="<?= $fname . '_' . $r['rate_id'] ?>"
                                            oninput="updatePreview(<?= $r['rate_id'] ?>)"
-                                           class="w-full bg-transparent border-none text-xl font-manrope font-black text-primary focus:outline-none text-right placeholder:text-tertiary/20">
+                                           class="w-full bg-transparent border-none text-lg font-manrope font-black text-primary focus:outline-none text-right placeholder:text-tertiary/20 appearance-none">
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -148,7 +163,7 @@ include '../../includes/header.php';
                 </div>
 
                 <!-- Simulation Card -->
-                <div class="lg:col-span-5 bento-card bg-surface border-color rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+                <div class="lg:col-span-5 bento-card bg-surface border-color rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
                     <div class="absolute -right-16 -top-16 w-48 h-48 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-700"></div>
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-10">
@@ -178,9 +193,8 @@ include '../../includes/header.php';
                     </div>
                 </div>
             </div>
-        </section>
-        <?php endforeach; ?>
-
+        </div>
+        <?php } ?>
     </div>
 </div>
 
@@ -229,9 +243,9 @@ scrollContainer.addEventListener('scroll', () => {
     });
 });
 
-<?php foreach ($rates as $r): ?>
+<?php foreach ($rates as $r) { ?>
 updatePreview(<?= $r['rate_id'] ?>);
-<?php endforeach; ?>
+<?php } ?>
 </script>
 
 <?php include '../../includes/footer.php'; ?>

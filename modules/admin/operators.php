@@ -15,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = trim($_POST['phone'] ?? '');
         $type  = $_POST['staff_type'] ?? 'operator';
         $valid_shifts = [
-            '06:00 - 12:00', '12:00 - 18:00', '18:00 - 00:00', '00:00 - 06:00',
-            '06:00 - 18:00 (Day)', '18:00 - 06:00 (Night)'
+            '07:00 - 10:45', '10:45 - 14:30', '14:30 - 18:15', '18:15 - 22:00',
+            '07:00 - 14:30', '14:30 - 22:00'
         ];
         if (!$name || !in_array($shift, $valid_shifts)) {
             $error = 'Name and shift are required.';
@@ -106,7 +106,7 @@ include '../../includes/header.php';
     <div class="bento-card p-4 overflow-hidden">
         <div class="px-8 py-6 border-b border-color flex items-center justify-between bg-surface">
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-users-gear text-lg"></i>
                 </div>
                 <div>
@@ -156,7 +156,7 @@ include '../../includes/header.php';
                     <tr class="group hover:bg-surface-alt/40 transition-all duration-300">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-manrope font-extrabold text-white text-base shadow-sm group-hover:scale-105 transition-transform">
+                                <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center font-manrope font-extrabold text-white text-base shadow-lg shadow-brand/20 group-hover:scale-105 transition-all duration-300">
                                     <?= strtoupper(substr($op['full_name'], 0, 1)) ?>
                                 </div>
                                 <div>
@@ -212,24 +212,24 @@ include '../../includes/header.php';
 $shiftOptions = function($selected = '') {
     $role = $_SESSION['role'] ?? '';
     $opts = [
-        '06:00 - 12:00' => 'Shift 1 (06-12)',
-        '12:00 - 18:00' => 'Shift 2 (12-18)',
-        '18:00 - 00:00' => 'Shift 3 (18-00)',
-        '00:00 - 06:00' => 'Shift 4 (00-06)'
+        '07:00 - 10:45' => 'Shift 1 (07:00 - 10:45)',
+        '10:45 - 14:30' => 'Shift 2 (10:45 - 14:30)',
+        '14:30 - 18:15' => 'Shift 3 (14:30 - 18:15)',
+        '18:15 - 22:00' => 'Shift 4 (18:15 - 22:00)'
     ];
     $adminOpts = [
-        '06:00 - 18:00 (Day)' => 'Day Shift (06-18)',
-        '18:00 - 06:00 (Night)' => 'Night Shift (18-06)'
+        '07:00 - 14:30' => 'Admin Shift 1 (07:00 - 14:30)',
+        '14:30 - 22:00' => 'Admin Shift 2 (14:30 - 22:00)'
     ];
     
-    $out = '<optgroup label="OPERATIONAL STAFF (6H)">';
+    $out = '<optgroup label="OPERATIONAL ROTATION (07-22)">';
     foreach ($opts as $v => $l) {
         $out .= "<option value='$v'" . ($selected === $v ? ' selected' : '') . ">$l</option>";
     }
     $out .= '</optgroup>';
     
     if ($role === 'superadmin') {
-        $out .= '<optgroup label="ADMINISTRATIVE STAFF (12H)">';
+        $out .= '<optgroup label="ADMINISTRATIVE ROTATION (07-22)">';
         foreach ($adminOpts as $v => $l) {
             $out .= "<option value='$v'" . ($selected === $v ? ' selected' : '') . ">$l</option>";
         }
@@ -272,7 +272,7 @@ $shiftOptions = function($selected = '') {
                     <div class="relative">
                         <select name="staff_type" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
                             <option value="operator">Operator</option>
-                            <?php if ($_SESSION['role']==='superadmin'): ?><option value="admin">Admin Staff</option><?php endif; ?>
+                            <?php if ($_SESSION['role']==='superadmin'): ?><option value="admin">Admin</option><?php endif; ?>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
                     </div>
@@ -343,7 +343,7 @@ $shiftOptions = function($selected = '') {
                     <div class="relative">
                         <select name="staff_type" id="edit_type" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
                             <option value="operator">Operator</option>
-                            <option value="admin">Admin Staff</option>
+                            <option value="admin">Admin</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
                     </div>

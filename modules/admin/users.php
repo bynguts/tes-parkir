@@ -97,7 +97,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
     <!-- Alerts -->
     <?php if ($displayMsg): ?>
     <div class="flex items-center gap-4 bg-emerald-50 border border-emerald-100 rounded-2xl px-6 py-4 animate-in fade-in slide-in-from-top-2 duration-500">
-        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
             <i class="fa-solid fa-check-circle"></i>
         </div>
         <p class="text-emerald-700 text-sm font-bold font-inter"><?= htmlspecialchars($displayMsg) ?></p>
@@ -118,7 +118,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
         <!-- Provisioning Panel -->
         <div class="bento-card p-8 self-start sticky top-32">
             <div class="flex items-center gap-4 mb-8">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-user-plus text-sm"></i>
                 </div>
                 <div>
@@ -147,9 +147,9 @@ $displayError = $error ?: ($_GET['error'] ?? '');
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Access Role</label>
                     <div class="relative">
                         <select name="role" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-5 py-3.5 text-sm font-manrope font-bold text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all cursor-pointer">
-                            <option value="operator">System Operator</option>
-                            <option value="admin">Administrator</option>
-                            <option value="superadmin">Super Administrator</option>
+                            <option value="operator">Operator</option>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Super Admin</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] pointer-events-none"></i>
                     </div>
@@ -179,7 +179,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
         <div class="bento-card p-4 overflow-hidden">
             <div class="px-8 py-6 border-b border-color flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary">
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-users-viewfinder text-lg"></i>
                     </div>
                     <div>
@@ -195,7 +195,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
                         <tr>
                             <th>Identity Profile</th>
                             <th class="text-center">Authorization</th>
-                            <th class="text-center">Last Session</th>
+                            <th class="text-center whitespace-nowrap">Last Session</th>
                             <th class="text-center">Status</th>
                             <th class="text-right">Commands</th>
                         </tr>
@@ -213,7 +213,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
                         <tr class="group hover:bg-surface-alt/40 transition-all duration-300 <?= !$u['is_active'] ? 'opacity-50' : '' ?>">
                             <td class="px-8 py-5">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-manrope font-extrabold text-white text-base shadow-sm group-hover:scale-105 transition-transform">
+                                    <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center font-manrope font-extrabold text-white text-base shadow-lg shadow-brand/20 group-hover:scale-105 transition-all duration-300">
                                         <?= strtoupper(substr($u['username'], 0, 1)) ?>
                                     </div>
                                     <div>
@@ -233,7 +233,7 @@ $displayError = $error ?: ($_GET['error'] ?? '');
                                 </span>
                             </td>
                             <td class="px-6 py-5 text-center">
-                                <div class="text-[12px] font-inter font-medium text-secondary">
+                                <div class="text-[12px] font-inter font-medium text-secondary whitespace-nowrap">
                                     <?= $u['last_login'] ? date('d M Y, H:i', strtotime($u['last_login'])) : '—' ?>
                                 </div>
                             </td>

@@ -1,10 +1,10 @@
 # 🅿️ SmartParking System v2
 
-Sistem manajemen parkir berbasis PHP + MySQL yang production-ready.
+Production-ready parking management system based on PHP + MySQL.
 
 ---
 
-## 🚀 Instalasi
+## 🚀 Installation
 
 ### 1. Import Database
 
@@ -12,30 +12,21 @@ Sistem manajemen parkir berbasis PHP + MySQL yang production-ready.
 mysql -u root -p < database/parking_db_v2.sql
 ```
 
-### 2. Setup Password Default
 
-Jalankan di browser **satu kali saja** setelah import:
-
-```
-http://localhost/parking/setup_passwords.php?key=SETUP_2026_PARKIR
-```
-
-> **⚠️ HAPUS `setup_passwords.php` setelah dijalankan!**
-
-### 3. Konfigurasi Koneksi DB
+### 3. DB Connection Configuration
 
 Edit `config/connection.php`:
 
 ```php
 $db_host = 'localhost';
-$db_name = 'parking_db';
+$db_name = 'parking_db_v2';
 $db_user = 'root';
 $db_pass = 'your_password';
 ```
 
 ---
 
-## 🔑 Akun Default
+## 🔑 Default Accounts
 
 | Username | Password     | Role       |
 |----------|-------------|------------|
@@ -43,11 +34,11 @@ $db_pass = 'your_password';
 | operator | operator2026| admin      |
 | rizky    | rizky123    | operator   |
 
-> Ganti semua password setelah setup via **Admin > Users > Reset Password**.
+> Change all passwords after setup via **Admin > Users > Reset Password**.
 
 ---
 
-## 📁 Struktur File
+## 📁 File Structure
 
 ```
 parking/
@@ -55,83 +46,81 @@ parking/
 │   ├── connection.php          # PDO database connection
 │   └── configexample.js        # Template config JS
 ├── database/
-│   └── parking_db_v2.sql       # Schema lengkap dengan indexes
+│   └── parking_db_v2.sql       # Complete schema with indexes
 ├── includes/
 │   ├── auth_guard.php          # Session & auth check
 │   └── functions.php           # CSRF, fee calculator, helpers
 │
-├── index.php                   # Dashboard utama + sidebar
-├── login.php                   # Login dengan bcrypt + rate limiting
+├── index.php                   # Main dashboard + sidebar
+├── login.php                   # Login with bcrypt + rate limiting
 ├── logout.php                  # Secure session destroy
-├── setup_passwords.php         # Setup awal password (hapus setelah pakai!)
 │
 ├── gate_simulator.php          # Entry gate + QR scanner
 ├── gate_exit.php               # Exit gate + fee calculation
-├── print_ticket.php            # Cetak tiket (auto + manual)
+├── print_ticket.php            # Ticket printing (auto + manual)
 │
-├── dashboard.php               # Kendaraan aktif (unpaid)
-├── dashboard_revenue.php       # Laporan revenue harian
-├── slot_map.php                # Visualisasi slot per lantai (real-time)
-├── reservation.php             # Booking slot di muka
-├── scan_log.php                # Riwayat aktivitas gate
+├── dashboard.php               # Active vehicles (unpaid)
+├── dashboard_revenue.php       # Daily revenue reports
+├── slot_map.php                # Floor slot visualization (real-time)
+├── reservation.php             # Advance slot booking
+├── scan_log.php                # Gate activity history
 │
-├── admin_slots.php             # CRUD slot parkir
-├── admin_rates.php             # Kelola tarif parkir
-├── admin_operators.php         # Kelola operator
-├── admin_users.php             # Kelola user login (superadmin only)
+├── admin_slots.php             # Parking slot CRUD
+├── admin_rates.php             # Manage parking rates
+├── admin_operators.php         # Manage operators
+├── admin_users.php             # Manage login users (superadmin only)
 │
-├── delete_logs.php             # API: hapus log (AJAX)
-└── get_log_dates.php           # API: daftar tanggal log (AJAX)
+├── delete_logs.php             # API: delete logs (AJAX)
+└── get_log_dates.php           # API: log date list (AJAX)
 ```
 
 ---
 
-## ✅ Perbaikan v2 vs v1
+## ✅ Improvements v2 vs v1
 
-### Keamanan
-- ✅ **SQL Injection** — Semua query menggunakan PDO prepared statements
-- ✅ **Password** — `password_hash()` bcrypt cost-12, bukan plaintext
-- ✅ **CSRF Protection** — Token di semua form POST
-- ✅ **Rate Limiting** — Max 5 login gagal per 5 menit per IP
+### Security
+- ✅ **SQL Injection** — All queries use PDO prepared statements
+- ✅ **Passwords** — `password_hash()` bcrypt cost-12, not plaintext
+- ✅ **CSRF Protection** — Tokens in all POST forms
+- ✅ **Rate Limiting** — Max 5 failed logins per 5 minutes per IP
 - ✅ **Session Security** — `session_regenerate_id()`, httponly, samesite=Strict
 - ✅ **Role-Based Access** — superadmin / admin / operator
-- ✅ **Atomic Transactions** — Checkout pakai `beginTransaction()` + rollback
+- ✅ **Atomic Transactions** — Checkout uses `beginTransaction()` + rollback
 
 ### Database
-- ✅ **INDEX** pada kolom kritis: `payment_status`, `check_out_time`, `plate_number`, `scan_time`
-- ✅ **Data integrity** — Hapus `vehicle_type=''` dan `duration_hours=999.99`
-- ✅ **Slot lebih banyak** — 58 slot (3 lantai: G, L1, L2)
-- ✅ **Tabel `admin_users`** — Menggantikan hardcoded credentials
-- ✅ **Tabel `reservation`** — Untuk sistem booking
+- ✅ **INDEX** on critical columns: `payment_status`, `check_out_time`, `plate_number`, `scan_time`
+- ✅ **Data integrity** — Removed `vehicle_type=''` and `duration_hours=999.99`
+- ✅ **More slots** — 58 slots (3 floors: G, L1, L2)
+- ✅ **`admin_users` table** — Replaces hardcoded credentials
+- ✅ **`reservation` table** — For booking system
 
-### Fitur Baru
-- ✅ **Slot Map** — Visualisasi real-time per lantai, auto-refresh 30 detik
-- ✅ **Reservation System** — Booking slot dengan deteksi overlap otomatis
-- ✅ **Admin CRUD** — Kelola slot, tarif, operator, dan user via UI
-- ✅ **Dashboard Index** — Sidebar navigasi + statistik live + alert slot penuh
-- ✅ **Rate Preview** — Simulasi biaya saat edit tarif
+### New Features
+- ✅ **Slot Map** — Real-time visualization per floor, 30s auto-refresh
+- ✅ **Reservation System** — Slot booking with automatic overlap detection
+- ✅ **Admin CRUD** — Manage slots, rates, operators, and users via UI
+- ✅ **Dashboard Index** — Sidebar navigation + live stats + full occupancy alerts
+- ✅ **Rate Preview** — Fee simulation while editing rates
 - ✅ **Multi-floor** — Ground, Level 1, Level 2
 
 ---
 
-## 🛡️ Catatan Produksi
+## 🛡️ Production Notes
 
-1. **HTTPS wajib** di production — set `'secure' => true` di session cookie params
-2. **Hapus `setup_passwords.php`** setelah setup awal
-3. Tambahkan `.htaccess` untuk block akses langsung ke folder `config/` dan `includes/`
-4. Set `display_errors = Off` dan `log_errors = On` di `php.ini`
+1. **HTTPS mandatory** in production — set `'secure' => true` in session cookie params
+3. Add `.htaccess` to block direct access to `config/` and `includes/` folders
+4. Set `display_errors = Off` and `log_errors = On` in `php.ini`
 
 ---
 
-## 📊 Alur Sistem
+## 📊 System Flow
 
 ```
-Masuk:
+Entry:
   Gate Simulator → Print Ticket → slot = 'occupied', ticket = 'active', trx = 'unpaid'
 
-Keluar:
-  Gate Exit (scan QR) → Hitung biaya → slot = 'available', ticket = 'used', trx = 'paid'
+Exit:
+  Gate Exit (scan QR) → Calculate fee → slot = 'available', ticket = 'used', trx = 'paid'
 
-Reservasi:
-  Reservation → Pilih waktu → slot otomatis dialokasikan → reservation_code diberikan
+Reservation:
+  Reservation → Select time → Slot automatically allocated → reservation_code provided
 ```

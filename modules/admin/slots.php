@@ -101,12 +101,12 @@ include '../../includes/header.php';
             <div class="overflow-x-auto no-scrollbar">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-color bg-surface-alt/30">
-                            <th class="px-10 py-8 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter">Slot Identity</th>
-                            <th class="px-6 py-8 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Classification</th>
-                            <th class="px-6 py-8 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Floor Index</th>
-                            <th class="px-6 py-8 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Status Badge</th>
-                            <th class="px-10 py-8 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-right">Operational Deck</th>
+                        <tr class="border-b border-color bg-surface">
+                            <th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter">Slot Identity</th>
+                            <th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Classification</th>
+                            <th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Floor Index</th>
+                            <th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-center">Status Badge</th>
+                            <th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.25em] text-tertiary font-inter text-right">Operational Deck</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-color">
@@ -130,7 +130,7 @@ include '../../includes/header.php';
                         [$stCls, $stLabel] = $stMap[$s['status']] ?? ['status-badge-maintenance', strtoupper($s['status'])];
                     ?>
                     <tr class="group hover:bg-surface-alt/50 transition-all duration-300">
-                        <td class="px-10 py-7">
+                        <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-surface-alt flex items-center justify-center text-primary border border-color group-hover:border-brand/30 transition-colors">
                                     <span class="font-manrope font-black text-lg"><?= substr($s['slot_number'], 0, 1) ?></span>
@@ -141,21 +141,21 @@ include '../../includes/header.php';
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-7">
+                        <td class="px-8 py-5">
                             <div class="flex flex-col items-center gap-1.5">
                                 <i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-blue-500' : 'fa-motorcycle text-emerald-500' ?> text-lg"></i>
                                 <span class="text-[9px] font-black uppercase tracking-widest text-secondary"><?= $s['slot_type'] ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-7 text-center">
+                        <td class="px-8 py-5 text-center">
                             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-color">
                                 <span class="text-[11px] font-black text-primary font-manrope"><?= htmlspecialchars($s['floor_code']) ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-7 text-center">
+                        <td class="px-8 py-5 text-center">
                             <span class="status-badge <?= $stCls ?>"><?= $stLabel ?></span>
                         </td>
-                        <td class="px-10 py-7">
+                        <td class="px-8 py-5">
                             <div class="flex items-center justify-end gap-3">
                                 <!-- Command Switch -->
                                 <form method="POST" class="relative">

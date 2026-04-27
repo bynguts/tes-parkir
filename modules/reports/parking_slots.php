@@ -117,7 +117,7 @@ include '../../includes/header.php';
 
 <style>
 /* Visual Map Styles */
-.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 24px; }
 .slot-box {
     border-radius: 1.5rem;
     height: 125px; 
@@ -196,7 +196,7 @@ include '../../includes/header.php';
         <div class="flex items-center justify-between px-4 py-4 border-b border-color shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-square-p text-lg"></i>
+                    <i class="fa-solid fa-car-side text-lg"></i>
                 </div>
                 <div>
                     <h3 class="card-title leading-tight">Full Fleet Inventory</h3>
@@ -297,36 +297,40 @@ include '../../includes/header.php';
                     <table class="w-full activity-table font-inter border-separate border-spacing-0">
                         <thead>
                             <tr class="bg-surface sticky top-0 z-10">
-                                <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tl-2xl">Slot Index</th>
+                                <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tl-2xl">Slot Index</th>
                                 <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Category</th>
                                 <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Type</th>
                                 <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Status</th>
                                 <?php if ($can_manage): ?>
-                                <th class="text-right px-6 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tr-2xl">Actions</th>
+                                <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tr-2xl">Actions</th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-color">
                             <?php foreach ($all_slots as $s): ?>
                              <tr class="hover:bg-surface-alt/30 transition-all group slot-row" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-number="<?= $s['slot_number'] ?>">
-                                <td class="px-6 py-4">
+                                <td class="px-8 py-5">
                                     <div class="font-manrope font-extrabold text-primary text-[13px] leading-tight"><?= htmlspecialchars($s['display_label']) ?></div>
                                     <div class="text-[10px] font-black uppercase tracking-widest text-tertiary mt-0.5 opacity-60"><?= htmlspecialchars($s['slot_number']) ?></div>
                                 </td>
                                 <td class="px-4 py-4 text-center text-[10px] font-black uppercase tracking-widest text-tertiary opacity-70"><?= $s['display_category'] ?></td>
-                                <td class="px-4 py-4 text-center">
+                                <td class="px-6 py-5 text-center">
                                     <div class="flex items-center justify-center gap-3">
                                         <div class="w-8 h-8 rounded-lg bg-surface border border-color flex items-center justify-center shadow-sm"><i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-[10px]"></i></div>
                                         <span class="text-[11px] font-black uppercase tracking-widest text-secondary"><?= ucfirst($s['slot_type']) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center">
-                                    <span class="status-badge status-badge-<?= $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status'] ?> text-[10px] font-bold uppercase px-3 py-1 rounded-full">
+                                <td class="px-6 py-5 text-center">
+                                    <?php 
+                                        $st = $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status'];
+                                    ?>
+                                    <div class="status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
+                                        <span class="status-dot-<?= $st ?>"></span>
                                         <?= $s['eff_status'] ?>
-                                    </span>
+                                    </div>
                                 </td>
                                 <?php if ($can_manage): ?>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-8 py-5 text-right">
                                     <div class="flex items-center justify-end">
                                         <div class="relative action-menu-container">
                                             <button onclick="toggleDropdown(event, 'action-<?= $s['slot_id'] ?>')" class="w-9 h-9 rounded-xl bg-surface border border-color text-tertiary hover:text-brand hover:border-brand/30 hover:shadow-lg transition-all flex items-center justify-center shadow-sm">
@@ -338,7 +342,7 @@ include '../../includes/header.php';
                                                 <div class="px-4 py-2 border-b border-color bg-surface-alt/30">
                                                     <span class="text-[9px] font-black uppercase tracking-widest text-tertiary">Quick Status Sync</span>
                                                 </div>
-                                                <?php foreach (['available','occupied','reserved','maintenance'] as $st): 
+                                                <?php foreach (['available','occupied','reserved'] as $st): 
                                                     $vis_st = ($st === 'occupied') ? 'parked' : $st;
                                                 ?>
                                                 <form method="POST" class="w-full">
@@ -376,10 +380,16 @@ include '../../includes/header.php';
         <!-- Footer Stats -->
         <div class="px-8 py-4 border-t border-color bg-surface-alt/20 flex justify-between items-center shrink-0">
             <p id="showingCount" class="text-[10px] font-black uppercase tracking-widest text-tertiary">Showing <?= count($all_slots) ?> indexed slots</p>
-            <div class="flex gap-6">
-                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-status-available-text"></div><span class="text-[10px] font-bold text-secondary uppercase">Available</span></div>
-                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-status-parked-text"></div><span class="text-[10px] font-bold text-secondary uppercase">Occupied</span></div>
-                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-status-reserved-text"></div><span class="text-[10px] font-bold text-secondary uppercase">Reserved</span></div>
+            <div class="flex gap-4">
+                <div class="status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                    <span class="status-dot-available"></span> Available
+                </div>
+                <div class="status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                    <span class="status-dot-parked"></span> Occupied
+                </div>
+                <div class="status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                    <span class="status-dot-reserved"></span> Reserved
+                </div>
             </div>
         </div>
     </div>

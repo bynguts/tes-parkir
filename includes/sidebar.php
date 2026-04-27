@@ -120,7 +120,7 @@ function is_active(string $target): string {
                     <a href="<?= BASE_URL ?>modules/admin/users.php"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-inter font-bold sidebar-link <?= is_active('users.php') ?>">
                         <i class="fa-solid fa-users text-sm"></i>
-                        <span class="sidebar-label">Users</span>
+                        <span class="sidebar-label">Users Management</span>
                     </a>
                 </li>
                 <?php endif; ?>

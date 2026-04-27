@@ -87,14 +87,9 @@ include '../../includes/header.php';
     
     <!-- Page Header -->
     <div class="flex items-center justify-between">
-        <div class="flex items-center gap-5">
-            <div class="w-14 h-14 rounded-2xl icon-container flex items-center justify-center shadow-lg shrink-0">
-                <i class="fa-solid fa-chart-line text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-3xl font-extrabold text-primary tracking-tight font-manrope"><?= $page_title ?></h1>
-                <p class="text-tertiary text-[13px] font-medium mt-1"><?= $page_subtitle ?></p>
-            </div>
+        <div>
+            <h1 class="text-3xl font-extrabold text-primary tracking-tight font-manrope"><?= $page_title ?></h1>
+            <p class="text-tertiary text-[13px] font-medium mt-1"><?= $page_subtitle ?></p>
         </div>
         
         <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
@@ -128,7 +123,7 @@ include '../../includes/header.php';
     </div>
 
     <!-- Main Distribution Card -->
-    <div class="bento-card p-10 shadow-2xl border-color bg-surface/50 backdrop-blur-md">
+    <div class="bento-card p-8 shadow-2xl border-color bg-surface/50 backdrop-blur-md">
         <div class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-4">
                 <div class="w-2 h-8 bg-brand rounded-full"></div>
@@ -140,7 +135,7 @@ include '../../includes/header.php';
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-8">
             <?php foreach($hourly_flow as $hf): ?>
             <div class="hour-card">
                 <span class="hour-label"><?= sprintf("%02d:00", $hf['hour']) ?></span>

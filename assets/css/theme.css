@@ -1,3 +1,5 @@
+html { scroll-behavior: smooth; }
+
 /* 1. Theme Variables (Indigo Night) */
 :root {
     --brand: #6366f1;
@@ -308,13 +310,13 @@ main.pl-64 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.125rem 0.5rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 9999px;
     font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    text-transform: none;
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     white-space: nowrap;
     transition: all 0.2s ease;
 }
@@ -328,17 +330,17 @@ main.pl-64 {
     margin-right: 0.5rem;
 }
 
-.status-badge-available { background-color: var(--status-available-bg) !important; color: var(--status-available-text) !important; border: 1px solid var(--status-available-border) !important; }
-.status-dot-available { background-color: var(--status-online) !important; }
-.status-text-available { color: var(--status-available-text) !important; }
+.status-badge-available { background-color: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.1) !important; }
+.status-dot-available { background-color: #10b981 !important; }
+.status-text-available { color: #10b981 !important; }
 
-.status-badge-parked { background-color: var(--status-parked-bg) !important; color: var(--status-parked-text) !important; border: 1px solid var(--status-parked-border) !important; }
-.status-dot-parked { background-color: var(--status-parked-text) !important; }
-.status-text-parked { color: var(--status-parked-text) !important; }
+.status-badge-parked { background-color: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; border: 1px solid rgba(245, 158, 11, 0.1) !important; }
+.status-dot-parked { background-color: #f59e0b !important; }
+.status-text-parked { color: #f59e0b !important; }
 
-.status-badge-reserved { background-color: var(--status-reserved-bg) !important; color: var(--status-reserved-text) !important; border: 1px solid var(--status-reserved-border) !important; }
-.status-dot-reserved { background-color: var(--status-reserved-text) !important; }
-.status-text-reserved { color: var(--status-reserved-text) !important; }
+.status-badge-reserved { background-color: rgba(139, 92, 246, 0.1) !important; color: #8b5cf6 !important; border: 1px solid rgba(139, 92, 246, 0.1) !important; }
+.status-dot-reserved { background-color: #8b5cf6 !important; }
+.status-text-reserved { color: #8b5cf6 !important; }
 
 .status-badge-maintenance { background-color: var(--status-maintenance-bg) !important; color: var(--status-maintenance-text) !important; border: 1px solid var(--status-maintenance-border) !important; }
 .status-dot-maintenance { background-color: var(--status-maintenance-text) !important; }
@@ -358,9 +360,9 @@ main.pl-64 {
 
 /* Online / Awaiting Badges */
 .status-badge-online {
-    background-color: var(--status-available-bg) !important;
-    color: var(--status-available-text) !important;
-    border: 1px solid var(--status-available-border) !important;
+    background-color: rgba(99, 102, 241, 0.1) !important;
+    color: #6366f1 !important;
+    border: 1px solid rgba(99, 102, 241, 0.1) !important;
     gap: 0.375rem;
 }
 .status-badge-online .status-dot-online {
@@ -1037,3 +1039,20 @@ main.pl-64 {
     border-color: var(--brand);
 }
 
+
+/* Universal Status Badge System */
+.status-badge-available { background: var(--status-available-bg); color: var(--status-available-text); border: 1px solid var(--status-available-border); }
+.status-badge-parked { background: var(--status-parked-bg); color: var(--status-parked-text); border: 1px solid var(--status-parked-border); }
+.status-badge-reserved { background: var(--status-reserved-bg); color: var(--status-reserved-text); border: 1px solid var(--status-reserved-border); }
+.status-badge-maintenance { background: var(--status-maintenance-bg); color: var(--status-maintenance-text); border: 1px solid var(--status-maintenance-border); }
+
+.status-dot-available, .status-dot-parked, .status-dot-reserved, .status-dot-maintenance {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.status-dot-available { background-color: var(--status-available-text); box-shadow: 0 0 8px var(--status-available-text); }
+.status-dot-parked { background-color: var(--status-parked-text); box-shadow: 0 0 8px var(--status-parked-text); }
+.status-dot-reserved { background-color: var(--status-reserved-text); box-shadow: 0 0 8px var(--status-reserved-text); }
+.status-dot-maintenance { background-color: var(--status-maintenance-text); box-shadow: 0 0 8px var(--status-maintenance-text); }

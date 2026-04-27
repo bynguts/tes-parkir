@@ -60,15 +60,10 @@ include '../../includes/header.php';
     
     <!-- PREMIUM HEADER -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-3xl icon-container flex items-center justify-center shadow-xl shrink-0">
-                <i class="fa-solid fa-chart-line text-3xl"></i>
-            </div>
             <div>
                 <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Occupancy Intelligence</h2>
                 <p class="text-tertiary mt-1 text-sm font-medium">Tracking temporal load and facility utilization dynamics.</p>
             </div>
-        </div>
 
         <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
             <div class="relative">
@@ -108,7 +103,7 @@ include '../../includes/header.php';
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Trend Chart -->
-        <div class="lg:col-span-2 bento-card p-10 border-color shadow-xl">
+        <div class="lg:col-span-2 bento-card p-8 border-color shadow-xl">
             <div class="flex items-center justify-between mb-10">
                 <div class="flex items-center gap-4">
                     <div class="w-1.5 h-8 bg-brand rounded-full"></div>
@@ -122,7 +117,7 @@ include '../../includes/header.php';
         </div>
 
         <!-- Dwell Intensity -->
-        <div class="bento-card p-10 border-color shadow-xl flex flex-col">
+        <div class="bento-card p-8 border-color shadow-xl flex flex-col">
             <h3 class="text-xl font-manrope font-black text-primary tracking-tight mb-10">Stay Intensity</h3>
             <div class="space-y-6 flex-grow">
                 <?php 
@@ -152,7 +147,7 @@ include '../../includes/header.php';
 
     <!-- CHRONOLOGICAL TABLE -->
     <div class="bento-card overflow-hidden shadow-xl border-color">
-        <div class="px-10 py-8 border-b border-color bg-surface/50">
+        <div class="px-8 py-6 border-b border-color bg-surface/50">
             <div class="flex items-center gap-4">
                 <div class="w-1.5 h-8 bg-brand rounded-full"></div>
                 <div>
@@ -166,19 +161,19 @@ include '../../includes/header.php';
             <table class="w-full activity-table font-inter border-separate border-spacing-0">
                 <thead>
                     <tr class="bg-surface-alt/50">
-                        <th class="text-left px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Date</th>
+                        <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Date</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Total Load</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Avg. Dwell</th>
-                        <th class="text-right px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operating Status</th>
+                        <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operating Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color">
                     <?php foreach(array_reverse($daily_usage) as $row): ?>
                     <tr class="hover:bg-surface-alt/30 transition-all group">
-                        <td class="px-10 py-6">
+                        <td class="px-8 py-5">
                             <span class="text-base font-extrabold text-primary"><?= date('l, d M Y', strtotime($row['date'])) ?></span>
                         </td>
-                        <td class="px-6 py-6 text-center">
+                        <td class="px-6 py-5 text-center">
                             <span class="px-4 py-1.5 rounded-xl bg-surface-alt text-primary text-[11px] font-black shadow-sm border border-color">
                                 <?= $row['total_visits'] ?> Units
                             </span>
@@ -186,7 +181,7 @@ include '../../includes/header.php';
                         <td class="px-6 py-6 text-center font-manrope font-black text-primary text-lg">
                             <?= round($row['avg_duration']) ?> <span class="text-[10px] text-tertiary uppercase ml-1">Min</span>
                         </td>
-                        <td class="px-10 py-6 text-right">
+                        <td class="px-8 py-5 text-right">
                             <?php 
                             $is_high = $row['total_visits'] > 20; 
                             $status_bg = $is_high ? 'var(--status-parked-bg)' : 'var(--status-available-bg)';

@@ -26,6 +26,18 @@ try {
     $reserved_from  = date('Y-m-d H:i:s', strtotime($from_iso));
     $reserved_until = date('Y-m-d H:i:s', strtotime($until_iso));
 
+    // 0. Check if the plate already has an active reservation
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM reservation 
+        WHERE plate_number = ? 
+          AND status IN ('pending', 'confirmed')
+    ");
+    $stmt->execute([$plate_number]);
+    if ($stmt->fetchColumn() > 0) {
+        throw new Exception("This license plate already has an active reservation.");
+    }
+
     // 1. Find a slot that doesn't have an overlapping confirmed reservation
     // Logic: Find slots of $vehicle_type where slot_id NOT IN (overlapping reservations)
     $stmt = $pdo->prepare("

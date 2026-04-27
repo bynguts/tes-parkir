@@ -79,18 +79,13 @@ include '../../includes/header.php';
 
 
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="px-10 py-10 max-w-[1750px] mx-auto space-y-10">
     
     <!-- PREMIUM HEADER -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-3xl icon-container flex items-center justify-center shadow-xl shrink-0">
-                <i class="fa-solid fa-wallet text-3xl"></i>
-            </div>
-            <div>
-                <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Revenue Intelligence</h2>
-                <p class="text-tertiary mt-1 text-sm font-medium">Financial auditing for <span class="text-primary font-bold"><?= ucfirst(str_replace('_', ' ', $range)) ?></span></p>
-            </div>
+        <div>
+            <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Revenue Intelligence</h2>
+            <p class="text-tertiary mt-1 text-sm font-medium">Financial auditing for <span class="text-primary font-bold"><?= ucfirst(str_replace('_', ' ', $range)) ?></span></p>
         </div>
 
         <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
@@ -127,14 +122,17 @@ include '../../includes/header.php';
     <!-- SUMMARY GRID -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Net Revenue -->
-        <div class="bento-card p-10 relative overflow-hidden group">
+        <div class="bento-card p-8 relative overflow-hidden group">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
             </div>
             <div class="relative z-10">
                 <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Net Revenue</p>
-                <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['grand_revenue'] ?? 0)) ?></p>
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-xl font-black text-tertiary">Rp</span>
+                    <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= number_format((float)($totals['grand_revenue'] ?? 0), 0, ',', '.') ?></p>
+                </div>
                 <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-secondary uppercase tracking-widest">
                     <i class="fa-solid fa-shield-check text-brand"></i> Financial Audit Verified
                 </div>
@@ -142,7 +140,7 @@ include '../../includes/header.php';
         </div>
 
         <!-- Total Transactions -->
-        <div class="bento-card p-10 relative overflow-hidden group">
+        <div class="bento-card p-8 relative overflow-hidden group">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-receipt text-6xl"></i>
@@ -161,15 +159,16 @@ include '../../includes/header.php';
         </div>
 
         <!-- Car Revenue -->
-        <div class="bento-card p-10 relative overflow-hidden group">
+        <div class="bento-card p-8 relative overflow-hidden group">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-car text-6xl"></i>
             </div>
             <div class="relative z-10">
                 <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Car Segments</p>
-                <div class="flex items-baseline gap-3">
-                    <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_car'] ?? 0)) ?></p>
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-xl font-black text-tertiary">Rp</span>
+                    <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= number_format((float)($totals['rev_car'] ?? 0), 0, ',', '.') ?></p>
                 </div>
                 <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
                     <i class="fa-solid fa-car text-brand"></i> <?= number_format($totals['total_cars'] ?? 0) ?> Volume Scans
@@ -178,15 +177,16 @@ include '../../includes/header.php';
         </div>
 
         <!-- Moto Revenue -->
-        <div class="bento-card p-10 relative overflow-hidden group">
+        <div class="bento-card p-8 relative overflow-hidden group">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-motorcycle text-6xl"></i>
             </div>
             <div class="relative z-10">
                 <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Moto Segments</p>
-                <div class="flex items-baseline gap-3">
-                    <p class="text-4xl font-manrope font-black text-primary tracking-tighter"><?= fmt_idr((float)($totals['rev_moto'] ?? 0)) ?></p>
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-xl font-black text-tertiary">Rp</span>
+                    <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= number_format((float)($totals['rev_moto'] ?? 0), 0, ',', '.') ?></p>
                 </div>
                 <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-tertiary uppercase tracking-widest">
                     <i class="fa-solid fa-motorcycle text-brand"></i> <?= number_format($totals['total_motos'] ?? 0) ?> Volume Scans
@@ -197,7 +197,7 @@ include '../../includes/header.php';
 
     <!-- DAILY BREAKDOWN -->
     <div class="bento-card overflow-hidden shadow-xl border-color">
-        <div class="px-10 py-8 border-b border-color flex items-center justify-between bg-surface/50">
+        <div class="px-8 py-6 border-b border-color flex items-center justify-between bg-surface/50">
             <div class="flex items-center gap-4">
                 <div class="w-1.5 h-8 bg-brand rounded-full"></div>
                 <div>
@@ -205,23 +205,19 @@ include '../../includes/header.php';
                     <p class="text-tertiary text-[11px] font-black uppercase tracking-widest mt-0.5">Chronological Revenue distribution</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button class="w-10 h-10 rounded-xl bg-surface-alt border border-color flex items-center justify-center text-tertiary hover:text-primary transition-all shadow-sm">
-                    <i class="fa-solid fa-file-export text-xs"></i>
-                </button>
-            </div>
+
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full activity-table font-inter border-separate border-spacing-0">
                 <thead>
                     <tr class="bg-surface-alt/50">
-                        <th class="text-left px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operational Date</th>
+                        <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operational Date</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Mix (C/M)</th>
                         <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Visits</th>
                         <th class="text-right px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Car Rev.</th>
                         <th class="text-right px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Moto Rev.</th>
-                        <th class="text-right px-10 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Daily Total</th>
+                        <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Daily Total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-color">
@@ -236,34 +232,29 @@ include '../../includes/header.php';
                     </tr>
                     <?php else: foreach ($daily as $row): ?>
                     <tr class="hover:bg-surface-alt/30 transition-all group">
-                        <td class="px-10 py-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-2xl bg-surface-alt border border-color flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <i class="fa-solid fa-calendar-day text-xs text-tertiary"></i>
-                                </div>
-                                <span class="text-base font-extrabold text-primary"><?= date('D, d M Y', strtotime($row['date'])) ?></span>
-                            </div>
+                        <td class="px-8 py-5">
+                            <span class="text-base font-extrabold text-primary"><?= date('D, d M Y', strtotime($row['date'])) ?></span>
                         </td>
-                        <td class="px-6 py-6 text-center">
+                        <td class="px-6 py-5 text-center">
                             <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-xl bg-surface-alt border border-color">
                                 <span class="text-[11px] font-black text-primary"><?= $row['cars'] ?></span>
                                 <span class="w-1 h-1 rounded-full bg-tertiary/30"></span>
                                 <span class="text-[11px] font-black text-primary"><?= $row['motos'] ?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-6 text-center font-manrope font-black text-primary text-xl"><?= number_format($row['total_count']) ?></td>
-                        <td class="px-6 py-6 text-right font-manrope font-extrabold text-tertiary text-sm"><?= fmt_idr((float)$row['revenue_car']) ?></td>
-                        <td class="px-6 py-6 text-right font-manrope font-extrabold text-tertiary text-sm"><?= fmt_idr((float)$row['revenue_moto']) ?></td>
-                        <td class="px-10 py-6 text-right font-manrope font-black text-primary text-lg"><?= fmt_idr((float)$row['total_revenue']) ?></td>
+                        <td class="px-6 py-5 text-center font-manrope font-black text-primary text-xl"><?= number_format($row['total_count']) ?></td>
+                        <td class="px-6 py-5 text-right font-manrope font-extrabold text-tertiary text-sm"><?= fmt_idr((float)$row['revenue_car']) ?></td>
+                        <td class="px-6 py-5 text-right font-manrope font-extrabold text-tertiary text-sm"><?= fmt_idr((float)$row['revenue_moto']) ?></td>
+                        <td class="px-8 py-5 text-right font-manrope font-black text-primary text-lg"><?= fmt_idr((float)$row['total_revenue']) ?></td>
                     </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
                 <?php if (!empty($daily)): ?>
                 <tfoot class="bg-surface-alt/40">
                     <tr>
-                        <td class="px-10 py-8 font-black text-[10px] uppercase tracking-[0.2em] text-tertiary">Audit Summary</td>
+                        <td class="px-8 py-6 font-black text-[10px] uppercase tracking-[0.2em] text-tertiary">Audit Summary</td>
                         <td colspan="2"></td>
-                        <td colspan="3" class="px-10 py-8 text-right">
+                        <td colspan="3" class="px-8 py-6 text-right">
                             <div class="flex flex-col items-end">
                                 <span class="text-[9px] font-black text-tertiary uppercase tracking-widest mb-2">Aggregate Revenue</span>
                                 <span class="font-manrope font-black text-3xl text-brand tracking-tighter">

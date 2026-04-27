@@ -199,41 +199,13 @@ $page_title = $page_title ?? 'Parking System';
 
         html.sidebar-collapsed .sidebar-label,
         html.sidebar-collapsed .sidebar-brand-text,
-        html.sidebar-collapsed .sidebar-badge {
+        html.sidebar-collapsed .sidebar-badge,
+        html.sidebar-collapsed .sidebar-label-text {
             opacity: 0 !important;
             width: 0 !important;
             margin: 0 !important;
             pointer-events: none !important;
             overflow: hidden;
-        }
-
-        /* Completely remove section labels in collapsed mode to normalize spacing */
-        html.sidebar-collapsed .sidebar-label-text {
-            display: none !important;
-        }
-
-        /* Standardize vertical gaps between ALL icons */
-        html.sidebar-collapsed aside nav,
-        html.sidebar-collapsed aside nav > div,
-        html.sidebar-collapsed aside nav ul {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 12px !important;
-            margin: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-
-        html.sidebar-collapsed aside nav {
-            padding-top: 24px !important;
-            padding-bottom: 24px !important;
-            align-items: center !important;
-        }
-
-        html.sidebar-collapsed aside nav > div,
-        html.sidebar-collapsed aside nav ul {
-            width: 100% !important;
-            align-items: center !important;
         }
 
         html.sidebar-collapsed aside .sidebar-link {
@@ -242,10 +214,9 @@ $page_title = $page_title ?? 'Parking System';
             padding-right: 0 !important;
             margin-left: auto !important;
             margin-right: auto !important;
-            width: 44px !important; /* Slightly smaller for a tighter, cleaner look */
-            height: 44px !important;
+            width: 48px !important;
+            height: 48px !important;
             gap: 0 !important;
-            border-radius: 12px !important;
         }
 
         .sidebar-link i {
@@ -393,12 +364,12 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
             </div>
 
             <!-- Universal Export -->
-            <button class="flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
+            <a href="<?= BASE_URL ?>modules/reports/export_excel.php" target="_blank" class="flex items-center gap-3 h-11 bento-card px-4 font-manrope font-bold text-[13px] text-primary transition-all group hover:border-brand">
                 <div class="w-5 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-file-export text-brand text-lg transition-colors"></i>
                 </div>
                 <span>Export</span>
-            </button>
+            </a>
 
             <!-- User Profile Dropdown -->
             <div class="relative" id="profile-dropdown-container">
@@ -528,12 +499,17 @@ if (!isset($hide_sidebar) || !$hide_sidebar) {
 
                 linkNodes.forEach((link) => {
                     const href = link.getAttribute('href') || '';
-                    const labelNode = link.cloneNode(true);
-                    labelNode.querySelectorAll('span').forEach((el) => el.remove());
-                    const label = (labelNode.textContent || '').replace(/\s+/g, ' ').trim().replace(/\s+\d+$/, '');
+                    const labelEl = link.querySelector('.sidebar-label');
+                    let label = '';
+                    if (labelEl) {
+                        label = (labelEl.textContent || '').trim();
+                    } else {
+                        label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+                    }
                     if (!href || !label) return;
 
-                    const icon = link.querySelector('i') ? link.querySelector('i').className : 'fa-solid fa-link';
+                    const iconEl = link.querySelector('i');
+                    const icon = iconEl ? iconEl.className : 'fa-solid fa-link';
                     const key = href.toLowerCase();
                     if (!unique.has(key)) {
                         unique.set(key, {

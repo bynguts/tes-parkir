@@ -23,7 +23,7 @@ include '../../includes/header.php';
 
 
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="px-10 py-10 max-w-[1750px] mx-auto space-y-10">
     
     <!-- ALERTS -->
     <?php if (($car_pct <= 20 && $car_total > 0) || ($moto_pct <= 20 && $moto_total > 0)): ?>
@@ -62,8 +62,10 @@ include '../../includes/header.php';
             <div class="absolute -right-24 -top-24 w-48 h-48 bg-brand/10 rounded-full blur-3xl group-hover:bg-brand/20 transition-all duration-700"></div>
             
             <div class="relative z-10">
-                <p class="text-tertiary text-[10px] font-black uppercase tracking-[0.25em] mb-12">Total Inflow Today</p>
-                <div class="font-manrope font-black text-6xl text-primary tracking-tighter drop-shadow-2xl"><?= fmt_idr((float)$today_rev) ?></div>
+                <div class="flex items-baseline gap-3 whitespace-nowrap drop-shadow-2xl">
+                    <span class="text-2xl font-black text-tertiary">Rp</span>
+                    <div class="font-manrope font-black text-5xl text-primary tracking-tighter"><?= number_format((float)$today_rev, 0, ',', '.') ?></div>
+                </div>
             </div>
 
             <div class="pt-8 border-t border-color flex items-center justify-between relative z-10">
