@@ -579,9 +579,9 @@ main.pl-64 {
     border-bottom: 1px solid var(--sidebar-border) !important;
 }
 
-.sidebar-brand-icon {
-    /* Background removed for image logo */
-}
+
+
+
 
 .sidebar-brand-text-main {
     color: #ffffff !important;
@@ -974,7 +974,19 @@ main.pl-64 {
 }
 
 .flatpickr-calendar.hasTime .flatpickr-time {
-    height: 60px !important;
+    height: auto !important;
+    min-height: 70px !important;
+}
+
+.flatpickr-time .numInputWrapper {
+    display: none !important;
+}
+
+.flatpickr-time-separator {
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-weight: 800;
 }
 
 /* Custom Extensions for Reservation Module */

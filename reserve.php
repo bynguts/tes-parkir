@@ -28,7 +28,6 @@ while ($r = $rates_stmt->fetch()) {
     
     <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
     <!-- Tailwind CSS -->
@@ -84,7 +83,7 @@ while ($r = $rates_stmt->fetch()) {
         }
         .btn-primary {
             background: var(--brand);
-            color: #ffffff;
+            color: #ffffff !important;
             box-shadow: 0 4px 15px rgba(129, 140, 248, 0.2);
             transition: all 0.3s ease;
         }
@@ -188,11 +187,20 @@ while ($r = $rates_stmt->fetch()) {
                         <input type="text" name="plate_number" required placeholder="B 1234 XYZ" class="form-input w-full h-14 px-6 rounded-2xl text-lg font-bold uppercase tracking-wider text-white">
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Reservation Time</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-calendar-days absolute left-6 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="time_range" name="time_range" required placeholder="Select Date & Time Range" class="form-input w-full h-14 pl-14 pr-6 rounded-2xl text-base font-semibold text-white">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="text" id="entry_time" name="entry_time" required placeholder="Pick Entry" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Exit Time</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="text" id="exit_time" name="exit_time" required placeholder="Pick Exit" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
+                            </div>
                         </div>
                     </div>
 
@@ -247,13 +255,98 @@ while ($r = $rates_stmt->fetch()) {
             updateSummary();
         }
 
-        // Initialize Flatpickr
-        const fp = flatpickr("#time_range", {
+        // Flatpickr Premium UI Helpers
+        function makeSelect(options, currentVal, onChange, extraStyle) {
+            var sel = document.createElement('select');
+            sel.className = 'fp-inject';
+            if (extraStyle) sel.style.cssText += extraStyle;
+            options.forEach(function(item) {
+                var o = document.createElement('option');
+                o.value = item.v; o.textContent = item.l;
+                if (String(item.v) === String(currentVal)) o.selected = true;
+                sel.appendChild(o);
+            });
+            sel.addEventListener('change', function () { onChange(parseInt(sel.value), sel); });
+            return sel;
+        }
+
+        function buildDropdowns(instance) {
+            var cal = instance.calendarContainer;
+            var hourInput = cal.querySelector('input.flatpickr-hour');
+            if (hourInput) {
+                var hw = hourInput.closest('.numInputWrapper');
+                if (hw) {
+                    var hourOpts = [];
+                    for (var h = 0; h < 24; h++) hourOpts.push({v: h, l: String(h).padStart(2,'0')});
+                    var hourSel = makeSelect(hourOpts, parseInt(hourInput.value) || 0, function(val) {
+                        hourInput.value = String(val).padStart(2,'0');
+                        hourInput.dispatchEvent(new Event('input', {bubbles: true}));
+                        hourInput.dispatchEvent(new Event('change', {bubbles: true}));
+                    }, 'font-size:16px;min-width:70px;text-align:center;');
+                    hw.parentNode.insertBefore(hourSel, hw);
+                }
+            }
+            var minInput = cal.querySelector('input.flatpickr-minute');
+            if (minInput) {
+                var mw = minInput.closest('.numInputWrapper');
+                if (mw) {
+                    var curMin = Math.round((parseInt(minInput.value) || 0) / 15) * 15 % 60;
+                    var minSel = makeSelect([{v:0,l:'00'},{v:15,l:'15'},{v:30,l:'30'},{v:45,l:'45'}], curMin, function(val) {
+                        minInput.value = String(val).padStart(2,'0');
+                        minInput.dispatchEvent(new Event('input', {bubbles: true}));
+                        minInput.dispatchEvent(new Event('change', {bubbles: true}));
+                    }, 'font-size:16px;min-width:70px;text-align:center;');
+                    mw.parentNode.insertBefore(minSel, mw);
+                }
+            }
+        }
+
+        function addButtons(instance) {
+            var d = document.createElement('div');
+            d.className = 'flatpickr-custom-btn';
+            ['Clear','Today','OK'].forEach(function(lbl) {
+                var b = document.createElement('button');
+                b.type = 'button'; b.innerText = lbl;
+                if (lbl === 'OK') b.className = 'ok';
+                b.onclick = function() {
+                    if (lbl === 'Clear') instance.clear();
+                    else if (lbl === 'Today') instance.setDate(new Date());
+                    else instance.close();
+                };
+                d.appendChild(b);
+            });
+            instance.calendarContainer.appendChild(d);
+        }
+
+        function onReady(_, __, instance) {
+            addButtons(instance);
+            buildDropdowns(instance);
+        }
+
+        // Initialize Flatpickr for Entry
+        const fpEntry = flatpickr("#entry_time", {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
             minDate: "today",
-            mode: "range",
             time_24hr: true,
+            monthSelectorType: "dropdown",
+            onReady: onReady,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    fpExit.set("minDate", selectedDates[0]);
+                }
+                updateSummary();
+            }
+        });
+
+        // Initialize Flatpickr for Exit
+        const fpExit = flatpickr("#exit_time", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+            time_24hr: true,
+            monthSelectorType: "dropdown",
+            onReady: onReady,
             onChange: function(selectedDates, dateStr, instance) {
                 updateSummary();
             }
@@ -262,11 +355,13 @@ while ($r = $rates_stmt->fetch()) {
         const rates = <?= json_encode($rates) ?>;
 
         function updateSummary() {
-            const range = fp.selectedDates;
+            const entry = fpEntry.selectedDates[0];
+            const exit = fpExit.selectedDates[0];
             const summary = document.getElementById('booking-summary');
-            if (range.length === 2) {
+
+            if (entry && exit && exit > entry) {
                 summary.classList.remove('hidden');
-                const diffMs = range[1] - range[0];
+                const diffMs = exit - entry;
                 const diffHrs = Math.ceil(diffMs / (1000 * 60 * 60));
                 const vType = document.getElementById('vehicle_type').value;
                 const rate = rates[vType];
@@ -282,10 +377,19 @@ while ($r = $rates_stmt->fetch()) {
         document.getElementById('reservation-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
-            const range = fp.selectedDates;
+            const entry = fpEntry.selectedDates[0];
+            const exit = fpExit.selectedDates[0];
             
-            if (range.length < 2) {
-                pushNotify('Validation Error', 'Please select a complete time range', 'error');
+            if (!entry || !exit) {
+                const msg = !entry ? 'Please select entry time' : 'Please select exit time';
+                if (typeof pushNotify === 'function') pushNotify('Validation Error', msg, 'error');
+                else alert(msg);
+                return;
+            }
+
+            if (exit <= entry) {
+                if (typeof pushNotify === 'function') pushNotify('Validation Error', 'Exit time must be after entry time', 'error');
+                else alert('Exit time must be after entry time');
                 return;
             }
 
@@ -293,8 +397,9 @@ while ($r = $rates_stmt->fetch()) {
             btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Processing...';
 
             const formData = new FormData(e.target);
-            formData.append('from', range[0].toISOString());
-            formData.append('until', range[1].toISOString());
+            // Send as local date strings to avoid UTC shift
+            formData.append('from', fpEntry.formatDate(entry, "Y-m-d H:i"));
+            formData.append('until', fpExit.formatDate(exit, "Y-m-d H:i"));
 
             try {
                 const response = await fetch('api/public_reserve.php', {
@@ -307,12 +412,20 @@ while ($r = $rates_stmt->fetch()) {
                     document.getElementById('res-code').textContent = result.reservation_code;
                     document.getElementById('success-overlay').classList.remove('hidden');
                 } else {
-                    pushNotify('Error', result.error || 'Reservation failed. Please try again.', 'error');
+                    if (typeof pushNotify === 'function') {
+                        pushNotify('Error', result.error || 'Reservation failed. Please try again.', 'error');
+                    } else {
+                        alert(result.error || 'Reservation failed. Please try again.');
+                    }
                     btn.disabled = false;
                     btn.innerHTML = '<span>Confirm Reservation</span> <i class="fa-solid fa-arrow-right"></i>';
                 }
             } catch (err) {
-                pushNotify('Connection Error', 'An error occurred. Please check your connection.', 'error');
+                if (typeof pushNotify === 'function') {
+                    pushNotify('Connection Error', 'An error occurred. Please check your connection.', 'error');
+                } else {
+                    alert('An error occurred. Please check your connection.');
+                }
                 btn.disabled = false;
                 btn.innerHTML = '<span>Confirm Reservation</span> <i class="fa-solid fa-arrow-right"></i>';
             }

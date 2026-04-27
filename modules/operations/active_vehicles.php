@@ -93,9 +93,9 @@ include '../../includes/header.php';
         </div>
     </div>
 
-    <div class="bento-card p-4">
+    <div class="bento-card overflow-hidden">
         <!-- Card Header with Filters -->
-        <div class="flex items-center justify-between py-5 border-b border-color">
+        <div class="flex items-center justify-between py-5 px-8 border-b border-color">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-car-side text-lg"></i>
@@ -160,14 +160,14 @@ include '../../includes/header.php';
             <table class="w-full font-inter border-collapse table-fixed activity-table">
                 <thead>
                     <tr class="border-b border-color">
-                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
-                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate Number</th>
-                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Ticket Code</th>
-                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Slot</th>
-                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
-                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Duration</th>
-                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Est. Fee</th>
-                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Actions</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-8">Vehicle</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Ticket Code</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
+                        <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Duration</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Est. Fee</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-8">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="activeFleetBody" class="divide-y divide-color">
@@ -206,21 +206,21 @@ include '../../includes/header.php';
                         data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
                         data-timestamp="<?= strtotime($row['check_in_time']) ?>">
-                        <td class="py-2 text-left align-middle">
+                        <td class="py-2 pl-8 pr-4 text-left align-middle">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
-                                    <i class="fa-solid fa-<?= strtolower($row['vehicle_type']) == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
+                                    <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
                                 </div>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex items-center justify-center">
                                 <span class="plate-number text-sm font-manrope font-semibold text-primary leading-none">
                                     <?= !empty($row['plate_number']) ? htmlspecialchars($row['plate_number']) : '------' ?>
                                 </span>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex flex-col items-center justify-center gap-1">
                                 <div class="flex items-center justify-center gap-2">
                                     <span class="ticket-code text-sm font-manrope font-semibold text-primary leading-none uppercase"><?= htmlspecialchars($row['ticket_code']) ?></span>
@@ -231,31 +231,31 @@ include '../../includes/header.php';
                                 <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-widest"><?= $is_res ? 'RESERVATION' : 'REGULAR' ?></span>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex flex-col items-center justify-center gap-1">
                                 <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $display_slot ?></span>
                                 <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-wider"><?= $slot_label ?></span>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex flex-col items-center justify-center gap-1">
                                 <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($row['check_in_time'])) ?></span>
                                 <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($row['check_in_time'])) ?></span>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex items-center justify-center">
                                 <span class="text-sm font-manrope font-semibold <?= $is_long_stay ? 'text-rose-500 animate-pulse' : 'text-primary' ?> leading-none">
                                     <?= $dur_text ?>
                                 </span>
                             </div>
                         </td>
-                        <td class="py-2 text-center align-middle">
+                        <td class="py-2 px-4 text-center align-middle">
                             <div class="flex items-center justify-center">
                                 <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $est_fee ?></span>
                             </div>
                         </td>
-                        <td class="py-2 text-right align-middle relative">
+                        <td class="py-2 pr-8 pl-4 text-right align-middle relative">
                             <div class="flex justify-end items-center relative action-menu-container">
                                 <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
                                     <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -284,7 +284,8 @@ include '../../includes/header.php';
 
     <!-- Protocol Info -->
     <?php if (!empty($active)): ?>
-    <div class="bento-card p-5 border-l-4 border-brand mt-6">
+    <div class="bento-card p-5 mt-6 relative overflow-hidden">
+        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand rounded-full"></div>
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-brand">
                 <i class="fa-solid fa-circle-info text-lg"></i>

@@ -587,7 +587,7 @@ include '../../includes/header.php';
                                     <i class="fa-solid fa-camera text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
                                 </button>
                                 <input type="text" id="exit-manual-lp" 
-                                       placeholder="Plate Number..." 
+                                       placeholder="Plate or Ticket Code..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('exit')"
                                         class="h-9 px-4 rounded-full bg-rose-600 text-white font-manrope font-bold text-[12px] transition-all hover:bg-rose-700 active:scale-95">
@@ -920,11 +920,17 @@ include '../../includes/header.php';
                 .catch(() => pushNotify('System Error', 'Could not validate reservation.', 'error'));
 
         } else {
-            const plate = (document.getElementById('exit-manual-lp')?.value || '').trim().toUpperCase();
-            if (!plate) { pushNotify('Input Required', 'Please enter a plate number.', 'error'); return; }
+            const inputVal = (document.getElementById('exit-manual-lp')?.value || '').trim().toUpperCase();
+            if (!inputVal) { pushNotify('Input Required', 'Please enter a plate number or ticket code.', 'error'); return; }
+
+            // SMART DETECT: If it's a ticket code (TKT- or RSV-), process directly
+            if (inputVal.startsWith('TKT-') || inputVal.startsWith('RSV-')) {
+                processTicket(inputVal, 'Manual Code Entry', `Processing ticket ${inputVal}...`);
+                return;
+            }
 
             const fd = new FormData();
-            fd.append('plate_number', plate);
+            fd.append('plate_number', inputVal);
             fetch('<?= BASE_URL ?>api/get_ticket_by_plate.php', { method: 'POST', body: fd })
                 .then(r => r.json())
                 .then(res => {

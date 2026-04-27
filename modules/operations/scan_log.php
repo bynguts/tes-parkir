@@ -169,7 +169,7 @@ include '../../includes/header.php';
     </div>
 
     <!-- Analytics Section -->
-    <div class="bento-card p-8">
+    <div class="bento-card py-5 px-8">
         <div class="flex justify-between items-center mb-8">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand">
@@ -218,15 +218,15 @@ include '../../includes/header.php';
     </div>
     
     <!-- Table Content Card -->
-    <div class="bento-card p-4 overflow-hidden mt-6">
+    <div class="bento-card overflow-hidden mt-6">
         <!-- Filters Header -->
-        <div class="flex items-center justify-between px-6 py-5 border-b border-color">
+        <div class="flex items-center justify-between py-5 px-8 border-b border-color">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                 </div>
                 <div>
-                    <h3 class="font-manrope font-bold text-primary text-base">Operational Index</h3>
+                    <h3 class="card-title leading-tight">Operational Index</h3>
                     <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Gate sensor history</p>
                 </div>
             </div>
@@ -234,9 +234,9 @@ include '../../includes/header.php';
             <div class="flex items-center gap-4">
                 <!-- Sort -->
                 <button onclick="toggleLogSort()" id="sortLogBtn" 
-                        class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
                     <i id="sortLogIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-primary">SORT</span>
+                    <span class="text-[11px] font-inter font-medium tracking-wider text-primary uppercase">Sort</span>
                 </button>
 
                 <!-- Search -->
@@ -244,11 +244,11 @@ include '../../includes/header.php';
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                     <input type="text" id="searchLog" placeholder="Search plate or ticket..."
                            oninput="applyScanLogFilters()"
-                           class="w-64 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-white transition-all">
+                           class="w-64 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
                 <!-- Vehicle Filter -->
-                <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-1 gap-1 h-[38px]">
+                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 h-[38px]">
                     <button onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
                             class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm leading-none">ALL</button>
                     <button onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
@@ -264,7 +264,7 @@ include '../../includes/header.php';
                 <!-- Type Filter -->
                 <div class="relative">
                     <select id="filterCategory" onchange="setScanLogTypeFilter(this.value)" 
-                            class="appearance-none bg-slate-50 border border-slate-100 px-6 h-[38px] pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
+                            class="appearance-none bg-surface-alt border border-color px-6 h-[38px] pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
                         <option value="all">All Entries</option>
                         <option value="reservation">Reservations</option>
                         <option value="regular">Regular</option>
@@ -275,28 +275,28 @@ include '../../includes/header.php';
         </div>
 
         <!-- Table Section -->
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse" id="logTable">
+        <div class="overflow-x-auto custom-scrollbar min-h-[350px]">
+            <table class="w-full text-left border-collapse table-fixed" id="logTable">
                 <thead class="premium-thead">
                     <tr>
-                        <th>Vehicle</th>
-                        <th>Plate Number</th>
-                        <th>Ticket Code</th>
-                        <th>Slot</th>
-                        <th>Entry</th>
-                        <th>Exit</th>
-                        <th>Duration</th>
-                        <th>Final Fee</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-8">Vehicle</th>
+                        <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Ticket Code</th>
+                        <th class="py-3 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
+                        <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
+                        <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Exit</th>
+                        <th class="py-3 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Duration</th>
+                        <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Final Fee</th>
+                        <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Action</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-8">Status</th>
                     </tr>
                 </thead>
-                <tbody id="logTableBody" class="divide-y divide-slate-50">
+                <tbody id="logTableBody" class="divide-y divide-color">
                     <tr id="noDataRow" class="<?= !empty($logs) ? 'hidden' : '' ?>">
                         <td colspan="10" class="px-6 py-24 text-center">
                             <div class="flex flex-col items-center opacity-40">
                                 <i class="fa-solid fa-clock-rotate-left text-5xl mb-4 text-slate-300"></i>
-                                <p class="text-slate-500 font-inter font-medium text-sm">No operational records match your criteria.</p>
+                                <p class="text-secondary font-inter font-medium text-sm">No operational records match your criteria.</p>
                             </div>
                         </td>
                     </tr>
@@ -329,7 +329,7 @@ include '../../includes/header.php';
                         data-vehicle="<?= trim(strtolower($row['vehicle_type'] ?? '')) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
                         data-timestamp="<?= strtotime($row['time_in']) ?>">
-                        <td class="px-6 py-4">
+                        <td class="pl-8 pr-4 py-4">
                             <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand group-hover:border-brand/20 transition-all">
                                 <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
                             </div>
@@ -375,7 +375,14 @@ include '../../includes/header.php';
                                 <?= $row['final_fee'] > 0 ? fmt_idr($row['final_fee']) : 'Rp 0' ?>
                             </span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4 text-center">
+                            <button type="button" 
+                                    onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
+                                    class="btn-ghost-danger">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                        <td class="pr-8 pl-4 py-4 text-right">
                             <div class="flex justify-end gap-1.5 flex-wrap max-w-[150px] ml-auto">
                                 <?php 
                                     $pay_status = strtolower($row['payment_status'] ?? '');
@@ -400,13 +407,6 @@ include '../../includes/header.php';
                                     <span class="badge-soft badge-soft-emerald">PAID</span>
                                 <?php endif; ?>
                             </div>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button type="button" 
-                                    onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
-                                    class="btn-ghost-danger">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
                         </td>
                     </tr>
                     <?php endforeach; endif; ?>
@@ -525,7 +525,7 @@ new Chart(ctx, {
                     borderDash: [5, 5]
                 }, 
                 border: { display: false },
-                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' }, padding: 10 } 
+                ticks: { color: '#94a3b8', font: { size: 10, weight: '700' }, padding: 10, precision: 0 } 
             },
             x: { 
                 grid: { display: false }, 

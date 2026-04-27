@@ -166,7 +166,7 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <p class="font-manrope font-extrabold text-primary text-sm leading-tight">Capacity Warning</p>
-                        <p class="font-inter text-tertiary text-[11px] mt-0.5">Sectors approaching full occupancy</p>
+                        <p class="font-inter text-tertiary text-[11px] mt-0.5">Sectors approaching full occupancy.</p>
                     </div>
                 </div>
 
@@ -784,7 +784,8 @@ function initChart(data) {
                     ticks: {
                         font: { family: 'Inter', size: 10 },
                         color: secondaryColor,
-                        padding: 8
+                        padding: 8,
+                        precision: 0
                     }
                 }
             },
@@ -816,12 +817,45 @@ function initChart(data) {
     document.getElementById('theme-toggle')?.addEventListener('click', () => {
         // Small timeout to allow CSS variables to update in the DOM
         setTimeout(() => {
+            const rootStyles = getComputedStyle(document.documentElement);
+            const textColor = rootStyles.getPropertyValue('--text-primary').trim();
+            const secondaryColor = rootStyles.getPropertyValue('--text-secondary').trim();
+            const borderColor = rootStyles.getPropertyValue('--border-color').trim();
+            const surfaceColor = rootStyles.getPropertyValue('--surface').trim();
+
             if (trafficChart) {
-                trafficChart.destroy();
-                trafficChart = null;
-                updateChart('today');
+                // Update options without destroying/re-fetching
+                trafficChart.options.scales.x.ticks.color = secondaryColor;
+                trafficChart.options.scales.x.border.color = borderColor;
+                trafficChart.options.scales.y.ticks.color = secondaryColor;
+                trafficChart.options.scales.y.grid.color = borderColor;
+                
+                trafficChart.options.plugins.tooltip.backgroundColor = surfaceColor;
+                trafficChart.options.plugins.tooltip.titleColor = textColor;
+                trafficChart.options.plugins.tooltip.bodyColor = textColor;
+                trafficChart.options.plugins.tooltip.borderColor = borderColor;
+                
+                trafficChart.update('none'); // Update without animation
             }
-            initStatusDoughnut();
+            
+            if (window.statusDoughnut) {
+                const c_surface = rootStyles.getPropertyValue('--surface').trim() || '#ffffff';
+                const c_text = rootStyles.getPropertyValue('--text-primary').trim() || '#0f172a';
+                const c_border = rootStyles.getPropertyValue('--border-color').trim() || 'rgba(0,0,0,0.1)';
+                
+                window.statusDoughnut.options.plugins.tooltip.backgroundColor = c_surface;
+                window.statusDoughnut.options.plugins.tooltip.titleColor = c_text;
+                window.statusDoughnut.options.plugins.tooltip.bodyColor = c_text;
+                window.statusDoughnut.options.plugins.tooltip.borderColor = c_border;
+                
+                // Update dataset border for dark/light mode surface parity
+                window.statusDoughnut.data.datasets[0].borderColor = c_surface;
+                window.statusDoughnut.data.datasets[0].hoverBorderColor = c_surface;
+                
+                window.statusDoughnut.update('none');
+            } else {
+                initStatusDoughnut();
+            }
         }, 100);
     });
 
@@ -903,7 +937,8 @@ function initStatusDoughnut() {
     const c_border = rootStyles.getPropertyValue('--border-color').trim() || 'rgba(0,0,0,0.1)';
 
     const ctx = document.getElementById('activeStatusDoughnut').getContext('2d');
-    new Chart(ctx, {
+    if (window.statusDoughnut) window.statusDoughnut.destroy();
+    window.statusDoughnut = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['Parked', 'Reserved', 'Free', 'Maint'],

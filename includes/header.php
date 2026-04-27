@@ -62,6 +62,10 @@ $page_title = $page_title ?? 'Parking System';
         darkMode: ['selector', '[data-theme="dark"]'],
         theme: {
             extend: {
+                spacing: {
+                    '11': '2.75rem',
+                    '9': '2.25rem',
+                },
                 fontFamily: {
                     'manrope': ['Manrope', 'sans-serif'],
                     'inter': ['Inter', 'sans-serif'],

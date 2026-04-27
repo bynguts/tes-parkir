@@ -196,7 +196,7 @@ include '../../includes/header.php';
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="bento-card p-8 relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
@@ -210,7 +210,7 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="bento-card p-8 relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-gauge-high text-6xl"></i>
@@ -228,7 +228,7 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="bento-card p-8 relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <div class="w-16 h-16 rounded-2xl flex items-center justify-center bg-brand/10 mb-6 overflow-hidden">
@@ -251,7 +251,7 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-10 relative overflow-hidden group">
+            <div class="bento-card p-8 relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-route text-6xl"></i>
@@ -279,9 +279,9 @@ include '../../includes/header.php';
                 <p class="text-tertiary mt-1 text-sm font-medium">Visual slot distribution across vertical levels.</p>
             </div>
         </div>
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-10">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <?php foreach($display_areas as $area): ?>
-            <div class="bento-card p-10 border-color shadow-xl bg-surface/50 backdrop-blur-sm">
+            <div class="bento-card p-8 border-color shadow-xl bg-surface/50 backdrop-blur-sm">
                 <div class="flex justify-between items-center mb-10">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-2xl bg-brand/5 text-brand flex items-center justify-center border border-brand/10">
@@ -324,20 +324,24 @@ include '../../includes/header.php';
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
             <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Revenue Dynamics</h3>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="bento-card p-10 border-color shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Daily Trajectory</h4>
                     <span class="text-[10px] font-black text-brand uppercase tracking-widest bg-brand/5 px-4 py-2 rounded-xl">14-Day View</span>
                 </div>
-                <canvas id="revDailyChart"></canvas>
+                <div class="h-[280px] w-full">
+                    <canvas id="revDailyChart"></canvas>
+                </div>
             </div>
-            <div class="bento-card p-10 border-color shadow-xl">
+            <div class="bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Monthly Performance</h4>
                     <span class="text-[10px] font-black text-tertiary uppercase tracking-widest bg-surface-alt px-4 py-2 rounded-xl">H1 Analysis</span>
                 </div>
-                <canvas id="revMonthlyChart"></canvas>
+                <div class="h-[280px] w-full">
+                    <canvas id="revMonthlyChart"></canvas>
+                </div>
             </div>
         </div>
     </section>
@@ -348,8 +352,8 @@ include '../../includes/header.php';
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
             <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Traffic Intelligence</h3>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <div class="bento-card p-10 border-color shadow-xl flex flex-col items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary text-center">Fleet Composition</h4>
                 <div class="w-full max-w-[220px] relative">
                     <canvas id="vehicleMixChart"></canvas>
@@ -358,7 +362,7 @@ include '../../includes/header.php';
                         <span class="text-[9px] font-black text-tertiary uppercase tracking-widest">Total</span>
                     </div>
                 </div>
-                <div class="mt-12 grid grid-cols-2 gap-10 w-full text-center border-t border-color pt-10">
+                <div class="mt-12 grid grid-cols-2 gap-8 w-full text-center border-t border-color pt-10">
                     <div>
                         <div class="flex items-center justify-center gap-2 mb-2">
                             <div class="w-2 h-2 rounded-full bg-[#1d4ed8]"></div>
@@ -375,7 +379,7 @@ include '../../includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="lg:col-span-2 bento-card p-10 border-color shadow-xl">
+            <div class="lg:col-span-2 bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Hourly Intake Distribution</h4>
                     <div class="flex items-center gap-3">
@@ -383,7 +387,9 @@ include '../../includes/header.php';
                         <span class="text-[10px] font-black text-tertiary uppercase tracking-widest">Peak Load Tracking</span>
                     </div>
                 </div>
-                <canvas id="peakChart" height="120"></canvas>
+                <div class="h-[280px] w-full">
+                    <canvas id="peakChart"></canvas>
+                </div>
             </div>
         </div>
     </section>
@@ -394,14 +400,18 @@ include '../../includes/header.php';
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
             <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Stay Behavior</h3>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="bento-card p-10 border-color shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bento-card p-8 border-color shadow-xl">
                 <h4 class="font-manrope font-black text-lg mb-10 text-primary">Avg Duration per Vehicle Class</h4>
-                <canvas id="dwellTypeChart"></canvas>
+                <div class="h-[280px] w-full">
+                    <canvas id="dwellTypeChart"></canvas>
+                </div>
             </div>
-            <div class="bento-card p-10 border-color shadow-xl">
+            <div class="bento-card p-8 border-color shadow-xl">
                 <h4 class="font-manrope font-black text-lg mb-10 text-primary">Stay Length by Inbound Period</h4>
-                <canvas id="dwellPeriodChart"></canvas>
+                <div class="h-[280px] w-full">
+                    <canvas id="dwellPeriodChart"></canvas>
+                </div>
             </div>
         </div>
     </section>
@@ -412,12 +422,12 @@ include '../../includes/header.php';
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
             <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Booking Pipeline</h3>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="bento-card p-10 border-color shadow-xl flex flex-col items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary">Reservation Conversion</h4>
                 <div class="w-full max-w-[260px]"><canvas id="resConversionChart"></canvas></div>
             </div>
-            <div class="bento-card bg-surface border-color p-12 shadow-2xl flex flex-col justify-center space-y-10 relative overflow-hidden">
+            <div class="bento-card bg-surface border-color p-8 shadow-2xl flex flex-col justify-center space-y-10 relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-tertiary text-[10px] font-black uppercase tracking-[0.25em] mb-12">System Efficiency</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-12">
@@ -504,7 +514,7 @@ include '../../includes/header.php';
                 </div>
             <?php else: ?>
                 <?php foreach($anomalies as $low): ?>
-                <div class="p-10 bg-status-lost-bg border border-status-lost-border rounded-[2.5rem] flex items-center justify-between group hover:shadow-2xl hover:shadow-status-lost-text/5 transition-all">
+                <div class="p-8 bg-status-lost-bg border border-status-lost-border rounded-[2.5rem] flex items-center justify-between group hover:shadow-2xl hover:shadow-status-lost-text/5 transition-all">
                     <div class="flex items-center gap-8">
                         <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl border border-status-lost-border">
                             <i class="fa-solid fa-triangle-exclamation text-status-lost-text text-3xl"></i>
@@ -587,7 +597,7 @@ const commonOptions = {
             },
             border: { display: false },
             beginAtZero: true,
-            ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10 }
+            ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10, precision: 0 }
         },
         x: { 
             grid: { display: false },
@@ -708,26 +718,41 @@ initChart('paymentChart', {
     }
 });
 
-// Scroll Highlighting
-const observerOptions = { root: null, rootMargin: '-20% 0px -70% 0px', threshold: 0 };
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const id = entry.target.getAttribute('id');
-            document.querySelectorAll('.jump-link').forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + id) link.classList.add('active');
-            });
-        }
-    });
-}, observerOptions);
-document.querySelectorAll('.scroll-section').forEach(section => observer.observe(section));
+// Global theme toggle listener for smooth chart updates
+document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    setTimeout(() => {
+        const root = document.documentElement;
+        const rootStyles = getComputedStyle(root);
+        const textColor = rootStyles.getPropertyValue('--text-primary').trim();
+        const secondaryColor = rootStyles.getPropertyValue('--text-secondary').trim();
+        const borderColor = rootStyles.getPropertyValue('--border-color').trim();
+        const surfaceColor = rootStyles.getPropertyValue('--surface').trim();
 
-document.querySelectorAll('.jump-link').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
-    });
+        const charts = [occupancyLineChart, trafficFlowBarChart, revenueStreamChart, radarCapacityChart];
+        
+        charts.forEach(chart => {
+            if (!chart) return;
+            
+            // Update Global Tooltip
+            if (chart.options.plugins.tooltip) {
+                chart.options.plugins.tooltip.backgroundColor = surfaceColor;
+                chart.options.plugins.tooltip.titleColor = textColor;
+                chart.options.plugins.tooltip.bodyColor = textColor;
+                chart.options.plugins.tooltip.borderColor = borderColor;
+            }
+
+            // Update Scales
+            if (chart.options.scales) {
+                Object.values(chart.options.scales).forEach(scale => {
+                    if (scale.ticks) scale.ticks.color = secondaryColor;
+                    if (scale.grid) scale.grid.color = borderColor;
+                    if (scale.border) scale.border.color = borderColor;
+                });
+            }
+            
+            chart.update('none');
+        });
+    }, 100);
 });
 </script>
 

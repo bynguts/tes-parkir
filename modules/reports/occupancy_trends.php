@@ -261,7 +261,7 @@ new Chart(ctx, {
                 },
                 border: { display: false },
                 beginAtZero: true,
-                ticks: { color: '#94a3b8', font: { weight: '800', size: 10 }, padding: 10 }
+                ticks: { color: '#94a3b8', font: { weight: '800', size: 10 }, padding: 10, precision: 0 }
             },
             x: {
                 grid: { display: false },
