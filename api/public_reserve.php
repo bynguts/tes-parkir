@@ -14,11 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     $plate_number = strtoupper(trim($_POST['plate_number'] ?? ''));
+    $visitor_name = trim($_POST['visitor_name'] ?? '');
     $vehicle_type = $_POST['vehicle_type'] ?? 'car';
     $from_iso     = $_POST['from'] ?? '';
     $until_iso    = $_POST['until'] ?? '';
 
-    if (empty($plate_number) || empty($from_iso) || empty($until_iso)) {
+    if (empty($plate_number) || empty($visitor_name) || empty($from_iso) || empty($until_iso)) {
         throw new Exception("Missing required fields");
     }
 
@@ -86,8 +87,8 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO reservation (
             vehicle_id, slot_id, reservation_code, 
-            reserved_from, reserved_until, status, is_public
-        ) VALUES (?, ?, ?, ?, ?, 'confirmed', 1)
+            reserved_from, reserved_until, status, is_public, visitor_name
+        ) VALUES (?, ?, ?, ?, ?, 'confirmed', 1, ?)
     ");
     
     $stmt->execute([
@@ -95,7 +96,8 @@ try {
         $slot_id,
         $reservation_code,
         $reserved_from,
-        $reserved_until
+        $reserved_until,
+        $visitor_name
     ]);
 
     // 5. Update slot status if the reservation starts within the next 15 minutes

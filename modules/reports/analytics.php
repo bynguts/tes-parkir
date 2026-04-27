@@ -36,7 +36,7 @@ $slots = $pdo->query("SELECT * FROM parking_slot ORDER BY is_reservation_only, s
 // Revenue Data
 $rev_daily = array_reverse($data['daily_trend']);
 $rev_monthly = $pdo->query("
-    SELECT MONTHNAME(check_out_time) as month, SUM(total_fee) as revenue
+    SELECT MONTHNAME(check_out_time) as month, COALESCE(SUM(total_fee), 0) as revenue
     FROM `transaction` 
     WHERE payment_status='paid' AND check_out_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
     GROUP BY MONTH(check_out_time)

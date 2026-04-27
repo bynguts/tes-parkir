@@ -271,7 +271,7 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     $daily_trend = $pdo->query("
         SELECT DATE(check_out_time) AS date,
                COUNT(*) AS volume,
-               SUM(total_fee) AS revenue,
+               COALESCE(SUM(total_fee), 0) AS revenue,
                SUM(vehicle_type='car') AS cars,
                SUM(vehicle_type='motorcycle') AS motos
         FROM `transaction` t
@@ -305,13 +305,13 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     ")->fetchAll();
 
     $operator_perf = $pdo->query("
-        SELECT o.full_name, o.shift, COUNT(t.transaction_id) AS total_transactions,
+        SELECT o.full_name, o.shift, o.operator_id, COUNT(t.transaction_id) AS total_transactions,
                COALESCE(SUM(t.total_fee),0) AS total_revenue_handled,
                COALESCE(AVG(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time))/60, 0) AS avg_duration_hours
         FROM operator o
         LEFT JOIN `transaction` t ON o.operator_id = t.operator_id AND t.payment_status='paid'
         WHERE t.check_out_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) OR t.transaction_id IS NULL
-        GROUP BY o.operator_id
+        GROUP BY o.operator_id, o.full_name, o.shift
     ")->fetchAll();
 
     // ── 7. RESERVATIONS SUMMARY ────────────────────────────────────────────

@@ -187,6 +187,11 @@ while ($r = $rates_stmt->fetch()) {
                         <input type="text" name="plate_number" required placeholder="B 1234 XYZ" class="form-input w-full h-14 px-6 rounded-2xl text-lg font-bold uppercase tracking-wider text-white">
                     </div>
 
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Visitor Name</label>
+                        <input type="text" name="visitor_name" required placeholder="Enter Your Name" class="form-input w-full h-14 px-6 rounded-2xl text-lg font-bold text-white">
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
