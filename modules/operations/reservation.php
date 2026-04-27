@@ -8,11 +8,12 @@ $error = '';
 // Auto-expire reservations that are past reserved_until
 $pdo->exec("UPDATE reservation SET status='expired' WHERE status IN ('pending','confirmed') AND reserved_until < NOW()");
 
-// ── Handle form submissions ───────────────────────────────────────────────
+// -------------------------------------------------------------------------
+// Handle form submissions
+// -------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $action = $_POST['action'] ?? '';
-
 
     if ($action === 'cancel') {
         $res_id = (int)($_POST['reservation_id'] ?? 0);

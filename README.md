@@ -1,126 +1,107 @@
-# 🅿️ SmartParking System v2
+# 🅿️ SmartParking Enterprise - Indigo Night Edition
 
-Production-ready parking management system based on PHP + MySQL.
-
----
-
-## 🚀 Installation
-
-### 1. Import Database
-
-```bash
-mysql -u root -p < database/parking_db_v2.sql
-```
-
-
-### 3. DB Connection Configuration
-
-Edit `config/connection.php`:
-
-```php
-$db_host = 'localhost';
-$db_name = 'parking_db_v2';
-$db_user = 'root';
-$db_pass = 'your_password';
-```
+**SmartParking Enterprise** is a premium, all-in-one unified parking platform designed to manage complex parking operations with a state-of-the-art "Indigo Night" aesthetic. Built for scalability and security, it features real-time monitoring, AI-driven insights, and a seamless user experience.
 
 ---
 
-## 🔑 Default Accounts
+## ✨ Key Features
 
-| Username | Password     | Role       |
-|----------|-------------|------------|
-| admin    | admin123    | superadmin |
-| operator | operator2026| admin      |
-| rizky    | rizky123    | operator   |
+### 🏢 Operations & Management
+- **Smart Gate Simulator**: Real-time entry/exit simulation with ALPR (Automatic License Plate Recognition) support.
+- **Reservation System**: High-priority slot allocation with automatic overlap detection and visitor tracking.
+- **Active Vehicle Tracking**: Live monitoring of all vehicles currently inside the facility.
+- **Real-time Slot Map**: Visual representation of parking occupancy across multiple zones and floors.
 
-> Change all passwords after setup via **Admin > Users > Reset Password**.
+### 📊 Intelligence & Analytics
+- **Cereza AI Assistant**: Integrated AI assistant powered by OpenRouter (Claude/Gemini) for operational queries and strategic recommendations.
+- **Advanced Analytics**: Interactive revenue graphs, occupancy trends, and traffic flow distribution using Chart.js.
+- **Historical Scan Logs**: Detailed records of all gate activity with advanced filtering and search capabilities.
+- **Export Reports**: One-click data export to Excel for offline processing.
+
+### 🛡️ Security & Administration
+- **CSRF Protection**: All sensitive operations are guarded by secure token validation.
+- **RBAC (Role-Based Access Control)**: Granular permissions for Superadmins, Admins, and Operators.
+- **Transaction Safety**: Atomic database transactions for secure payment processing and slot state management.
+- **Admin Control Panel**: Full CRUD management for slots, parking rates, operators, and user accounts.
+
+---
+
+## 🚀 Tech Stack
+
+- **Backend**: PHP 8.2+ (Core PHP with PDO)
+- **Database**: MySQL 8.0+
+- **Styling**: Tailwind CSS 3.4 (Modern, utility-first UI)
+- **Visuals**: Chart.js, FontAwesome 6 Pro, Flatpickr
+- **AI Engine**: OpenRouter API Integration
+- **Optimization**: Vite (Asset Bundling)
+
+---
+
+## 🛠️ Installation & Setup
+
+### 1. Database Configuration
+1. Create a new database named `parking_db_v2` in your MySQL environment.
+2. Import the provided schema:
+   ```bash
+   mysql -u root -p parking_db_v2 < schema.sql
+   ```
+
+### 2. Environment Setup
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit `.env` and fill in your database credentials and **OpenRouter API Key**.
+
+### 3. Permissions
+Ensure the following directories are writable by the web server (for logs and temp assets):
+- `assets/`
+- `config/`
+
+---
+
+## 🔑 Default Credentials
+
+| Role | Username | Password |
+| :--- | :--- | :--- |
+| **Superadmin** | `admin` | `admin123` |
+| **Administrator** | `operator` | `operator2026` |
+| **Staff/Operator** | `rizky` | `rizky123` |
+
+> [!IMPORTANT]
+> For security, immediately rotate all default passwords via the **Admin > Users** management panel.
 
 ---
 
 ## 📁 File Structure
 
-```
-parking/
-├── config/
-│   ├── connection.php          # PDO database connection
-│   └── configexample.js        # Template config JS
-├── database/
-│   └── parking_db_v2.sql       # Complete schema with indexes
-├── includes/
-│   ├── auth_guard.php          # Session & auth check
-│   └── functions.php           # CSRF, fee calculator, helpers
-│
-├── index.php                   # Main dashboard + sidebar
-├── login.php                   # Login with bcrypt + rate limiting
-├── logout.php                  # Secure session destroy
-│
-├── gate_simulator.php          # Entry gate + QR scanner
-├── gate_exit.php               # Exit gate + fee calculation
-├── print_ticket.php            # Ticket printing (auto + manual)
-│
-├── dashboard.php               # Active vehicles (unpaid)
-├── dashboard_revenue.php       # Daily revenue reports
-├── slot_map.php                # Floor slot visualization (real-time)
-├── reservation.php             # Advance slot booking
-├── scan_log.php                # Gate activity history
-│
-├── admin_slots.php             # Parking slot CRUD
-├── admin_rates.php             # Manage parking rates
-├── admin_operators.php         # Manage operators
-├── admin_users.php             # Manage login users (superadmin only)
-│
-├── delete_logs.php             # API: delete logs (AJAX)
-└── get_log_dates.php           # API: log date list (AJAX)
+```text
+parkir_final/
+├── api/                # Core API endpoints (AI, Traffic, AJAX)
+├── assets/             # Compiled CSS, JS, and optimized Images
+├── config/             # Database connection & system settings
+├── includes/           # Shared UI (Header, Sidebar, AI Assistant)
+├── modules/
+│   ├── admin/          # Admin CRUD (Users, Rates, Slots)
+│   ├── operations/     # Gate Simulators, Reservations, Logs
+│   └── reports/        # Analytics, Revenue, Slot Maps, Exports
+├── index.php           # Main Dashboard Entry Point
+├── home.php            # Public Landing Page
+├── reserve.php         # Public Booking Portal
+└── schema.sql          # Final Production Database Schema
 ```
 
 ---
 
-## ✅ Improvements v2 vs v1
+## 🛡️ Security & Best Practices
 
-### Security
-- ✅ **SQL Injection** — All queries use PDO prepared statements
-- ✅ **Passwords** — `password_hash()` bcrypt cost-12, not plaintext
-- ✅ **CSRF Protection** — Tokens in all POST forms
-- ✅ **Rate Limiting** — Max 5 failed logins per 5 minutes per IP
-- ✅ **Session Security** — `session_regenerate_id()`, httponly, samesite=Strict
-- ✅ **Role-Based Access** — superadmin / admin / operator
-- ✅ **Atomic Transactions** — Checkout uses `beginTransaction()` + rollback
-
-### Database
-- ✅ **INDEX** on critical columns: `payment_status`, `check_out_time`, `plate_number`, `scan_time`
-- ✅ **Data integrity** — Removed `vehicle_type=''` and `duration_hours=999.99`
-- ✅ **More slots** — 58 slots (3 floors: G, L1, L2)
-- ✅ **`admin_users` table** — Replaces hardcoded credentials
-- ✅ **`reservation` table** — For booking system
-
-### New Features
-- ✅ **Slot Map** — Real-time visualization per floor, 30s auto-refresh
-- ✅ **Reservation System** — Slot booking with automatic overlap detection
-- ✅ **Admin CRUD** — Manage slots, rates, operators, and users via UI
-- ✅ **Dashboard Index** — Sidebar navigation + live stats + full occupancy alerts
-- ✅ **Rate Preview** — Fee simulation while editing rates
-- ✅ **Multi-floor** — Ground, Level 1, Level 2
+1. **SQL Injection**: Prevented globally via PDO prepared statements.
+2. **Password Hashing**: Utilizes `password_hash()` with Bcrypt (cost 12).
+3. **Session Hardening**: Secure cookie parameters with `httponly` and `samesite=Strict`.
+4. **Rate Limiting**: Integrated protection against brute-force login attempts.
+5. **CSRF**: Token-based protection for all state-changing POST requests.
 
 ---
 
-## 🛡️ Production Notes
-
-1. **HTTPS mandatory** in production — set `'secure' => true` in session cookie params
-3. Add `.htaccess` to block direct access to `config/` and `includes/` folders
-4. Set `display_errors = Off` and `log_errors = On` in `php.ini`
-
----
-
-## 📊 System Flow
-
-```
-Entry:
-  Gate Simulator → Print Ticket → slot = 'occupied', ticket = 'active', trx = 'unpaid'
-
-Exit:
-  Gate Exit (scan QR) → Calculate fee → slot = 'available', ticket = 'used', trx = 'paid'
-
-Reservation:
-  Reservation → Select time → Slot automatically allocated → reservation_code provided
-```
+**Developed for PHP Course - Final Task Submission.**
+*Indigo Night Design System © 2026*
