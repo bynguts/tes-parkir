@@ -280,7 +280,7 @@ include 'includes/header.php';
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $car_avail ?></span>
                         <span class="text-[13px] font-inter text-tertiary truncate">Car Slot Available</span>
                         <div class="mt-3">
-                            <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                            <div class="w-full h-2 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $car_pct ?>%"></div>
                             </div>
                         </div>
@@ -296,7 +296,7 @@ include 'includes/header.php';
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $moto_avail ?></span>
                         <span class="text-[13px] font-inter text-tertiary truncate">Motorcycle Slot Available</span>
                         <div class="mt-3">
-                            <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                            <div class="w-full h-2 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $moto_pct ?>%"></div>
                             </div>
                         </div>
@@ -566,10 +566,8 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Active Duty</h3>
                             </div>
                         </div>
-                        <span class="status-badge status-badge-available">
-                            <?= count($active_staff) ?> Active
-                        </span>
                     </div>
+
 
                     <div class="space-y-2 flex-grow overflow-y-auto custom-scrollbar pr-1">
                         <?php if (empty($display_staff)): ?>

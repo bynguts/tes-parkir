@@ -13,54 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'create') {
-        $plate      = strtoupper(trim($_POST['plate_number'] ?? ''));
-        $vtype      = $_POST['vehicle_type'] ?? '';
-        $owner      = trim($_POST['owner_name'] ?? 'Guest');
-        $phone      = trim($_POST['owner_phone'] ?? '');
-        $date_from  = $_POST['reserved_from'] ?? '';
-        // Set a default indefinite end time (e.g., 30 days buffer) to avoid constraining the user's return
-        $date_until = $date_from ? date('Y-m-d H:i:s', strtotime($date_from . ' + 30 days')) : '';
-
-        if (!$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from) {
-            $error = 'All fields are required.';
-        } elseif (strtotime($date_from) < time() - 300) {
-            $error = 'Start time cannot be in the past.';
-        } else {
-            $stmt = $pdo->prepare("
-                SELECT ps.slot_id FROM parking_slot ps
-                JOIN floor f ON ps.floor_id = f.floor_id
-                WHERE ps.slot_type = ?
-                  AND ps.status = 'available'
-                  AND ps.slot_id NOT IN (
-                    SELECT slot_id FROM reservation
-                    WHERE status IN ('pending','confirmed')
-                      AND NOT (reserved_until <= ? OR reserved_from >= ?)
-                  )
-                ORDER BY f.floor_code, ps.slot_number LIMIT 1
-            ");
-            $stmt->execute([$vtype, $date_from, $date_until]);
-            $slot = $stmt->fetch();
-
-            if (!$slot) {
-                $error = 'No slots available for this period.';
-            } else {
-                $pdo->prepare("INSERT INTO vehicle (plate_number, vehicle_type, owner_name, owner_phone)
-                                VALUES (?,?,?,?)
-                                ON DUPLICATE KEY UPDATE vehicle_type=VALUES(vehicle_type), owner_name=VALUES(owner_name), owner_phone=VALUES(owner_phone)")
-                    ->execute([$plate, $vtype, $owner ?: 'Guest', $phone ?: null]);
-
-                $vid  = $pdo->query("SELECT vehicle_id FROM vehicle WHERE plate_number='".addslashes($plate)."'")->fetchColumn();
-                $code = generate_reservation_code($pdo);
-
-                $pdo->prepare("INSERT INTO reservation (vehicle_id, plate_number, slot_id, reservation_code, reserved_from, reserved_until, status, is_public)
-                                VALUES (?,?,?,?,?,?,'confirmed', 0)")
-                    ->execute([$vid, $plate, $slot['slot_id'], $code, $date_from, $date_until]);
-
-                $msg = "Reservation successful! Code: <strong class='font-mono'>{$code}</strong>";
-            }
-        }
-    }
 
     if ($action === 'cancel') {
         $res_id = (int)($_POST['reservation_id'] ?? 0);
@@ -76,7 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $owner      = trim($_POST['owner_name'] ?? 'Guest');
         $phone      = trim($_POST['owner_phone'] ?? '');
         $date_from  = $_POST['reserved_from'] ?? '';
-        $date_until = $date_from ? date('Y-m-d H:i:s', strtotime($date_from . ' + 30 days')) : '';
+        $date_until = $_POST['reserved_until'] ?? '';
+        if (!$date_until && $date_from) {
+            $date_until = date('Y-m-d H:i:s', strtotime($date_from . ' + 30 days'));
+        }
 
         if (!$res_id || !$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from) {
             $error = 'All fields are required.';
@@ -174,7 +129,6 @@ function calculateEstimation($from, $until, $rate) {
     return min($fee, $rate['daily_max_rate']);
 }
 
-$min_datetime = date('Y-m-d\TH:i', strtotime('+5 minutes'));
 
 $page_title = 'Reservation Management';
 $page_subtitle = 'Manage pre-booking and priority parking slot allocation.';
@@ -231,7 +185,7 @@ include '../../includes/header.php';
     <div class="grid grid-cols-1 gap-5 overflow-hidden flex-1 min-h-0">
 
         <div class="bento-card overflow-hidden">
-            <div class="py-5 px-8 border-b border-color flex items-center justify-between">
+            <div class="py-5 px-4 border-b border-color flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-calendar-check text-lg"></i>
@@ -240,18 +194,10 @@ include '../../includes/header.php';
                         <h3 class="card-title leading-tight">Active Reservation Queue</h3>
                         <p class="text-tertiary text-[11px] font-medium flex items-center gap-2">
                             Scheduled Parking Sessions
-                            <span class="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
                         </p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleModal('reservationModal')" 
-                            class="bg-brand hover:brightness-110 text-white font-black text-[11px] uppercase tracking-widest rounded-xl px-6 py-3 shadow-lg shadow-brand/20 transition-all active:scale-[0.98] flex items-center gap-2">
-                        <i class="fa-solid fa-plus text-xs"></i>
-                        New Booking
-                    </button>
-                </div>
             </div>
 
             <div class="overflow-x-auto min-h-[350px]">
@@ -259,21 +205,22 @@ include '../../includes/header.php';
                     <table class="w-full font-inter border-collapse table-fixed activity-table">
                         <thead>
                             <tr class="border-b border-color">
-                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-8">Vehicle</th>
-                                <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
-                                <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left px-4">Client</th>
-                                <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Validation</th>
-                                <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
-                                <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
-                                <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Exit</th>
-                                <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Est. Fee</th>
-                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-8">Action</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-6">Vehicle</th>
+                                <th class="py-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
+                                <th class="py-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left px-4">Client</th>
+                                <th class="py-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Ticket Code</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Exit</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Est. Fee</th>
+                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Status</th>
+                                <th class="py-4 w-[6%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-6">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-color">
                             <?php if (empty($reservations)): ?>
                                 <tr>
-                                    <td colspan="9" class="px-4 py-24 text-center">
+                                    <td colspan="10" class="px-4 py-24 text-center">
                                         <div class="flex flex-col items-center opacity-40">
                                             <i class="fa-solid fa-calendar-xmark text-5xl mb-4 text-slate-300"></i>
                                             <p class="text-slate-500 font-inter font-medium text-sm">No active reservations found.</p>
@@ -286,37 +233,25 @@ include '../../includes/header.php';
                             foreach ($reservations as $r): 
                             ?>
                             <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row">
-                                <td class="pl-8 pr-4 py-2 align-middle">
+                                <td class="pl-6 pr-4 py-4 align-middle">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
                                             <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-lg"></i>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <span class="plate-number text-sm font-manrope font-semibold text-primary leading-none uppercase tracking-wider"><?= htmlspecialchars($r['plate_number']) ?></span>
                                 </td>
-                                <td class="px-4 py-2 text-left align-middle">
+                                <td class="px-4 py-4 text-left align-middle">
                                     <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($r['owner_name']) ?></span>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <div class="flex flex-col gap-1 items-center">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none uppercase"><?= htmlspecialchars($r['reservation_code']) ?></span>
-                                         <?php if ($r['status'] === 'used'): ?>
-                                            <span class="badge-soft badge-soft-indigo text-[9px] leading-none w-fit">INSIDE</span>
-                                        <?php else: ?>
-                                            <span class="badge-soft badge-soft-emerald text-[9px] leading-none w-fit">WAITING</span>
-                                        <?php endif; ?>
-                                        
-                                        <?php if ($r['is_public']): ?>
-                                            <div class="flex items-center gap-1 text-[9px] font-inter text-tertiary leading-none uppercase tracking-widest mt-0.5">
-                                                <i class="fa-solid fa-earth-americas text-[8px]"></i>
-                                                <span>Public</span>
-                                            </div>
-                                        <?php endif; ?>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <?php 
                                             $display_slot = "#RES " . $res_counter++;
@@ -325,28 +260,42 @@ include '../../includes/header.php';
                                         <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-wider">RSV ZONE</span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_from'])) ?></span>
                                         <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_from'])) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_until'])) ?></span>
                                         <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_until'])) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 text-center align-middle">
+                                <td class="px-4 py-4 text-center align-middle">
                                     <?php 
                                     $est_fee = calculateEstimation($r['reserved_from'], $r['reserved_until'], $rates[$r['vehicle_type']] ?? null);
                                     ?>
                                     <div class="flex flex-col gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none">Rp <?= number_format($est_fee, 0, ',', '.') ?></span>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-widest">Total Est.</span>
                                     </div>
                                 </td>
-                                <td class="py-2 pr-8 pl-4 text-right align-middle relative">
+                                <td class="px-4 py-4 text-center align-middle">
+                                    <div class="flex justify-center">
+                                        <?php if ($r['status'] === 'used'): ?>
+                                            <div class="status-badge status-badge-online !bg-indigo-500/10 !text-indigo-400 !border-indigo-500/20">
+                                                <span class="status-dot-online !bg-indigo-500"></span>
+                                                INSIDE
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="status-badge status-badge-awaiting uppercase">
+                                                <span class="status-dot-awaiting"></span>
+                                                WAITING
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td class="py-4 pr-6 pl-4 text-right align-middle relative">
                                     <div class="flex justify-end">
                                         <div class="relative action-menu-container">
                                             <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
@@ -362,7 +311,8 @@ include '../../includes/header.php';
                                                     'type' => $r['vehicle_type'],
                                                     'owner' => $r['owner_name'],
                                                     'phone' => $r['owner_phone'],
-                                                    'from' => $r['reserved_from']
+                                                    'from' => $r['reserved_from'],
+                                                    'until' => $r['reserved_until']
                                                 ])) ?>)" class="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-brand/[0.03] transition-all group/item">
                                                     <div class="w-8 h-8 rounded-lg icon-container flex items-center justify-center shrink-0 !text-brand !bg-brand/5 transition-all group-hover/item:scale-110">
                                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
@@ -411,10 +361,11 @@ include '../../includes/header.php';
         </div>
     </div>
 
+
     <!-- EDIT RESERVATION MODAL -->
     <div id="editResModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] hidden items-center justify-center p-6">
         <div class="bg-surface border border-color w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div class="py-5 px-8 border-b border-color flex items-center justify-between">
+            <div class="py-5 px-4 border-b border-color flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-2xl icon-container flex items-center justify-center bg-brand/10 text-brand">
                         <i class="fa-solid fa-pen-to-square text-xl"></i>
@@ -442,7 +393,7 @@ include '../../includes/header.php';
                                placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-3 gap-6">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Vehicle Category</label>
                             <select name="vehicle_type" id="edit_vtype"
@@ -456,6 +407,15 @@ include '../../includes/header.php';
                             <div class="relative">
                                 <input type="text" name="reserved_from" id="edit_from_dt" required
                                        class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer">
+                                <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">End Schedule</label>
+                            <div class="relative">
+                                <input type="text" name="reserved_until" id="edit_until_dt"
+                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer"
+                                       placeholder="Optional">
                                 <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
                             </div>
                         </div>
@@ -491,15 +451,15 @@ include '../../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    function setType(type) {
-        const hiddenInput = document.getElementById('vtype_hidden');
-        if (hiddenInput) hiddenInput.value = type;
-        
-        const carBtn = document.getElementById('btnCar');
-        const motoBtn = document.getElementById('btnMoto');
-        
-        if (carBtn) carBtn.classList.toggle('active', type === 'car');
-        if (motoBtn) motoBtn.classList.toggle('active', type === 'motorcycle');
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     }
 
     function toggleActionMenu(button, event) {
@@ -590,18 +550,17 @@ include '../../includes/header.php';
         buildDropdowns(instance);
     }
 
-    var minDate = new Date("<?= date('Y-m-d\TH:i', strtotime('+5 minutes')) ?>");
-    var fromPicker = flatpickr("#from_dt", {
+
+    var editPicker = flatpickr("#edit_from_dt", {
         enableTime: true, 
         dateFormat: "Y-m-d\\TH:i",
         monthSelectorType: "dropdown",
-        minDate: minDate, 
         time_24hr: true, 
         minuteIncrement: 15,
         onReady: onReady
     });
 
-    var editPicker = flatpickr("#edit_from_dt", {
+    var editUntilPicker = flatpickr("#edit_until_dt", {
         enableTime: true, 
         dateFormat: "Y-m-d\\TH:i",
         monthSelectorType: "dropdown",
@@ -618,8 +577,15 @@ include '../../includes/header.php';
         document.getElementById('edit_phone').value = data.phone || '';
         
         // Convert SQL format (YYYY-MM-DD HH:MM:SS) to ISO format (YYYY-MM-DDTHH:MM) for picker
-        const isoDate = data.from.replace(' ', 'T').substring(0, 16);
-        editPicker.setDate(isoDate);
+        const isoDateFrom = data.from.replace(' ', 'T').substring(0, 16);
+        editPicker.setDate(isoDateFrom);
+
+        if (data.until) {
+            const isoDateUntil = data.until.replace(' ', 'T').substring(0, 16);
+            editUntilPicker.setDate(isoDateUntil);
+        } else {
+            editUntilPicker.clear();
+        }
 
         document.getElementById('editResModal').classList.remove('hidden');
         document.getElementById('editResModal').classList.add('flex');

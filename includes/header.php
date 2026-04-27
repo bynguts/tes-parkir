@@ -199,13 +199,41 @@ $page_title = $page_title ?? 'Parking System';
 
         html.sidebar-collapsed .sidebar-label,
         html.sidebar-collapsed .sidebar-brand-text,
-        html.sidebar-collapsed .sidebar-badge,
-        html.sidebar-collapsed .sidebar-label-text {
+        html.sidebar-collapsed .sidebar-badge {
             opacity: 0 !important;
             width: 0 !important;
             margin: 0 !important;
             pointer-events: none !important;
             overflow: hidden;
+        }
+
+        /* Completely remove section labels in collapsed mode to normalize spacing */
+        html.sidebar-collapsed .sidebar-label-text {
+            display: none !important;
+        }
+
+        /* Standardize vertical gaps between ALL icons */
+        html.sidebar-collapsed aside nav,
+        html.sidebar-collapsed aside nav > div,
+        html.sidebar-collapsed aside nav ul {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            margin: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        html.sidebar-collapsed aside nav {
+            padding-top: 24px !important;
+            padding-bottom: 24px !important;
+            align-items: center !important;
+        }
+
+        html.sidebar-collapsed aside nav > div,
+        html.sidebar-collapsed aside nav ul {
+            width: 100% !important;
+            align-items: center !important;
         }
 
         html.sidebar-collapsed aside .sidebar-link {
@@ -214,9 +242,10 @@ $page_title = $page_title ?? 'Parking System';
             padding-right: 0 !important;
             margin-left: auto !important;
             margin-right: auto !important;
-            width: 48px !important;
-            height: 48px !important;
+            width: 44px !important; /* Slightly smaller for a tighter, cleaner look */
+            height: 44px !important;
             gap: 0 !important;
+            border-radius: 12px !important;
         }
 
         .sidebar-link i {

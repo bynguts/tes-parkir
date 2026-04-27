@@ -86,7 +86,7 @@ include '../../includes/header.php';
         </div>
         <div class="flex items-center gap-3">
                 <button type="button" onclick="forceCheckoutAll(this)"
-                    class="btn-danger-soft gap-2">
+                    class="btn-danger-soft h-[38px] gap-2">
                 <i class="fa-solid fa-sign-out-alt"></i>
                 Force Checkout All
             </button>
@@ -95,7 +95,7 @@ include '../../includes/header.php';
 
     <div class="bento-card overflow-hidden">
         <!-- Card Header with Filters -->
-        <div class="flex items-center justify-between py-5 px-8 border-b border-color">
+        <div class="flex items-center justify-between py-5 px-4 border-b border-color">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-car-side text-lg"></i>
@@ -118,8 +118,8 @@ include '../../includes/header.php';
                 <!-- Search -->
                 <div class="relative group">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
-                          <input type="text" id="logSearch" placeholder="Search plate or ticket..." 
-                              class="w-44 bg-surface-alt border border-color rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
+                           <input type="text" id="logSearch" placeholder="Search plate or ticket..." 
+                               class="w-44 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
                 <!-- Vehicle Type Filter -->
@@ -160,14 +160,14 @@ include '../../includes/header.php';
             <table class="w-full font-inter border-collapse table-fixed activity-table">
                 <thead>
                     <tr class="border-b border-color">
-                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-8">Vehicle</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-4">Vehicle</th>
                         <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
                         <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Ticket Code</th>
                         <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
                         <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
                         <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Duration</th>
                         <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Est. Fee</th>
-                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-8">Actions</th>
+                        <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="activeFleetBody" class="divide-y divide-color">
@@ -206,7 +206,7 @@ include '../../includes/header.php';
                         data-vehicle="<?= strtolower($row['vehicle_type']) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
                         data-timestamp="<?= strtotime($row['check_in_time']) ?>">
-                        <td class="py-2 pl-8 pr-4 text-left align-middle">
+                        <td class="py-2 pl-4 pr-4 text-left align-middle">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
                                     <i class="fa-solid fa-<?= strtolower($row['vehicle_type'] ?? '') == 'motorcycle' ? 'motorcycle' : 'car' ?> text-lg"></i>
@@ -255,7 +255,7 @@ include '../../includes/header.php';
                                 <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $est_fee ?></span>
                             </div>
                         </td>
-                        <td class="py-2 pr-8 pl-4 text-right align-middle relative">
+                        <td class="py-2 pr-4 pl-4 text-right align-middle relative">
                             <div class="flex justify-end items-center relative action-menu-container">
                                 <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
                                     <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -302,15 +302,15 @@ include '../../includes/header.php';
 <!-- Receipt Modal (Aesthetic Update) -->
     <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
     <div class="bg-surface p-8 w-full max-w-[340px] rounded-3xl shadow-2xl relative animate-in fade-in zoom-in duration-300 border border-color">
-        <button onclick="closeReceipt()" class="absolute -top-12 right-0 text-white hover:text-brand transition-colors flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest">
-            Close <i class="fa-solid fa-xmark"></i>
+        <button onclick="closeReceipt()" class="absolute top-6 right-6 text-tertiary/40 hover:text-brand transition-all">
+            <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <div id="receiptContent" class="receipt-thermal text-slate-900 font-mono text-[12px] leading-tight">
+        <div id="receiptContent" class="receipt-thermal text-primary font-mono text-[12px] leading-tight">
             <div class="text-center mb-6">
-                <h2 class="font-black text-lg uppercase tracking-tighter">SMARTPARK v2</h2>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400">Digital Receipt</p>
-                <div class="border-b border-dashed border-slate-200 my-4"></div>
+                <h2 class="font-black text-lg uppercase tracking-tighter">SmartParking</h2>
+                <p class="text-[10px] uppercase tracking-widest text-tertiary">Digital Receipt</p>
+                <div class="border-b border-dashed border-color my-4 opacity-50"></div>
                 <p class="font-bold uppercase">LOST TICKET FINE RECEIPT</p>
             </div>
 
@@ -320,7 +320,7 @@ include '../../includes/header.php';
                 <div class="flex justify-between"><span>PLATE:</span> <span id="r-plate" class="font-bold"></span></div>
             </div>
 
-            <div class="border-b border-dashed border-slate-200 my-4"></div>
+            <div class="border-b border-dashed border-color my-4 opacity-50"></div>
 
             <div class="space-y-2 mb-6">
                 <div class="flex justify-between">
@@ -333,22 +333,22 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="border-b border-double border-slate-300 my-4"></div>
+            <div class="border-b border-double border-color my-4 opacity-50"></div>
 
             <div class="flex justify-between items-end mb-8">
                 <span class="text-[10px] font-bold">TOTAL AMOUNT:</span>
                 <span id="r-total" class="text-xl font-black tracking-tighter"></span>
             </div>
 
-            <div class="text-center text-[10px] text-slate-400 uppercase tracking-widest">
+            <div class="text-center text-[10px] text-tertiary uppercase tracking-widest">
                 <p>Thank you for your visit</p>
                 <p>Drive Safely!</p>
             </div>
         </div>
 
         <button onclick="processCheckout()" class="w-full mt-8 py-4 bg-brand text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-2">
-            <i class="fa-solid fa-print"></i>
-            PROCESS & PRINT
+            <i class="fa-solid fa-check-double"></i>
+            COMPLETE TRANSACTION
         </button>
     </div>
 </div>
@@ -459,9 +459,6 @@ function processCheckout() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            if (isLostMode) {
-                window.print();
-            }
             location.reload();
         } else {
             pushNotify('Error', data.message, 'error');

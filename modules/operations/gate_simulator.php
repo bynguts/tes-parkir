@@ -237,7 +237,7 @@ include '../../includes/header.php';
     width: 100vw !important;
     height: 100vh !important;
     background: color-mix(in srgb, var(--bg-page) 88%, transparent);
-    z-index: 99999 !important;
+    z-index: 1000001 !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -379,6 +379,7 @@ include '../../includes/header.php';
 .notification-progress {
     animation: progressShrink 5s linear forwards;
 }
+
 </style>
 
 <div class="px-10 py-10 max-w-[1300px] mx-auto space-y-6">
@@ -397,7 +398,7 @@ include '../../includes/header.php';
                 $total = $summary[$t]['total'] ?? 0;
                 $pct   = $total > 0 ? round(($avail / $total) * 100) : 100;
             ?>
-            <div class="bento-card p-4 flex items-center gap-4">
+            <div class="bento-card p-4 flex items-center gap-4 slot-summary-card <?= $t ?>">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-<?= $icon ?> fa-fw text-lg"></i>
                 </div>
@@ -408,7 +409,7 @@ include '../../includes/header.php';
                     </div>
                     <span class="text-[13px] font-inter text-tertiary truncate"><?= $label ?> Slots Available</span>
                     <div class="mt-3">
-                        <div class="w-full h-1.5 progress-track rounded-full overflow-hidden">
+                        <div class="w-full h-2 progress-track rounded-full overflow-hidden">
                             <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $pct ?>%"></div>
                         </div>
                     </div>
@@ -1202,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </script>
 
     <!-- CAMERA MODAL -->
-    <div id="cameraModal" style="position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg-page) 90%, transparent); backdrop-filter: blur(12px);">
+    <div id="cameraModal" style="position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 1000001 !important; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg-page) 90%, transparent); backdrop-filter: blur(12px);">
         <div class="camera-container animate-bounce-in shadow-2xl">
             <div class="p-6 border-b border-color flex items-center justify-between bg-surface-alt/20 backdrop-blur-md">
                 <div class="flex items-center gap-4">

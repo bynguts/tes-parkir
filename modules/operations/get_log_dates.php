@@ -4,30 +4,28 @@ require_once '../../config/connection.php';
 
 header('Content-Type: application/json');
 
-$rows = $pdo->query("
-    SELECT
-        DATE(e.scan_time)                                       AS date,
-        DAYNAME(DATE(e.scan_time))                              AS day,
-        COUNT(DISTINCT e.scan_id)                               AS scan_count,
-        SUM(x.scan_id IS NOT NULL)                              AS exited,
-        SUM(x.scan_id IS NULL)                                  AS still_parked
-    FROM plate_scan_log e
-    LEFT JOIN plate_scan_log x
-        ON x.ticket_code = e.ticket_code AND x.scan_type = 'exit'
-    WHERE e.scan_type = 'entry' AND e.gate_action = 'open'
-    GROUP BY DATE(e.scan_time)
-    ORDER BY DATE(e.scan_time) DESC
-")->fetchAll();
+// Get unique dates from plate_scan_log and reservation tables
+try {
+    $query = "
+        SELECT DISTINCT DATE(scan_time) as log_date FROM plate_scan_log
+        UNION
+        SELECT DISTINCT DATE(reserved_from) as log_date FROM reservation
+        ORDER BY log_date DESC
+    ";
 
-$out = [];
-foreach ($rows as $r) {
-    $out[] = [
-        'date'         => $r['date'],
-        'day'          => $r['day'],
-        'scan_count'   => (int)$r['scan_count'],
-        'exited'       => (int)$r['exited'],
-        'still_parked' => (int)$r['still_parked'],
-    ];
+    $stmt = $pdo->query($query);
+    $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    echo json_encode([
+        'success' => true,
+        'dates' => $dates
+    ]);
+} catch (Exception $e) {
+    error_log("get_log_dates error: " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error fetching dates',
+        'dates' => []
+    ]);
 }
-
-echo json_encode($out);
+?>
