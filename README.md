@@ -28,11 +28,11 @@ $db_pass = 'your_password';
 
 ## 🔑 Default Accounts
 
-| Username | Password     | Role       |
-|----------|-------------|------------|
-| admin    | admin123    | superadmin |
-| operator | operator2026| admin      |
-| rizky    | rizky123    | operator   |
+| Username   | Password      | Role       |
+|------------|---------------|------------|
+| superadmin | superadmin123 | superadmin |
+| admin      | admin123      | admin      |
+| operator   | operator123   | operator   |
 
 > Change all passwords after setup via **Admin > Users > Reset Password**.
 
