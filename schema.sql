@@ -33,8 +33,17 @@ CREATE TABLE `admin_users` (
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `uk_username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `admin_users` WRITE;
+/*!40000 ALTER TABLE `admin_users` DISABLE KEYS */;
+INSERT INTO `admin_users` (username, password_hash, role, full_name) VALUES 
+('superadmin', '$2y$12$VsdDFrvvr9gy4uTRE1FD/OTTYab3mxg.82dheudG.e8xt5Fvyw2qO', 'superadmin', 'System Super Admin'),
+('admin', '$2y$12$Z1FJ0cgGKh8LmMv5JL5OjOoxI9nX06rJKEwQT6ruwrq5XEvLtkvf6', 'admin', 'Administrative Manager'),
+('operator', '$2y$12$65SIEUljNuTYdFcVtPjhbuVKU.Dx/XO2pDRMTzbLafqwG1Jr4iX3m', 'operator', 'Standard Operator');
+/*!40000 ALTER TABLE `admin_users` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `floor`

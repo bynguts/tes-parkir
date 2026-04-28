@@ -11,10 +11,10 @@ token.json
 
 # --- DATABASE ---
 # Don't commit raw SQL dumps containing real user/system data
-database/*.sql
-!database/schema.sql
-!database/*.sample.sql
-!database/*.seed.sql
+*.sql
+!schema.sql
+!*.sample.sql
+!*.seed.sql
 
 # --- AI & AGENT METADATA ---
 .claude/

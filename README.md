@@ -9,30 +9,35 @@ Production-ready parking management system based on PHP + MySQL.
 ### 1. Import Database
 
 ```bash
-mysql -u root -p < database/parking_db_v2.sql
+mysql -u root -p < schema.sql
 ```
 
+### 2. Environment Configuration
 
-### 3. DB Connection Configuration
+Copy the example environment file and update your credentials:
 
-Edit `config/connection.php`:
+```bash
+cp .env.example .env
+```
 
-```php
-$db_host = 'localhost';
-$db_name = 'parking_db_v2';
-$db_user = 'root';
-$db_pass = 'your_password';
+Edit `.env`:
+
+```env
+DB_HOST=localhost
+DB_NAME=parking_db_v2
+DB_USER=root
+DB_PASS=your_password
 ```
 
 ---
 
 ## 🔑 Default Accounts
 
-| Username | Password     | Role       |
-|----------|-------------|------------|
-| admin    | admin123    | superadmin |
-| operator | operator2026| admin      |
-| rizky    | rizky123    | operator   |
+| Username   | Password      | Role       |
+|------------|---------------|------------|
+| superadmin | superadmin123 | superadmin |
+| admin      | admin123      | admin      |
+| operator   | operator123   | operator   |
 
 > Change all passwords after setup via **Admin > Users > Reset Password**.
 
@@ -42,36 +47,25 @@ $db_pass = 'your_password';
 
 ```
 parking/
+├── api/                        # JSON Endpoints for AJAX
+├── assets/                     # CSS, JS, and Images
 ├── config/
-│   ├── connection.php          # PDO database connection
-│   └── configexample.js        # Template config JS
-├── database/
-│   └── parking_db_v2.sql       # Complete schema with indexes
+│   └── connection.php          # PDO database connection + .env loader
+├── design-system/              # Design specifications
 ├── includes/
 │   ├── auth_guard.php          # Session & auth check
-│   └── functions.php           # CSRF, fee calculator, helpers
+│   └── functions.php           # Shared utilities & helpers
+├── modules/
+│   ├── admin/                  # Slot, Rate, Operator, User CRUD
+│   ├── operations/             # Gates, Simulator, Logs
+│   └── reports/                # Analytics & Visualization
 │
-├── index.php                   # Main dashboard + sidebar
-├── login.php                   # Login with bcrypt + rate limiting
-├── logout.php                  # Secure session destroy
-│
-├── gate_simulator.php          # Entry gate + QR scanner
-├── gate_exit.php               # Exit gate + fee calculation
-├── print_ticket.php            # Ticket printing (auto + manual)
-│
-├── dashboard.php               # Active vehicles (unpaid)
-├── dashboard_revenue.php       # Daily revenue reports
-├── slot_map.php                # Floor slot visualization (real-time)
-├── reservation.php             # Advance slot booking
-├── scan_log.php                # Gate activity history
-│
-├── admin_slots.php             # Parking slot CRUD
-├── admin_rates.php             # Manage parking rates
-├── admin_operators.php         # Manage operators
-├── admin_users.php             # Manage login users (superadmin only)
-│
-├── delete_logs.php             # API: delete logs (AJAX)
-└── get_log_dates.php           # API: log date list (AJAX)
+├── .env.example                # Environment template
+├── README.md                   # System documentation
+├── schema.sql                  # Complete database schema
+├── index.php                   # Unified Dashboard
+├── login.php                   # Enterprise Auth
+└── logout.php                  # Session Termination
 ```
 
 ---
