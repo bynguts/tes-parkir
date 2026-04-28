@@ -1,0 +1,57 @@
+/* 1. Theme Variables (Sleek Neutral + Azure Identity) - Overrides theme.css */
+:root {
+    /* Base Neutral Colors (Light) */
+    --bg-page: #ffffff; /* White main background */
+    --surface: #f0f4f9; /* Cool gray cards & sidebar (Material 3 style) */
+    --surface-alt: #e8eaed; /* Slightly darker for inputs */
+    --border-color: #d1d5db; /* Balanced soft outline */
+    --shadow-color: rgba(0, 0, 0, 0.03); /* Softer shadow for the flat gray look */
+    --icon-shadow: rgba(0, 0, 0, 0.20); /* Distinct, clear shadow for icons */
+    
+    /* Text Colors (Light) */
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+
+    /* Identity Color: Muted Soft Blue */
+    --brand: #4f83cc; /* Muted steel/soft blue */
+    --brand-subtle: #e6f0fa; /* Very soft blue background */
+    
+    /* Sidebar overrides to match card background */
+    --sidebar: var(--surface);
+    --sidebar-text: var(--text-secondary);
+    --sidebar-border: transparent; /* Often no border in this style */
+    
+    --hover-border: var(--brand);
+    --scrollbar-thumb: rgba(79, 131, 204, 0.5);
+    --scrollbar-thumb-hover: rgba(79, 131, 204, 0.8);
+}
+
+[data-theme="dark"] {
+    /* Base Neutral Colors (Dark) */
+    --bg-page: #121212; /* Deep neutral background */
+    --surface: #1e1e1e; /* Elevated neutral cards & sidebar */
+    --surface-alt: #262626; /* Darker inputs */
+    --border-color: #333333; /* Solid visible border */
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --icon-shadow: rgba(0, 0, 0, 0.5); /* Stronger shadow for icons in dark mode */
+    
+    /* Text Colors (Dark) */
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+
+    /* Identity Color: Deep Soft Blue */
+    --brand: #5c8eb8; /* Deeper, less bright muted blue */
+    --brand-subtle: rgba(92, 142, 184, 0.15); /* Muted blue w/ opacity */
+    
+    /* Sidebar overrides to match card background */
+    --sidebar: var(--surface);
+    --sidebar-text: var(--text-secondary);
+    --sidebar-border: var(--border-color);
+    
+    --hover-border: var(--brand);
+    --scrollbar-thumb: rgba(92, 142, 184, 0.3);
+    --scrollbar-thumb-hover: rgba(92, 142, 184, 0.5);
+}
+
+/* Optional: override the generic trend colors or traffic dots if needed, 
+   but since this is just a brand color test, we mainly change --brand. */
