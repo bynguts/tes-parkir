@@ -382,7 +382,7 @@ include '../../includes/header.php';
 
 </style>
 
-<div class="px-10 py-10 max-w-[1300px] mx-auto space-y-6">
+<div class="px-10 py-10 space-y-6">
         
         <!-- Slot Availability -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -441,7 +441,7 @@ include '../../includes/header.php';
                 </div>
                 <div class="status-badge status-badge-online">
                     <span class="status-dot-online"></span>
-                    Online
+                    <span class="text-primary">Online</span>
                 </div>
             </div>
 
@@ -482,17 +482,17 @@ include '../../includes/header.php';
                     
                     <div class="w-full max-w-[320px] mx-auto">
                         <div class="relative group/input">
-                            <div class="flex items-center gap-2 h-11 bg-[var(--surface-alt)] rounded-full p-1 border-2 border-color shadow-sm transition-all hover:border-brand/30">
+                            <div class="flex items-center gap-2 h-11 bento-card pl-3 pr-1.5 transition-all">
                                 <button onclick="triggerALPRCamera('entry')" 
-                                        class="w-9 h-9 flex items-center justify-center rounded-full bg-page border border-color transition-all hover:scale-105 active:scale-95 group/cam"
+                                        class="w-8 h-8 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group/cam"
                                         title="Open Camera">
-                                    <i class="fa-solid fa-camera text-brand transition-colors group-hover/cam:text-brand-hover"></i>
+                                    <i class="fa-solid fa-camera text-lg text-brand transition-colors group-hover/cam:text-brand-hover"></i>
                                 </button>
                                 <input type="text" id="entry-manual-lp" 
                                        placeholder="Plate Number..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('entry')"
-                                        class="h-9 px-4 rounded-full bg-brand text-white font-manrope font-bold text-[12px] transition-all hover:bg-brand-hover active:scale-95">
+                                        class="ml-auto h-8 px-3 rounded-full bg-brand text-white font-manrope font-bold text-[11px] transition-all hover:bg-brand-hover active:scale-95">
                                     Verify
                                 </button>
                             </div>
@@ -518,7 +518,7 @@ include '../../includes/header.php';
                 </div>
                 <div class="status-badge status-badge-online">
                     <span class="status-dot-online"></span>
-                    Online
+                    <span class="text-primary">Online</span>
                 </div>
             </div>
 
@@ -581,17 +581,17 @@ include '../../includes/header.php';
                     </div>
                     <div class="w-full max-w-[320px] mx-auto">
                         <div class="relative group/manual">
-                            <div class="flex items-center gap-2 h-11 bg-[var(--surface-alt)] rounded-full p-1 border-2 border-color shadow-sm transition-all hover:border-brand/30">
+                            <div class="flex items-center gap-2 h-11 bento-card pl-3 pr-1.5 transition-all">
                                 <button onclick="triggerALPRCamera('exit')" 
-                                        class="w-9 h-9 flex items-center justify-center rounded-full bg-page border border-color transition-all hover:scale-105 active:scale-95 group/cam"
+                                        class="w-8 h-8 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group/cam"
                                         title="Open Camera">
-                                    <i class="fa-solid fa-camera text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
+                                    <i class="fa-solid fa-camera text-lg text-rose-600 transition-colors group-hover/cam:text-rose-700"></i>
                                 </button>
                                 <input type="text" id="exit-manual-lp" 
                                        placeholder="Plate or Ticket Code..." 
                                        class="flex-1 h-full bg-transparent text-[13px] font-inter font-medium text-primary px-2 focus:outline-none placeholder:text-tertiary">
                                 <button onclick="processALPR('exit')"
-                                        class="h-9 px-4 rounded-full bg-rose-600 text-white font-manrope font-bold text-[12px] transition-all hover:bg-rose-700 active:scale-95">
+                                        class="ml-auto h-8 px-3 rounded-full bg-rose-600 text-white font-manrope font-bold text-[11px] transition-all hover:bg-rose-700 active:scale-95">
                                     Verify
                                 </button>
                             </div>
@@ -691,7 +691,6 @@ include '../../includes/header.php';
                         document.getElementById('vipPlate').value = '';
                         statusEl.innerHTML = `
                             <div class="status-badge status-badge-awaiting">
-                                <span class="status-dot-awaiting"></span>
                                 Awaiting detection...
                             </div>`;
                         refreshGateStats();
@@ -1239,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <!-- Status Pill (Floating) -->
-                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20" id="cameraScanStatus">
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 hidden" id="cameraScanStatus">
                         <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl">
                             <span class="flex h-2 w-2 relative">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

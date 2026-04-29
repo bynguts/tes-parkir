@@ -240,7 +240,7 @@ include 'includes/header.php';
             <div class="col-span-12 lg:col-span-4">
                 <div class="bento-card p-4 h-full flex flex-col relative overflow-hidden group">
                     <!-- Premium Background Accent (Subtle) -->
-                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-accent-glow rounded-full blur-3xl group-hover-bg-accent-glow transition-all"></div>
+                    <div class="absolute -right-16 -top-16 w-32 h-32 bg-accent-glow rounded-full blur-3xl group-hover:bg-accent-glow transition-all"></div>
                     
                     <div class="flex items-center gap-4 relative z-10 mb-4">
                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -275,7 +275,7 @@ include 'includes/header.php';
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $car_avail ?></span>
-                        <span class="text-[13px] font-inter text-tertiary truncate">Car Slot Available</span>
+                        <span class="text-xs font-inter text-tertiary truncate">Car Slot Available</span>
                         <div class="mt-3">
                             <div class="w-full h-2 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $car_pct ?>%"></div>
@@ -291,7 +291,7 @@ include 'includes/header.php';
                     </div>
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-2xl font-manrope font-semibold text-primary leading-none mb-1"><?= $moto_avail ?></span>
-                        <span class="text-[13px] font-inter text-tertiary truncate">Motorcycle Slot Available</span>
+                        <span class="text-xs font-inter text-tertiary truncate">Motorcycle Slot Available</span>
                         <div class="mt-3">
                             <div class="w-full h-2 progress-track rounded-full overflow-hidden">
                                 <div class="h-full progress-fill animate-growth rounded-full" style="width: <?= $moto_pct ?>%"></div>
@@ -383,12 +383,12 @@ include 'includes/header.php';
                                 <h3 class="card-title leading-tight">Parking Intensity</h3>
                             </div>
                         </div>
-                        <div class="flex items-center px-2.5 py-1 bg-surface-alt border border-color rounded-full shrink-0">
+                        <div class="flex items-center p-1.5 bg-surface-alt border border-color rounded-full shrink-0">
                             <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Today</span>
                         </div>
                     </div>
  
-                    <div class="relative flex-1 h-0 min-h-[300px] min-w-0">
+                    <div class="relative flex-1 h-0 min-h-[300px] min-w-0 -ml-2">
                         <canvas id="trafficChart" class="w-full h-full"></canvas>
                     </div>
  
@@ -453,7 +453,7 @@ include 'includes/header.php';
                     LIMIT 7
                 ")->fetchAll();
             ?>
-            <div class="col-span-12 lg:col-span-8 bento-card py-4 flex flex-col self-start transition-all duration-300">
+            <div class="col-span-12 lg:col-span-8 bento-card pt-4 pb-0 flex flex-col self-start transition-all duration-300">
                 <div class="flex items-center justify-between mb-4 px-4">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -463,7 +463,9 @@ include 'includes/header.php';
                             <h3 class="card-title leading-tight">Recent Activity Log</h3>
                         </div>
                     </div>
-                    <a href="modules/operations/scan_log.php" class="text-xs font-inter text-tertiary hover:text-primary transition-colors">View All</a>
+                    <a href="modules/operations/scan_log.php" class="group flex items-center p-1.5 bg-surface-alt border border-color rounded-full hover:border-brand/30 hover:bg-brand/5 transition-all shrink-0">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-primary group-hover:text-brand transition-colors">View All</span>
+                    </a>
                 </div>
 
                 <?php if (empty($recent_logs)): ?>
@@ -472,7 +474,7 @@ include 'includes/header.php';
                         <p class="text-sm font-inter">No recent activity detected.</p>
                     </div>
                 <?php else: ?>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto pb-4">
                         <table class="w-full font-inter border-collapse table-fixed activity-table">
                             <thead>
                                 <tr class="border-b border-color">
@@ -867,6 +869,15 @@ function updateChart(range) {
         .then(data => {
             if (data.error) throw new Error(data.error);
             
+            const rootStyles = getComputedStyle(document.documentElement);
+            const carColor = rootStyles.getPropertyValue('--traffic-car').trim() || '#1d4ed8';
+            const motoColor = rootStyles.getPropertyValue('--traffic-moto').trim() || '#93c5fd';
+
+            if (data.datasets && data.datasets.length >= 2) {
+                data.datasets[0].backgroundColor = motoColor;
+                data.datasets[1].backgroundColor = carColor;
+            }
+
             if (!trafficChart) {
                 initChart(data);
             } else {

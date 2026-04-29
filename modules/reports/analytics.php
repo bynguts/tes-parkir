@@ -161,13 +161,9 @@ include '../../includes/header.php';
             $sections = [
                 ['id' => 'overview', 'icon' => 'fa-th-large', 'label' => 'Overview'],
                 ['id' => 'heatmap', 'icon' => 'fa-fire', 'label' => 'Heatmap'],
-                ['id' => 'revenue', 'icon' => 'fa-money-bill-trend-up', 'label' => 'Revenue'],
-                ['id' => 'traffic', 'icon' => 'fa-car-side', 'label' => 'Traffic'],
-                ['id' => 'turnover', 'icon' => 'fa-arrows-spin', 'label' => 'Turnover'],
-                ['id' => 'dwell', 'icon' => 'fa-hourglass-half', 'label' => 'Duration'],
-                ['id' => 'reservations', 'icon' => 'fa-calendar-check', 'label' => 'Booking'],
-                ['id' => 'operators', 'icon' => 'fa-users-gear', 'label' => 'Operators'],
-
+                ['id' => 'financial', 'icon' => 'fa-money-bill-trend-up', 'label' => 'Financial'],
+                ['id' => 'duration', 'icon' => 'fa-hourglass-half', 'label' => 'Duration'],
+                ['id' => 'operations', 'icon' => 'fa-users-gear', 'label' => 'Operations'],
             ];
             foreach($sections as $s): ?>
             <a href="#<?= $s['id'] ?>" class="jump-link flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-tertiary hover:bg-surface border border-transparent hover:border-color shadow-sm transition-all">
@@ -320,12 +316,14 @@ include '../../includes/header.php';
         </div>
     </section>
 
-    <!-- 3. REVENUE SECTION -->
-    <section id="revenue" class="scroll-section space-y-10">
+    <!-- 3. FINANCIAL & FLOW SECTION -->
+    <section id="financial" class="scroll-section space-y-10">
         <div class="flex items-center gap-5">
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Revenue Dynamics</h3>
+            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Financial & Flow Intelligence</h3>
         </div>
+        
+        <!-- Revenue Trajectory Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="bento-card p-8 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
@@ -346,14 +344,8 @@ include '../../includes/header.php';
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 4. TRAFFIC SECTION -->
-    <section id="traffic" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Traffic Intelligence</h3>
-        </div>
+        <!-- Traffic Intelligence Row -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary text-center">Fleet Composition</h4>
@@ -396,11 +388,11 @@ include '../../includes/header.php';
         </div>
     </section>
 
-    <!-- 5. TURNOVER SECTION -->
-    <section id="turnover" class="scroll-section space-y-10">
+    <!-- 4. DURATION & EFFICIENCY SECTION -->
+    <section id="duration" class="scroll-section space-y-10">
         <div class="flex items-center gap-5">
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Turnover Intelligence</h3>
+            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Duration & Efficiency</h3>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -438,14 +430,7 @@ include '../../includes/header.php';
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 5. DWELL TIME SECTION -->
-    <section id="dwell" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Stay Behavior</h3>
-        </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="bento-card p-8 border-color shadow-xl">
                 <h4 class="font-manrope font-black text-lg mb-10 text-primary">Avg Duration per Vehicle Class</h4>
@@ -462,12 +447,13 @@ include '../../includes/header.php';
         </div>
     </section>
 
-    <!-- 7. RESERVATIONS -->
-    <section id="reservations" class="scroll-section space-y-10">
+    <!-- 5. OPERATIONS & PERSONNEL SECTION -->
+    <section id="operations" class="scroll-section space-y-10">
         <div class="flex items-center gap-5">
             <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Booking Pipeline</h3>
+            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Operations & Personnel</h3>
         </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary">Reservation Conversion</h4>
@@ -489,18 +475,11 @@ include '../../includes/header.php';
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 8. OPERATORS -->
-    <section id="operators" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center">
-                <i class="fa-solid fa-users-gear text-xs"></i>
-            </div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Personnel Intelligence</h3>
-        </div>
         <div class="bento-card overflow-hidden shadow-xl border-color">
+            <div class="p-8 border-b border-color bg-surface-alt/20">
+                <h4 class="font-manrope font-black text-lg text-primary">Personnel Intelligence</h4>
+            </div>
             <table class="w-full activity-table font-inter border-separate border-spacing-0">
                 <thead>
                     <tr class="bg-surface-alt/50">
@@ -578,6 +557,12 @@ Chart.defaults.plugins.tooltip.bodyFont = { size: 14, weight: '800' };
 
 const chartColors = {
     brand: chartBrand,
+    green: '#10b981',    // Revenue
+    rose: '#f43f5e',     // Motorcycles
+    amber: '#f59e0b',    // Reservations
+    cyan: '#06b6d4',     // Turnover & Dwell
+    indigo: '#6366f1',   // Brand/Misc
+    slate: '#64748b',    // Neutral
     car: chartCar,
     moto: chartMoto,
     grid: chartGrid,
@@ -648,9 +633,9 @@ initChart('revDailyChart', {
         labels: <?= json_encode(array_map(fn($d) => date('d M', strtotime($d['date'])), $rev_daily)) ?>,
         datasets: [{
             data: <?= json_encode(array_column($rev_daily, 'revenue')) ?>,
-            borderColor: chartColors.brand, borderWidth: 4, tension: 0.4, fill: true, 
-            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(99, 102, 241, 0.05)'), 
-            pointRadius: 0, pointHoverRadius: 8, pointHoverBackgroundColor: chartColors.brand, pointHoverBorderWidth: 4, pointHoverBorderColor: '#fff'
+            borderColor: chartColors.green, borderWidth: 4, tension: 0.4, fill: true, 
+            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(16, 185, 129, 0.05)'), 
+            pointRadius: 0, pointHoverRadius: 8, pointHoverBackgroundColor: chartColors.green, pointHoverBorderWidth: 4, pointHoverBorderColor: '#fff'
         }]
     },
     options: commonOptions
@@ -660,7 +645,7 @@ initChart('revMonthlyChart', {
     type: 'bar',
     data: {
         labels: <?= json_encode(array_column($rev_monthly, 'month')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($rev_monthly, 'revenue')) ?>, backgroundColor: chartColors.brand, borderRadius: 12, hoverBackgroundColor: '#4f46e5' }]
+        datasets: [{ data: <?= json_encode(array_column($rev_monthly, 'revenue')) ?>, backgroundColor: chartColors.green, borderRadius: 12, hoverBackgroundColor: '#059669' }]
     },
     options: commonOptions
 });
@@ -748,7 +733,7 @@ initChart('dwellTypeChart', {
     type: 'bar',
     data: {
         labels: <?= json_encode(array_column($dwell_avg, 'vehicle_type')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($dwell_avg, 'avg_min')) ?>, backgroundColor: chartColors.brand, borderRadius: 20 }]
+        datasets: [{ data: <?= json_encode(array_column($dwell_avg, 'avg_min')) ?>, backgroundColor: chartColors.cyan, borderRadius: 20 }]
     },
     options: commonOptions
 });
@@ -757,7 +742,7 @@ initChart('dwellPeriodChart', {
     type: 'line',
     data: {
         labels: <?= json_encode(array_column($dwell_period, 'period')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($dwell_period, 'avg_min')) ?>, borderColor: chartColors.brand, borderWidth: 5, tension: 0.5, pointRadius: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($dwell_period, 'avg_min')) ?>, borderColor: chartColors.cyan, borderWidth: 5, tension: 0.5, pointRadius: 0 }]
     },
     options: commonOptions
 });
@@ -769,8 +754,8 @@ initChart('turnoverChart', {
         datasets: [{
             label: 'Turnover Ratio',
             data: <?= json_encode(array_column($turnover_trend, 'ratio')) ?>,
-            borderColor: chartColors.brand,
-            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(99, 102, 241, 0.1)'),
+            borderColor: chartColors.cyan,
+            backgroundColor: (context) => createChartGradient(context.chart.ctx, 'rgba(6, 182, 212, 0.1)'),
             fill: true, tension: 0.4, borderWidth: 4, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 3
         }]
     },
@@ -785,7 +770,7 @@ initChart('resConversionChart', {
     type: 'doughnut',
     data: {
         labels: <?= json_encode(array_column($data['reservation_summary'], 'status')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: [chartColors.brand, chartColors.car, chartColors.moto, '#94a3b8'], borderWidth: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: [chartColors.amber, chartColors.car, chartColors.moto, '#94a3b8'], borderWidth: 0 }]
     },
     options: { cutout: '80%', plugins: { legend: { display: false } } }
 });
@@ -794,7 +779,7 @@ initChart('paymentChart', {
     type: 'polarArea',
     data: {
         labels: <?= json_encode(array_column($data['payment_methods'], 'payment_method')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($data['payment_methods'], 'count')) ?>, backgroundColor: [chartColors.brand, chartColors.car, chartColors.moto], borderWidth: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($data['payment_methods'], 'count')) ?>, backgroundColor: [chartColors.green, chartColors.cyan, chartColors.amber], borderWidth: 0 }]
     },
     options: { 
         scales: { 

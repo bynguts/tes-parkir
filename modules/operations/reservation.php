@@ -1,9 +1,6 @@
 <?php
 require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
-require_once '../../includes/functions.php';
-
-sync_slot_statuses($pdo);
 
 $msg   = '';
 $error = '';
@@ -134,18 +131,25 @@ function calculateEstimation($from, $until, $rate) {
 }
 
 
-$page_title = 'Reservation Management';
-$page_subtitle = 'Manage pre-booking and priority parking slot allocation.';
-$page_actions = '
-<div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-color shadow-sm transition-all hover:border-brand/30">
-    <div class="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
-    <span class="text-[10px] font-black uppercase tracking-widest text-primary">
-        ' . count($reservations) . ' Active Reservations
-    </span>
-</div>';
-
 include '../../includes/header.php';
 ?>
+
+<div class="px-10 py-10">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight">Reservation Management</h1>
+            <p class="text-sm font-inter text-tertiary mt-1">Manage pre-booking and priority parking slot allocation.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-color shadow-sm transition-all hover:border-brand/30">
+                <div class="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-primary">
+                    <?= count($reservations) ?> Active Reservations
+                </span>
+            </div>
+        </div>
+    </div>
+
 
 
 <!-- Flatpickr -->
@@ -167,7 +171,7 @@ include '../../includes/header.php';
 }
 </style>
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
+<div class="space-y-6">
     
     <?php if ($msg || $error): ?>
     <div class="flex-shrink-0">
@@ -186,9 +190,8 @@ include '../../includes/header.php';
     </div>
     <?php endif; ?>
 
-    <div class="grid grid-cols-1 gap-5 overflow-hidden flex-1 min-h-0">
-
-        <div class="bento-card overflow-hidden">
+    <div class="grid grid-cols-1 gap-6 overflow-hidden flex-1 min-h-0">
+        <div class="bento-card relative group overflow-hidden">
             <div class="py-5 px-4 border-b border-color flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -196,9 +199,7 @@ include '../../includes/header.php';
                     </div>
                     <div>
                         <h3 class="card-title leading-tight">Active Reservation Queue</h3>
-                        <p class="text-tertiary text-[11px] font-medium flex items-center gap-2">
-                            Scheduled Parking Sessions
-                        </p>
+                        <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Scheduled Parking Sessions</p>
                     </div>
                 </div>
 
@@ -209,16 +210,17 @@ include '../../includes/header.php';
                     <table class="w-full font-inter border-collapse table-fixed activity-table">
                         <thead>
                             <tr class="border-b border-color">
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-6">Vehicle</th>
-                                <th class="py-4 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Plate Number</th>
-                                <th class="py-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left px-4">Client</th>
-                                <th class="py-4 w-[14%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Ticket Code</th>
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Slot</th>
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Entry</th>
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Exit</th>
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Est. Fee</th>
-                                <th class="py-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Status</th>
-                                <th class="py-4 w-[6%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-6">Action</th>
+                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-4 whitespace-nowrap">Vehicle</th>
+                                <th class="py-3 w-[11%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Plate Number</th>
+                                <th class="py-3 w-[12%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left px-4 whitespace-nowrap">Client Name</th>
+                                <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Contact</th>
+                                <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Ticket</th>
+                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Slot</th>
+                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Entry</th>
+                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Exit</th>
+                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Est. Fee</th>
+                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Status</th>
+                                <th class="py-3 w-[6%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-color">
@@ -237,51 +239,48 @@ include '../../includes/header.php';
                             foreach ($reservations as $r): 
                             ?>
                             <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row">
-                                <td class="pl-6 pr-4 py-4 align-middle">
+                                <td class="pl-4 pr-4 py-2 align-middle whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
                                             <i class="fa-solid fa-<?= $r['vehicle_type'] === 'car' ? 'car' : 'motorcycle' ?> text-lg"></i>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <span class="plate-number text-sm font-manrope font-semibold text-primary leading-none uppercase tracking-wider"><?= htmlspecialchars($r['plate_number']) ?></span>
                                 </td>
-                                <td class="px-4 py-4 text-left align-middle">
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($r['client_name'] ?? $r['owner_name'] ?? 'Guest') ?></span>
-                                        <?php if (!empty($r['client_phone']) || !empty($r['owner_phone'])): ?>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none"><?= htmlspecialchars($r['client_phone'] ?? $r['owner_phone']) ?></span>
-                                        <?php endif; ?>
-                                    </div>
+                                <td class="px-4 py-2 text-left align-middle whitespace-nowrap">
+                                    <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($r['client_name'] ?? $r['owner_name'] ?? 'Guest') ?></span>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
+                                    <span class="text-[10px] font-inter text-tertiary/40 italic">Not set</span>
+                                </td>
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col gap-1 items-center">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none uppercase"><?= htmlspecialchars($r['reservation_code']) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <?php 
                                             $display_slot = "#RES " . $res_counter++;
                                         ?>
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $display_slot ?></span>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-wider">RSV ZONE</span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_from'])) ?></span>
                                         <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_from'])) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_until'])) ?></span>
                                         <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_until'])) ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <?php 
                                     $est_fee = calculateEstimation($r['reserved_from'], $r['reserved_until'], $rates[$r['vehicle_type']] ?? null);
                                     ?>
@@ -289,19 +288,20 @@ include '../../includes/header.php';
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none">Rp <?= number_format($est_fee, 0, ',', '.') ?></span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-center align-middle">
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex justify-center">
                                         <?php if ($r['status'] === 'used'): ?>
-                                            <span class="status-badge status-badge-parked uppercase">Inside</span>
+                                            <div class="status-badge status-badge-parked">
+                                                PARKED
+                                            </div>
                                         <?php else: ?>
-                                            <div class="status-badge status-badge-awaiting uppercase">
-                                                <span class="status-dot-awaiting"></span>
-                                                WAITING
+                                            <div class="status-badge status-badge-reserved uppercase">
+                                                RESERVED
                                             </div>
                                         <?php endif; ?>
                                     </div>
                                 </td>
-                                <td class="py-4 pr-6 pl-4 text-right align-middle relative">
+                                <td class="py-2 pr-4 pl-4 text-right align-middle relative">
                                     <div class="flex justify-end">
                                         <div class="relative action-menu-container">
                                             <button onclick="toggleActionMenu(this, event)" class="btn-ghost">
@@ -369,7 +369,7 @@ include '../../includes/header.php';
 
 
     <!-- EDIT RESERVATION MODAL -->
-    <div id="editResModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] hidden items-center justify-center p-6">
+    <div id="editResModal" style="position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 1000001 !important; display: none; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg-page) 90%, transparent); backdrop-filter: blur(12px);" class="p-6">
         <div class="bg-surface border border-color w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
             <div class="py-5 px-4 border-b border-color flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -454,6 +454,9 @@ include '../../includes/header.php';
             </form>
         </div>
     </div>
+
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
@@ -593,14 +596,21 @@ include '../../includes/header.php';
             editUntilPicker.clear();
         }
 
-        document.getElementById('editResModal').classList.remove('hidden');
-        document.getElementById('editResModal').classList.add('flex');
+        document.getElementById('editResModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 
     function closeEditModal() {
-        document.getElementById('editResModal').classList.add('hidden');
-        document.getElementById('editResModal').classList.remove('flex');
+        document.getElementById('editResModal').style.display = 'none';
+        document.body.style.overflow = '';
     }
+
+    // Teleport modals to body to bypass stacking contexts
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalId = 'editResModal';
+        const el = document.getElementById(modalId);
+        if (el) document.body.appendChild(el);
+    });
 </script>
 
 <?php include '../../includes/footer.php'; ?>

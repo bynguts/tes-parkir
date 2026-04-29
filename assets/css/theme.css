@@ -46,8 +46,15 @@ html { scroll-behavior: smooth; }
     --status-issue-bg: color-mix(in srgb, var(--status-issue-text) 15%, var(--surface));
     --status-issue-border: color-mix(in srgb, var(--status-issue-text) 25%, var(--surface));
 
+    --status-awaiting-text: #0891b2;     /* Cyan-600 */
+    --status-awaiting-bg: color-mix(in srgb, var(--status-awaiting-text) 15%, var(--surface));
+    --status-awaiting-border: color-mix(in srgb, var(--status-awaiting-text) 25%, var(--surface));
+
     /* Fixed Status Colors (Theme-independent) */
-    --status-online: #10b981;
+    --status-online-text: #10b981;
+    --status-online-bg: color-mix(in srgb, var(--status-online-text) 15%, var(--surface));
+    --status-online-border: color-mix(in srgb, var(--status-online-text) 25%, var(--surface));
+    --status-online: var(--status-online-text);
     --accent-glow: rgba(15, 23, 42, 0.05);
     --accent-glow-hover: rgba(15, 23, 42, 0.1);
     --trend-up: #10b981;    /* Vibrant Green */
@@ -122,13 +129,34 @@ html { scroll-behavior: smooth; }
     --status-issue-bg: color-mix(in srgb, var(--status-issue-text) 15%, var(--surface));
     --status-issue-border: color-mix(in srgb, var(--status-issue-text) 25%, var(--surface));
 
+    --status-awaiting-text: #22d3ee;     /* Cyan-400 */
+    --status-awaiting-bg: color-mix(in srgb, var(--status-awaiting-text) 15%, var(--surface));
+    --status-awaiting-border: color-mix(in srgb, var(--status-awaiting-text) 25%, var(--surface));
+
+    --status-online-text: #4ade80;
+    --status-online-bg: color-mix(in srgb, var(--status-online-text) 15%, var(--surface));
+    --status-online-border: color-mix(in srgb, var(--status-online-text) 25%, var(--surface));
+    --status-online: var(--status-online-text);
+
     --accent-glow: rgba(255, 255, 255, 0.03);
     --accent-glow-hover: rgba(255, 255, 255, 0.05);
 
     /* Scrollbar Variables (Dark) */
     --scrollbar-thumb: rgba(129, 140, 248, 0.3);
     --scrollbar-thumb-hover: rgba(129, 140, 248, 0.5);
+
+    --traffic-car: #60a5fa;   /* Biru terang untuk dark mode */
+    --traffic-moto: #bfdbfe;  /* Biru sangat terang untuk motor di dark mode */
 }
+
+[data-theme="dark"] .btn-danger-soft:hover {
+    background-color: var(--status-over-border) !important;
+    border-color: var(--status-over-text) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);  /* Shadow merah terang */
+    transform: translateY(-1px);
+}
+
+
 
 
 /* 1.1 Global Scrollbar */
@@ -264,6 +292,10 @@ main.pl-64 {
 .group-hover-bg-accent-glow { transition: background-color 0.3s ease; }
 .group:hover .group-hover-bg-accent-glow { background-color: var(--accent-glow-hover) !important; }
 
+/* group-hover compatibility for static CSS */
+.group:hover .group-hover\:text-brand { color: var(--brand) !important; }
+.group:hover .group-hover\:bg-accent-glow { background-color: var(--accent-glow-hover) !important; }
+
 
 /* Progress Bars & Animations */
 @keyframes fillGrowth {
@@ -361,36 +393,39 @@ main.pl-64 {
 .status-dot-issue { background-color: var(--status-issue-text) !important; }
 .status-text-issue { color: var(--status-issue-text) !important; }
 
+.status-dot-online { background-color: var(--status-online-text) !important; }
+.status-text-online { color: var(--status-online-text) !important; }
+
 /* Online / Awaiting Badges */
 .status-badge-online {
-    background-color: rgba(99, 102, 241, 0.1) !important;
-    color: #6366f1 !important;
-    border: 1px solid rgba(99, 102, 241, 0.1) !important;
+    background-color: var(--status-online-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--status-online-border) !important;
     gap: 0.375rem;
 }
 .status-badge-online .status-dot-online {
     position: relative;
-    display: inline-flex;
-    width: 0.5rem;
-    height: 0.5rem;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     flex-shrink: 0;
 }
 .status-badge-online .status-dot-online::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 9999px;
+    border-radius: 50%;
     background-color: var(--status-online);
     opacity: 0.7;
     animation: badge-pulse 1.5s ease-in-out infinite;
+    pointer-events: none;
 }
 .status-badge-online .status-dot-online::after {
     content: '';
-    position: relative;
-    display: inline-flex;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 9999px;
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
     background-color: var(--status-online);
 }
 @keyframes badge-pulse {
@@ -399,11 +434,12 @@ main.pl-64 {
 }
 
 .status-badge-awaiting {
-    background-color: var(--surface-alt) !important;
-    color: var(--text-secondary) !important;
-    border: 1px solid var(--border-color) !important;
+    background-color: var(--status-awaiting-bg) !important;
+    color: var(--status-awaiting-text) !important;
+    border: 1px solid var(--status-awaiting-border) !important;
     gap: 0.375rem;
 }
+
 .status-badge-awaiting .status-dot-awaiting {
     position: relative;
     display: inline-flex;
@@ -411,15 +447,17 @@ main.pl-64 {
     height: 0.5rem;
     flex-shrink: 0;
 }
+
 .status-badge-awaiting .status-dot-awaiting::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 9999px;
-    background-color: var(--brand);
-    opacity: 0.5;
+    background-color: var(--status-awaiting-text);
+    opacity: 0.7;
     animation: badge-pulse 2s ease-in-out infinite;
 }
+
 .status-badge-awaiting .status-dot-awaiting::after {
     content: '';
     position: relative;
@@ -427,9 +465,10 @@ main.pl-64 {
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 9999px;
-    background-color: var(--brand);
+    background-color: var(--status-awaiting-text);
     opacity: 0.8;
 }
+
 
 /* 5. Typography & Icons */
 .card-title {
@@ -777,9 +816,10 @@ main.pl-64 {
 }
 
 .btn-danger-soft:hover {
-    filter: brightness(0.95);
+    background-color: var(--status-over-border) !important;  /* Lebih tegas dari bg biasa */
     border-color: var(--status-over-text) !important;
-    box-shadow: 0 4px 12px var(--shadow-color);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);  /* Shadow merah */
+    transform: translateY(-1px);  /* Efek timbul dikit */
 }
 
 .btn-warning-soft {

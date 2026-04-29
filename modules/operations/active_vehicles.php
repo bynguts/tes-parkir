@@ -86,8 +86,7 @@ include '../../includes/header.php';
         </div>
         <div class="flex items-center gap-3">
                 <button type="button" onclick="forceCheckoutAll(this)"
-                    class="btn-danger-soft h-[38px] gap-2">
-                <i class="fa-solid fa-sign-out-alt"></i>
+                    class="btn-danger-soft h-[38px]">
                 Force Checkout All
             </button>
         </div>
@@ -284,10 +283,10 @@ include '../../includes/header.php';
 
     <!-- Protocol Info -->
     <?php if (!empty($active)): ?>
-    <div class="bento-card p-5 mt-6 relative overflow-hidden">
+    <div class="bento-card px-4 py-5 mt-6 relative overflow-hidden">
         <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand rounded-full"></div>
         <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-brand">
+            <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-circle-info text-lg"></i>
             </div>
             <div>
