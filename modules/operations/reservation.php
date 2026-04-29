@@ -1,6 +1,9 @@
 <?php
 require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
+
+sync_slot_statuses($pdo);
 
 $msg   = '';
 $error = '';
@@ -289,10 +292,7 @@ include '../../includes/header.php';
                                 <td class="px-4 py-4 text-center align-middle">
                                     <div class="flex justify-center">
                                         <?php if ($r['status'] === 'used'): ?>
-                                            <div class="status-badge status-badge-online !bg-indigo-500/10 !text-indigo-400 !border-indigo-500/20">
-                                                <span class="status-dot-online !bg-indigo-500"></span>
-                                                INSIDE
-                                            </div>
+                                            <span class="status-badge status-badge-parked uppercase">Inside</span>
                                         <?php else: ?>
                                             <div class="status-badge status-badge-awaiting uppercase">
                                                 <span class="status-dot-awaiting"></span>

@@ -423,7 +423,10 @@ include 'includes/header.php';
                         t.ticket_code as code,
                         COALESCE(t.total_fee, 
                             pr.first_hour_rate + (GREATEST(0, CEIL(TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) / 60) - 1) * pr.next_hour_rate)
-                        ) as total_fee
+                        ) as total_fee,
+                        t.is_lost_ticket,
+                        t.is_force_checkout,
+                        NULL as status
                      FROM `transaction` t
                      JOIN vehicle v ON t.vehicle_id = v.vehicle_id
                      JOIN parking_rate pr ON t.rate_id = pr.rate_id
@@ -437,17 +440,21 @@ include 'includes/header.php';
                         v.plate_number,
                         v.vehicle_type,
                         r.reservation_code as code,
-                        0 as total_fee
+                        0 as total_fee,
+                        0 as is_lost_ticket,
+                        0 as is_force_checkout,
+                        r.status as status
                      FROM reservation r
                      JOIN vehicle v ON r.vehicle_id = v.vehicle_id
-                     WHERE r.status = 'confirmed' AND DATE(r.reserved_from) = CURDATE()
+                     WHERE r.status IN ('pending', 'confirmed', 'used')
+                       AND NOT EXISTS (SELECT 1 FROM `transaction` t WHERE t.reservation_id = r.reservation_id)
                     )
                     ORDER BY entry_time DESC 
                     LIMIT 7
                 ")->fetchAll();
             ?>
-            <div class="col-span-12 lg:col-span-8 bento-card p-4 flex flex-col self-start transition-all duration-300">
-                <div class="flex items-center justify-between mb-4">
+            <div class="col-span-12 lg:col-span-8 bento-card py-4 flex flex-col self-start transition-all duration-300">
+                <div class="flex items-center justify-between mb-4 px-4">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-clock-rotate-left text-lg"></i>
@@ -469,18 +476,18 @@ include 'includes/header.php';
                         <table class="w-full font-inter border-collapse table-fixed activity-table">
                             <thead>
                                 <tr class="border-b border-color">
-                                    <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
+                                    <th class="py-3 pl-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left">Vehicle</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Plate/Ticket</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Entry</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Exit</th>
                                     <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center">Fee</th>
-                                    <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
+                                    <th class="py-3 pr-4 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-color">
                                 <?php foreach ($recent_logs as $log): ?>
                                 <tr class="group hover:bg-surface-alt/50 transition-colors">
-                                    <td class="py-2 text-left align-middle">
+                                    <td class="py-2 pl-4 text-left align-middle">
                                         <div class="flex items-center">
                                             <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
                                                 <i class="fa-solid <?= $log['vehicle_type'] === 'car' ? 'fa-car' : 'fa-motorcycle' ?> text-lg"></i>
@@ -518,20 +525,22 @@ include 'includes/header.php';
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="py-2 text-right align-middle">
+                                    <td class="py-2 pr-4 text-right align-middle">
                                         <div class="flex justify-end items-center">
                                             <?php if ($log['log_type'] === 'reservation'): ?>
-                                                <span class="status-badge status-badge-reserved">
-                                                    Reserved
-                                                </span>
+                                                <?php if ($log['status'] === 'used'): ?>
+                                                    <span class="status-badge status-badge-parked">Inside</span>
+                                                <?php else: ?>
+                                                    <span class="status-badge status-badge-reserved">Reserved</span>
+                                                <?php endif; ?>
+                                            <?php elseif ($log['is_lost_ticket']): ?>
+                                                <span class="status-badge status-badge-issue">Lost Ticket</span>
+                                            <?php elseif ($log['is_force_checkout']): ?>
+                                                <span class="status-badge status-badge-issue">Forced Exit</span>
                                             <?php elseif (!$log['exit_time']): ?>
-                                                <span class="status-badge status-badge-parked">
-                                                    Parked
-                                                </span>
+                                                <span class="status-badge status-badge-parked">Parked</span>
                                             <?php else: ?>
-                                                <span class="status-badge status-badge-departed">
-                                                    Departed
-                                                </span>
+                                                <span class="status-badge status-badge-departed">Departed</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>

@@ -133,10 +133,7 @@ function sync_slot_statuses(PDO $pdo): void {
     // Auto-expire reservations that are past reserved_until
     $pdo->exec("UPDATE reservation SET status='expired' WHERE status IN ('pending','confirmed') AND reserved_until < NOW()");
     
-    // Reset all slots to available first (only those that are occupied or reserved)
-    $pdo->exec("UPDATE parking_slot SET status = 'available' WHERE status IN ('occupied', 'reserved')");
-    
-    // Mark as Occupied based on active transactions
+    // 1. Mark as Occupied based on active transactions
     $pdo->exec("
         UPDATE parking_slot s
         JOIN `transaction` t ON s.slot_id = t.slot_id
@@ -144,7 +141,7 @@ function sync_slot_statuses(PDO $pdo): void {
         WHERE t.payment_status = 'unpaid'
     ");
 
-    // Sync Reserved (with 15-minute buffer for immediate status)
+    // 2. Sync Reserved (with 15-minute buffer for immediate status)
     $pdo->exec("
         UPDATE parking_slot s
         JOIN reservation r ON s.slot_id = r.slot_id
@@ -152,7 +149,18 @@ function sync_slot_statuses(PDO $pdo): void {
         WHERE r.status = 'confirmed' 
           AND r.reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE) 
           AND r.reserved_until >= NOW()
-          AND s.status = 'available'
+    ");
+
+    // 3. Reset to available only those slots that are NEITHER unpaid transactions NOR active confirmed reservations
+    $pdo->exec("
+        UPDATE parking_slot SET status = 'available' 
+        WHERE slot_id NOT IN (
+            SELECT t2.slot_id FROM (
+                SELECT slot_id FROM `transaction` WHERE payment_status = 'unpaid' 
+                UNION 
+                SELECT slot_id FROM `reservation` WHERE status = 'confirmed' AND reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE) AND reserved_until >= NOW()
+            ) as t2
+        )
     ");
 }
 
