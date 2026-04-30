@@ -140,14 +140,7 @@ include '../../includes/header.php';
             <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight">Reservation Management</h1>
             <p class="text-sm font-inter text-tertiary mt-1">Manage pre-booking and priority parking slot allocation.</p>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-color shadow-sm transition-all hover:border-brand/30">
-                <div class="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
-                <span class="text-[10px] font-black uppercase tracking-widest text-primary">
-                    <?= count($reservations) ?> Active Reservations
-                </span>
-            </div>
-        </div>
+
     </div>
 
 

@@ -159,10 +159,9 @@ include '../../includes/header.php';
                 <?php endif; ?>
             </form>
 
-            <button type="button" onclick="openPurgeModal()"
-                    class="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 rounded-xl px-6 h-[46px] hover:bg-rose-500 text-rose-500 hover:text-white transition-all group">
+            <button type="button" onclick="openPurgeModal()" class="btn-danger-soft h-[38px]">
                 <i class="fa-solid fa-broom text-[12px]"></i>
-                <span class="text-[11px] font-inter font-bold uppercase tracking-widest">Purge Logs</span>
+                <span>Purge Logs</span>
             </button>
         </div>
     </div>
@@ -171,7 +170,7 @@ include '../../includes/header.php';
     <div class="bento-card overflow-hidden mt-6">
         <!-- Filters Header -->
         <div class="flex items-center justify-between py-5 px-4 border-b border-color">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-clock-rotate-left text-lg"></i>
                 </div>
@@ -186,7 +185,7 @@ include '../../includes/header.php';
                 <button onclick="toggleLogSort()" id="sortLogBtn" 
                         class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
                     <i id="sortLogIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
-                    <span class="text-[11px] font-inter font-medium tracking-wider text-primary uppercase">Sort</span>
+                    <span class="text-[11px] font-inter font-medium tracking-wider text-primary">Sort</span>
                 </button>
 
                 <!-- Search -->
@@ -194,32 +193,34 @@ include '../../includes/header.php';
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                     <input type="text" id="searchLog" placeholder="Search plate or ticket..."
                            oninput="applyScanLogFilters()"
-                           class="w-64 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
+                           class="w-44 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
                 <!-- Vehicle Filter -->
                 <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 h-[38px]">
-                    <button onclick="setScanLogVehicleFilter('all')" id="btn-filter-all" 
-                            class="filter-btn-log active px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all bg-brand text-white shadow-sm leading-none">ALL</button>
-                    <button onclick="setScanLogVehicleFilter('car')" id="btn-filter-car" 
-                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
+                    <button onclick="setScanLogVehicleFilter('all')" data-filter="all" 
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-[11px] font-inter font-medium tracking-wider transition-all bg-brand text-white shadow-sm leading-none">All</button>
+                    <button onclick="setScanLogVehicleFilter('car')" data-filter="car" 
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-car text-sm pointer-events-none"></i>
                     </button>
-                    <button onclick="setScanLogVehicleFilter('motorcycle')" id="btn-filter-motorcycle" 
-                            class="filter-btn-log px-3 py-1.5 rounded-lg text-tertiary hover:text-brand transition-all leading-none">
+                    <button onclick="setScanLogVehicleFilter('motorcycle')" data-filter="motorcycle" 
+                            class="vehicle-filter-btn w-11 h-[30px] flex items-center justify-center rounded-lg text-tertiary hover:text-brand transition-all leading-none">
                         <i class="fa-solid fa-motorcycle text-sm pointer-events-none"></i>
                     </button>
                 </div>
 
                 <!-- Type Filter -->
                 <div class="relative">
-                    <select id="filterCategory" onchange="setScanLogTypeFilter(this.value)" 
-                            class="appearance-none bg-surface-alt border border-color px-6 h-[38px] pr-12 rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary focus:outline-none focus:bg-white transition-all cursor-pointer">
-                        <option value="all">All Entries</option>
-                        <option value="reservation">Reservations</option>
-                        <option value="regular">Regular</option>
-                    </select>
-                    <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary text-[8px] pointer-events-none"></i>
+                    <button onclick="toggleScanLogCategoryDropdown(event)" class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all">
+                        <span id="scanLogCategoryLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Entries</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
+                    </button>
+                    <div id="scanLogCategoryDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <button onclick="setScanLogCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Entries</button>
+                        <button onclick="setScanLogCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservations</button>
+                        <button onclick="setScanLogCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Regular</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -237,7 +238,7 @@ include '../../includes/header.php';
                         <th class="py-3 px-4 text-center text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider">Exit</th>
                         <th class="py-3 px-4 text-center text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider">Duration</th>
                         <th class="py-3 px-4 text-center text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider min-w-[150px]">Final Fee</th>
-                        <th class="py-3 px-4 text-right text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider min-w-[250px]">Status</th>
+                        <th class="py-3 px-4 text-right text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider">Status</th>
                         <th class="py-3 pr-4 text-right text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider"></th>
                     </tr>
                 </thead>
@@ -355,8 +356,8 @@ include '../../includes/header.php';
                         </td>
 
                         <!-- Status -->
-                        <td class="py-2 px-4 text-right align-middle whitespace-nowrap">
-                            <div class="flex justify-end gap-1.5 ml-auto">
+                        <td class="py-2 px-4 text-right align-middle">
+                            <div class="flex justify-end gap-1.5 ml-auto flex-wrap">
                                 <?php 
                                     $pay_status = strtolower($row['payment_status'] ?? '');
                                     $is_lost = (int)($row['is_lost_ticket'] ?? 0);
@@ -632,18 +633,30 @@ function deleteSingleLog(btn, scanId, resId, ticket) {
 
 function setScanLogVehicleFilter(type) {
     currentLogVehicleFilter = type;
-    document.querySelectorAll('.filter-btn-log').forEach(btn => {
-        btn.classList.remove('active', 'bg-brand', 'text-white', 'shadow-sm');
+    document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-brand', 'text-white', 'shadow-sm');
         btn.classList.add('text-tertiary');
     });
-    const activeBtn = document.getElementById('btn-filter-' + type);
-    activeBtn.classList.add('active', 'bg-brand', 'text-white', 'shadow-sm');
-    activeBtn.classList.remove('text-tertiary');
+    const activeBtn = document.querySelector(`.vehicle-filter-btn[data-filter="${type}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('bg-brand', 'text-white', 'shadow-sm');
+        activeBtn.classList.remove('text-tertiary');
+    }
     applyScanLogFilters();
 }
 
-function setScanLogTypeFilter(category) {
-    currentLogCategoryFilter = category;
+function toggleScanLogCategoryDropdown(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('scanLogCategoryDropdown');
+    if (dd) dd.classList.toggle('hidden');
+}
+
+function setScanLogCategoryFilter(val, label) {
+    currentLogCategoryFilter = val;
+    const labelEl = document.getElementById('scanLogCategoryLabel');
+    if (labelEl) labelEl.textContent = label;
+    const dd = document.getElementById('scanLogCategoryDropdown');
+    if (dd) dd.classList.add('hidden');
     applyScanLogFilters();
 }
 
@@ -730,6 +743,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const changeBtn = document.getElementById('change-range-btn');
         if (changeBtn) changeBtn.addEventListener('click', () => fp.open());
     }
+
+    document.addEventListener('click', (e) => {
+        const dd = document.getElementById('scanLogCategoryDropdown');
+        if (dd && !e.target.closest('.relative')) {
+            dd.classList.add('hidden');
+        }
+    });
 });
 </script>
 
