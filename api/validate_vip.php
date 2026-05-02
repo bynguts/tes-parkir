@@ -42,7 +42,6 @@ try {
             OR REPLACE(r.plate_number, ' ', '') LIKE ?)
           AND r.status IN ('pending', 'confirmed')
           AND r.reserved_from <= (NOW() + INTERVAL 30 MINUTE)
-          AND r.reserved_until >= NOW()
         LIMIT 1
     ");
     $stmt->execute([$normalizedPlate, $corePlate, '%' . $corePlate . '%']);
@@ -61,7 +60,6 @@ try {
                 OR REPLACE(v.plate_number, ' ', '') LIKE ?)
               AND r.status IN ('pending', 'confirmed')
               AND r.reserved_from <= (NOW() + INTERVAL 30 MINUTE)
-              AND r.reserved_until >= NOW()
             LIMIT 1
         ");
         $stmt->execute([$normalizedPlate, $corePlate, '%' . $corePlate . '%']);

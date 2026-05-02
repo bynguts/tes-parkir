@@ -135,10 +135,12 @@ $hours = $pdo->query("
 
 $reservations = $pdo->query("
     SELECT r.reservation_code, v.plate_number, v.vehicle_type, v.owner_name,
-           ps.slot_id, r.reserved_from, r.reserved_until, r.status, r.created_at
+           ps.slot_id, r.reserved_from, t.check_out_time as exit_time, r.status, r.created_at
     FROM reservation r
     JOIN vehicle v ON r.vehicle_id=v.vehicle_id JOIN parking_slot ps ON r.slot_id=ps.slot_id
-    JOIN floor f ON ps.floor_id=f.floor_id ORDER BY r.created_at DESC LIMIT 500
+    JOIN floor f ON ps.floor_id=f.floor_id 
+    LEFT JOIN `transaction` t ON r.reservation_id = t.reservation_id
+    ORDER BY r.created_at DESC LIMIT 500
 ")->fetchAll();
 
 $rates = $pdo->query("SELECT * FROM parking_rate ORDER BY vehicle_type")->fetchAll();
@@ -699,19 +701,20 @@ if (empty($reservations)) {
     echo rH(34,
         cS('#','sHdrP'), cS('Reservation Code','sHdrP'), cS('Plate Number','sHdrP'),
         cS('Type','sHdrP'), cS('Owner Name','sHdrP'), cS('Slot','sHdrP'),
-        cS('From','sHdrP'), cS('Until','sHdrP'),
+        cS('From','sHdrP'), cS('Exit Time (Actual)','sHdrP'),
         cS('Status','sHdrP')
     );
     foreach ($reservations as $i => $r) {
         [$d,$dc] = $i%2 ? ['sDa','sDca'] : ['sD','sDc'];
         $bc = $r['vehicle_type']==='car' ? ($i%2?'sBcara':'sBcar') : ($i%2?'sBmota':'sBmot');
         $ss = match($r['status']) { 'confirmed'=>'sBconf','cancelled','expired'=>'sBcncl',default=>'sBpend' };
+        $exit_val = $r['exit_time'] ? date('d/m/Y H:i',strtotime($r['exit_time'])) : '-';
         echo rD(
             cS($i+1,$dc), cS($r['reservation_code'],$d), cS($r['plate_number']??'-',$d),
             cS($r['vehicle_type']==='car'?'Car':'Motor',$bc),
             cS($r['owner_name'],$d), cS($slot_mapping[$r['slot_id']]??'-',$dc),
             cS(date('d/m/Y H:i',strtotime($r['reserved_from'])),$d),
-            cS(date('d/m/Y H:i',strtotime($r['reserved_until'])),$d),
+            cS($exit_val,$d),
             cS(strtoupper($r['status']),$ss)
         );
     }

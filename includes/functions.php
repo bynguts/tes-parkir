@@ -130,8 +130,7 @@ function get_slot_summary(PDO $pdo): array {
  * Ensures parking_slot statuses are in sync with active transactions and reservations.
  */
 function sync_slot_statuses(PDO $pdo): void {
-    // Auto-expire reservations that are past reserved_until
-    $pdo->exec("UPDATE reservation SET status='expired' WHERE status IN ('pending','confirmed') AND reserved_until < NOW()");
+    // Auto-expire reservations logic removed (entry-only system)
     
     // 1. Mark as Occupied based on active transactions
     $pdo->exec("
@@ -148,7 +147,6 @@ function sync_slot_statuses(PDO $pdo): void {
         SET s.status = 'reserved'
         WHERE r.status = 'confirmed' 
           AND r.reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE) 
-          AND r.reserved_until >= NOW()
     ");
 
     // 3. Reset to available only those slots that are NEITHER unpaid transactions NOR active confirmed reservations
@@ -158,7 +156,7 @@ function sync_slot_statuses(PDO $pdo): void {
             SELECT t2.slot_id FROM (
                 SELECT slot_id FROM `transaction` WHERE payment_status = 'unpaid' 
                 UNION 
-                SELECT slot_id FROM `reservation` WHERE status = 'confirmed' AND reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE) AND reserved_until >= NOW()
+                SELECT slot_id FROM `reservation` WHERE status = 'confirmed' AND reserved_from <= DATE_ADD(NOW(), INTERVAL 15 MINUTE)
             ) as t2
         )
     ");

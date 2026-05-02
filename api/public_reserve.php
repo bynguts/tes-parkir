@@ -18,15 +18,13 @@ try {
     $client_phone = trim($_POST['client_phone'] ?? '');
     $vehicle_type = $_POST['vehicle_type'] ?? 'car';
     $from_iso     = $_POST['from'] ?? '';
-    $until_iso    = $_POST['until'] ?? '';
 
-    if (empty($plate_number) || empty($client_name) || empty($client_phone) || empty($from_iso) || empty($until_iso)) {
+    if (empty($plate_number) || empty($client_name) || empty($client_phone) || empty($from_iso)) {
         throw new Exception("Missing required fields");
     }
 
     // Convert ISO dates to MySQL format
     $reserved_from  = date('Y-m-d H:i:s', strtotime($from_iso));
-    $reserved_until = date('Y-m-d H:i:s', strtotime($until_iso));
 
     // 0. Check if the plate already has an active reservation
     $stmt = $pdo->prepare("
@@ -52,14 +50,12 @@ try {
               SELECT slot_id 
               FROM reservation 
               WHERE status IN ('pending', 'confirmed')
-                AND (
-                    (reserved_from < ?) AND (reserved_until > ?)
-                )
+                AND reserved_from = ?
           )
         ORDER BY ps.is_reservation_only DESC, ps.slot_id ASC
         LIMIT 1
     ");
-    $stmt->execute([$vehicle_type, $reserved_until, $reserved_from]);
+    $stmt->execute([$vehicle_type, $reserved_from]);
     $slot = $stmt->fetch();
 
     if (!$slot) {
@@ -90,8 +86,8 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO reservation (
             vehicle_id, plate_number, client_name, client_phone, slot_id, reservation_code, 
-            reserved_from, reserved_until, status, is_public
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', 1)
+            reserved_from, status, is_public
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 1)
     ");
     
     $stmt->execute([
@@ -101,8 +97,7 @@ try {
         $client_phone,
         $slot_id,
         $reservation_code,
-        $reserved_from,
-        $reserved_until
+        $reserved_from
     ]);
 
     // 5. Update slot status if the reservation starts within the next 15 minutes
@@ -117,8 +112,7 @@ try {
         'client_name' => $client_name,
         'plate_number' => $plate_number,
         'vehicle_type' => $vehicle_type,
-        'from' => $reserved_from,
-        'until' => $reserved_until
+        'from' => $reserved_from
     ]);
 
 } catch (Exception $e) {

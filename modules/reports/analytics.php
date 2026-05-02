@@ -93,8 +93,6 @@ include '../../includes/header.php';
 <style>
     .scroll-section { scroll-margin-top: 180px; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    .jump-link { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .jump-link.active { background: var(--brand); color: white; box-shadow: 0 10px 20px var(--shadow-color); }
     
     .heatmap-slot {
         aspect-ratio: 1;
@@ -115,48 +113,38 @@ include '../../includes/header.php';
     .heatmap-slot.reserved { background: var(--status-reserved-bg); border-color: var(--status-reserved-border); color: var(--status-reserved-text); }
 </style>
 
-<div class="px-10 py-10 max-w-[1750px] mx-auto space-y-10">
+<div class="px-10 py-10">
     
     <!-- TOP FILTER BAR -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div class="flex items-center justify-between mb-6">
         <div>
-            <h2 class="text-4xl font-manrope font-black text-primary tracking-tight">Analytics Dashboard</h2>
-            <p class="text-tertiary mt-1 text-sm font-medium">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
+            <h2 class="text-3xl font-manrope font-extrabold text-primary tracking-tight">Analytics Dashboard</h2>
+            <p class="text-sm font-inter text-tertiary mt-1">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
         </div>
 
-        <form method="GET" id="filter-form" class="flex items-center gap-4 bg-surface border border-color p-2 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-4">
             <div class="relative">
-                <select name="range" id="range-select" class="appearance-none bg-surface-alt border-none px-6 py-3 pr-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
-                    <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
-                    <option value="1week" <?= $range === '1week' ? 'selected' : '' ?>>1 Week</option>
-                    <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>1 Month</option>
-                    <option value="1year" <?= $range === '1year' ? 'selected' : '' ?>>1 Year</option>
-                    <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
-                </select>
-                <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[9px]"></i>
-            </div>
-
-            <!-- Hidden inputs for custom range -->
-            <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
-            <input type="hidden" name="end_date" id="end_date" value="<?= $end_date ?>">
-            <input type="text" id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
-
-            <?php if($range === 'custom'): ?>
-            <div class="flex items-center gap-2 px-4 border-l border-color animate-in slide-in-from-right-4">
-                <button type="button" id="change-range-btn" class="flex items-center gap-3 hover:text-brand transition-colors group">
-                    <span class="text-[10px] font-black uppercase tracking-widest text-primary">
-                        <?= date('d M Y', strtotime($start_date)) ?> — <?= date('d M Y', strtotime($end_date)) ?>
-                    </span>
-                    <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
+                <button type="button" onclick="toggleRangeDropdown(event)"
+                        class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                    <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= ucfirst($range) ?></span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                 </button>
+                <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
+                    <button type="button" onclick="setRange('1week', '1 Week')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Week</button>
+                    <button type="button" onclick="setRange('1month', '1 Month')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Month</button>
+                    <button type="button" onclick="setRange('1year', '1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Year</button>
+                </div>
+                <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
+                <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+                <input type="hidden" name="end_date" id="end_date" value="<?= $end_date ?>">
             </div>
-            <?php endif; ?>
-        </form>
+        </div>
     </div>
 
     <!-- STICKY JUMP MENU -->
-    <div class="sticky top-20 z-40 bg-page py-5 -mx-10 px-10 border-b border-color shadow-sm">
-        <div class="flex items-center gap-3 overflow-x-auto no-scrollbar">
+    <div class="sticky top-[72px] lg:top-20 z-40 bg-page/80 backdrop-blur-xl py-4 -mx-10 px-10 border-b border-color shadow-sm mb-10 transition-all">
+        <div class="flex items-center gap-4 overflow-x-auto no-scrollbar">
             <?php 
             $sections = [
                 ['id' => 'overview', 'icon' => 'fa-th-large', 'label' => 'Overview'],
@@ -166,7 +154,7 @@ include '../../includes/header.php';
                 ['id' => 'operations', 'icon' => 'fa-users-gear', 'label' => 'Operations'],
             ];
             foreach($sections as $s): ?>
-            <a href="#<?= $s['id'] ?>" class="jump-link flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-tertiary hover:bg-surface border border-transparent hover:border-color shadow-sm transition-all">
+            <a href="#<?= $s['id'] ?>" class="jump-link flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-inter font-medium tracking-wider transition-all <?= $s['id'] === 'overview' ? 'bg-brand text-white shadow-lg' : 'text-tertiary hover:text-brand hover:bg-surface-alt' ?>">
                 <i class="fa-solid <?= $s['icon'] ?> text-sm"></i>
                 <?= $s['label'] ?>
             </a>
@@ -175,24 +163,26 @@ include '../../includes/header.php';
     </div>
 
     <!-- 1. OVERVIEW SECTION -->
-    <section id="overview" class="scroll-section space-y-10">
-        <div class="flex items-end justify-between">
+    <section id="overview" class="scroll-section space-y-6 mb-24">
+        <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
-                <div class="w-1.5 h-10 bg-brand rounded-full"></div>
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-chart-line text-lg"></i>
+                </div>
                 <div>
-                    <h2 class="text-2xl font-manrope font-black text-primary tracking-tight">Executive Summary</h2>
-                    <p class="text-tertiary mt-1 text-sm font-medium">Critical performance metrics for the active window.</p>
+                    <h3 class="card-title leading-tight">Executive Summary</h3>
+                    <p class="text-[11px] text-tertiary font-inter font-medium uppercase tracking-wider">Critical performance metrics for the active window.</p>
                 </div>
             </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="bento-card p-8 relative overflow-hidden group">
+            <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
                 </div>
-                <div class="relative z-10">
+                <div class="p-8 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Revenue Today' : 'Total Revenue' ?></p>
                     <div class="flex items-baseline gap-2 whitespace-nowrap">
                         <span class="text-xl font-black text-tertiary">Rp</span>
@@ -204,15 +194,15 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-8 relative overflow-hidden group">
+            <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-gauge-high text-6xl"></i>
                 </div>
-                <div class="relative z-10">
+                <div class="p-8 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Occupancy Rate</p>
                     <div class="flex items-baseline gap-3">
-                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['active_vehicles'] ?></p>
+                        <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['active_vehicles'] ?></p>
                         <p class="text-[11px] font-black text-tertiary uppercase">Units Active</p>
                     </div>
                     <div class="mt-8 h-2 w-full bg-surface-alt rounded-full overflow-hidden">
@@ -222,15 +212,15 @@ include '../../includes/header.php';
                 </div>
             </div>
 
-            <div class="bento-card p-8 relative overflow-hidden group">
+            <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-15 group-hover:opacity-25 transition-opacity">
                     <img src="../../assets/img/logo_p.png" alt="Logo" class="w-16 h-16 object-contain grayscale brightness-0">
                 </div>
-                <div class="relative z-10">
+                <div class="p-8 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Intake Capacity</p>
                     <div class="flex items-baseline gap-3">
-                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['available_slots'] ?></p>
+                        <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['available_slots'] ?></p>
                         <p class="text-[11px] font-black text-tertiary uppercase">Slots Free</p>
                     </div>
                     <div class="mt-8 flex items-center gap-3">
@@ -238,37 +228,41 @@ include '../../includes/header.php';
                             <div class="w-8 h-8 rounded-full status-badge-reserved border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-clock text-[8px]"></i></div>
                             <div class="w-8 h-8 rounded-full status-badge-available border-2 border-surface flex items-center justify-center"><i class="fa-solid fa-check text-[8px]"></i></div>
                         </div>
-                        <span class="text-[10px] font-black text-tertiary uppercase tracking-widest"><?= $data['summary']['total_reservations'] ?> RSV Today</span>
+                        <span class="text-[10px] font-black text-secondary uppercase tracking-widest"><?= $data['summary']['total_reservations'] ?> RSV Today</span>
                     </div>
                 </div>
             </div>
 
-            <div class="bento-card p-8 relative overflow-hidden group">
+            <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
                 <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-route text-6xl"></i>
                 </div>
-                <div class="relative z-10">
+                <div class="p-8 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Traffic Today' : 'Total Traffic' ?></p>
                     <div class="flex items-baseline gap-3">
-                        <p class="text-5xl font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['entries_today'] ?></p>
+                        <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['entries_today'] ?></p>
                         <p class="text-[11px] font-black text-tertiary uppercase">Flow-ins</p>
                     </div>
-                    <p class="text-[10px] text-tertiary font-black mt-8 uppercase tracking-widest flex items-center gap-2">
+                    <div class="mt-8 flex items-center gap-2 text-[10px] font-black text-secondary uppercase tracking-widest">
                         <i class="fa-solid fa-circle-check text-brand"></i> Hardware-validated scans
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- 2. HEATMAP SECTION -->
-    <section id="heatmap" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <div>
-                <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Facility Heatmap</h3>
-                <p class="text-tertiary mt-1 text-sm font-medium">Visual slot distribution across vertical levels.</p>
+    <section id="heatmap" class="scroll-section space-y-6 mb-24">
+        <div class="flex items-center justify-between pt-5 pb-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-layer-group text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="card-title leading-tight">Facility Heatmap</h3>
+                    <p class="text-[11px] text-tertiary font-inter font-medium uppercase tracking-wider">Visual slot distribution across vertical levels.</p>
+                </div>
             </div>
         </div>
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -317,10 +311,17 @@ include '../../includes/header.php';
     </section>
 
     <!-- 3. FINANCIAL & FLOW SECTION -->
-    <section id="financial" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Financial & Flow Intelligence</h3>
+    <section id="financial" class="scroll-section space-y-6 mb-24">
+        <div class="flex items-center justify-between pt-5 pb-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-money-bill-trend-up text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="card-title leading-tight">Financial & Flow Intelligence</h3>
+                    <p class="text-[11px] text-tertiary font-inter font-medium uppercase tracking-wider">Revenue trajectory and traffic intelligence.</p>
+                </div>
+            </div>
         </div>
         
         <!-- Revenue Trajectory Row -->
@@ -389,10 +390,17 @@ include '../../includes/header.php';
     </section>
 
     <!-- 4. DURATION & EFFICIENCY SECTION -->
-    <section id="duration" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Duration & Efficiency</h3>
+    <section id="duration" class="scroll-section space-y-6 mb-24">
+        <div class="flex items-center justify-between pt-5 pb-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-hourglass-half text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="card-title leading-tight">Duration & Efficiency</h3>
+                    <p class="text-[11px] text-tertiary font-inter font-medium uppercase tracking-wider">Turnover ratios and stay length analysis.</p>
+                </div>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -448,10 +456,17 @@ include '../../includes/header.php';
     </section>
 
     <!-- 5. OPERATIONS & PERSONNEL SECTION -->
-    <section id="operations" class="scroll-section space-y-10">
-        <div class="flex items-center gap-5">
-            <div class="w-1.5 h-10 bg-brand rounded-full"></div>
-            <h3 class="text-2xl font-manrope font-black text-primary tracking-tight">Operations & Personnel</h3>
+    <section id="operations" class="scroll-section space-y-6 mb-24">
+        <div class="flex items-center justify-between pt-5 pb-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-users-gear text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="card-title leading-tight">Operations & Personnel</h3>
+                    <p class="text-[11px] text-tertiary font-inter font-medium uppercase tracking-wider">System efficiency and personnel intelligence.</p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -842,41 +857,51 @@ document.getElementById('theme-toggle')?.addEventListener('click', () => {
 </script>
 
 <script>
+function toggleRangeDropdown(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('rangeDropdown');
+    if (dd) dd.classList.toggle('hidden');
+}
+
+function setRange(value, label) {
+    document.getElementById('range-value').value = value;
+    document.getElementById('rangeLabel').textContent = label;
+    document.getElementById('rangeDropdown').classList.add('hidden');
+
+    const params = new URLSearchParams({
+        range: value,
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value
+    });
+    window.location.href = '?' + params.toString();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // --- DATE RANGE PICKER ---
-    const rangeSelect = document.getElementById('range-select');
-    const trigger = document.getElementById('range-picker-trigger');
-    const form = document.getElementById('filter-form');
-    
-    if (rangeSelect && trigger && form) {
-        const fp = flatpickr(trigger, {
-            mode: "range",
-            monthSelectorType: "dropdown",
-            dateFormat: "Y-m-d",
-            defaultDate: ["<?= $start_date ?>", "<?= $end_date ?>"],
-            onClose: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length === 2) {
-                    document.getElementById('start_date').value = instance.formatDate(selectedDates[0], "Y-m-d");
-                    document.getElementById('end_date').value = instance.formatDate(selectedDates[1], "Y-m-d");
-                    form.submit();
-                } else if (rangeSelect.value === 'custom' && "<?= $range ?>" !== 'custom') {
-                    rangeSelect.value = "<?= $range ?>";
-                }
-            }
-        });
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dd = document.getElementById('rangeDropdown');
+        if (dd && !e.target.closest('[onclick*="toggleRangeDropdown"]')) {
+            dd.classList.add('hidden');
+        }
+    });
 
-        rangeSelect.addEventListener('change', function() {
-            if (this.value === 'custom') fp.open();
-            else form.submit();
-        });
-
-        const changeBtn = document.getElementById('change-range-btn');
-        if (changeBtn) changeBtn.addEventListener('click', () => fp.open());
-    }
+    // Set initial label
+    const rangeLabels = {
+        'today': 'Today',
+        '1week': '1 Week',
+        '1month': '1 Month',
+        '1year': '1 Year'
+    };
+    const label = rangeLabels['<?= $range ?>'] || '1 Week';
+    const labelEl = document.getElementById('rangeLabel');
+    if (labelEl) labelEl.textContent = label;
 
     // --- SCROLLSPY LOGIC ---
     const sections = document.querySelectorAll('section.scroll-section');
     const navLinks = document.querySelectorAll('.jump-link');
+
+    const activeClasses = ['bg-brand', 'text-white', 'shadow-lg'];
+    const inactiveClasses = ['text-tertiary', 'hover:text-brand', 'hover:bg-surface-alt'];
 
     const observerOptions = {
         root: null,
@@ -889,7 +914,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (entry.isIntersecting) {
                 const id = entry.target.getAttribute('id');
                 navLinks.forEach(link => {
-                    link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.remove(...inactiveClasses);
+                        link.classList.add(...activeClasses);
+                    } else {
+                        link.classList.remove(...activeClasses);
+                        link.classList.add(...inactiveClasses);
+                    }
                 });
             }
         });

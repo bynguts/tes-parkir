@@ -168,8 +168,6 @@ include '../../includes/header.php';
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 
-<div class="px-10 py-10 max-w-[1600px] mx-auto space-y-10">
-    
     <!-- Toast Notifications -->
     <div id="toastContainer" class="fixed top-24 right-10 z-[100] flex flex-col gap-3">
         <?php if ($msg): ?>
@@ -190,72 +188,82 @@ include '../../includes/header.php';
         <?php endif; ?>
     </div>
 
+<div class="px-10 py-10">
+
+    <!-- PAGE HEADER -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-manrope font-extrabold text-primary tracking-tight"><?= $page_title ?></h1>
+            <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
+        </div>
+    </div>
+
     <!-- Main Inventory Card -->
     <div class="bento-card flex flex-col overflow-hidden min-h-[600px]">
         <!-- Card Header (Dashboard Style) -->
-        <div class="flex items-center justify-between px-4 py-4 border-b border-color shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-car-side text-lg"></i>
-                </div>
-                <div>
-                    <h3 class="card-title leading-tight">Full Fleet Inventory</h3>
-                    <div class="flex items-center gap-4 mt-0.5">
-                        <p class="text-[11px] text-tertiary font-inter">Total Capacity: <span class="text-primary font-bold"><?= $total_stats['total'] ?></span></p>
-                        <div class="w-1 h-1 rounded-full bg-tertiary/30"></div>
-                        <p class="text-[11px] text-tertiary font-inter">Available: <span class="text-status-available-text font-bold"><?= $total_stats['avail'] ?></span></p>
-                        <div class="w-1 h-1 rounded-full bg-tertiary/30"></div>
-                        <p class="text-[11px] text-tertiary font-inter">Occupancy: <span class="text-brand font-bold"><?= round(($total_stats['total'] - $total_stats['avail']) / ($total_stats['total'] ?: 1) * 100) ?>%</span></p>
+        <div class="flex items-start justify-between py-5 px-4 border-b border-color">
+            <div class="flex flex-col gap-2.5">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-car-side text-lg"></i>
                     </div>
+                    <div>
+                        <h3 class="card-title leading-tight">Full Fleet Inventory</h3>
+                        <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Visual slot mapping and inventory management system.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 ml-[3.5rem]">
+                    <p class="text-[11px] text-tertiary font-inter">Total Capacity: <span class="text-primary font-bold"><?= $total_stats['total'] ?></span></p>
+                    <div class="w-1 h-1 rounded-full bg-tertiary/30"></div>
+                    <p class="text-[11px] text-tertiary font-inter">Available: <span class="text-status-available-text font-bold"><?= $total_stats['avail'] ?></span></p>
+                    <div class="w-1 h-1 rounded-full bg-tertiary/30"></div>
+                    <p class="text-[11px] text-tertiary font-inter">Occupancy: <span class="text-brand font-bold"><?= round(($total_stats['total'] - $total_stats['avail']) / ($total_stats['total'] ?: 1) * 100) ?>%</span></p>
                 </div>
             </div>
 
             <!-- Controls (Dashboard Style) -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 <!-- View Toggle -->
-                <div class="flex items-center bg-surface-alt border border-color rounded-2xl p-1 gap-1 h-11">
-                    <a href="?view=map" class="px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all <?= $view === 'map' ? 'bg-brand text-white shadow-lg' : 'text-tertiary hover:text-brand' ?>">MAP</a>
-                    <a href="?view=list" class="px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all <?= $view === 'list' ? 'bg-brand text-white shadow-lg' : 'text-tertiary hover:text-brand' ?>">LIST</a>
+                <div class="flex items-center bg-surface-alt border border-color rounded-xl p-1 gap-1 h-[38px]">
+                    <a href="?view=map" class="w-11 h-[30px] flex items-center justify-center rounded-lg text-[11px] font-inter font-medium tracking-wider transition-all <?= $view === 'map' ? 'bg-brand text-white shadow-sm' : 'text-tertiary hover:text-brand' ?>">MAP</a>
+                    <a href="?view=list" class="w-11 h-[30px] flex items-center justify-center rounded-lg text-[11px] font-inter font-medium tracking-wider transition-all <?= $view === 'list' ? 'bg-brand text-white shadow-sm' : 'text-tertiary hover:text-brand' ?>">LIST</a>
                 </div>
 
                 <!-- Search Input -->
                 <div class="relative group">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-xs transition-colors group-focus-within:text-brand"></i>
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm transition-colors group-focus-within:text-brand"></i>
                     <input type="text" id="slotSearch" placeholder="Search slot identifier..." 
-                           class="w-48 bg-surface border border-color rounded-2xl py-2.5 pl-10 pr-4 text-[11px] font-inter text-primary placeholder:text-tertiary focus:outline-none focus:border-brand/30 transition-all">
+                           class="w-48 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
-                <!-- Dual Dropdowns: Vehicle Type & Fleet Category -->
-                <div class="flex items-center gap-2">
-                    <!-- Vehicle Type Dropdown -->
-                    <div class="relative">
-                        <button onclick="toggleDropdown(event, 'vehicleDropdown')" class="flex items-center gap-3 bg-surface border border-color rounded-2xl px-5 h-11 hover:border-brand/30 transition-all group min-w-[140px]">
-                            <span id="activeVehicleLabel" class="text-[10px] font-black uppercase tracking-widest text-primary">All Types</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-tertiary group-hover:text-brand transition-colors ml-auto"></i>
-                        </button>
-                        <div id="vehicleDropdown" class="hidden dropdown-menu absolute right-0 top-14 w-48 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <button onclick="setVehicleFilter('all', 'All Types')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">All Types</button>
-                            <button onclick="setVehicleFilter('car', 'Automobiles')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all border-t border-color">Automobiles</button>
-                            <button onclick="setVehicleFilter('motorcycle', 'Two-Wheelers')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">Two-Wheelers</button>
+                <!-- Vehicle Type Dropdown -->
+                <div class="relative">
+                    <button onclick="toggleDropdown(event, 'vehicleDropdown')" class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <span id="activeVehicleLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Types</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-tertiary group-hover:text-brand transition-colors"></i>
+                    </button>
+                    <div id="vehicleDropdown" class="hidden dropdown-menu absolute left-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <button onclick="setVehicleFilter('all', 'All Types')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Types</button>
+                            <button onclick="setVehicleFilter('car', 'Automobiles')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Automobiles</button>
+                            <button onclick="setVehicleFilter('motorcycle', 'Two-Wheelers')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Two-Wheelers</button>
                         </div>
                     </div>
 
-                    <!-- Fleet Category Dropdown -->
-                    <div class="relative">
-                        <button onclick="toggleDropdown(event, 'categoryDropdown')" class="flex items-center gap-3 bg-surface border border-color rounded-2xl px-5 h-11 hover:border-brand/30 transition-all group min-w-[160px]">
-                            <span id="activeCategoryLabel" class="text-[10px] font-black uppercase tracking-widest text-primary">All Categories</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-tertiary group-hover:text-brand transition-colors ml-auto"></i>
-                        </button>
-                        <div id="categoryDropdown" class="hidden dropdown-menu absolute right-0 top-14 w-56 bg-surface border border-color rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <button onclick="setCategoryFilter('all', 'All Categories')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">All Categories</button>
-                            <button onclick="setCategoryFilter('REGULAR', 'Standard Regular')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all border-t border-color">Standard Regular</button>
-                            <button onclick="setCategoryFilter('RSV ZONE', 'Reservation Only Zone')" class="w-full px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-brand/[0.03] hover:text-brand transition-all">Reservation Only Zone</button>
-                        </div>
+                <!-- Fleet Category Dropdown -->
+                <div class="relative">
+                    <button onclick="toggleDropdown(event, 'categoryDropdown')" class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <span id="activeCategoryLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Categories</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-tertiary group-hover:text-brand transition-colors"></i>
+                    </button>
+                    <div id="categoryDropdown" class="hidden dropdown-menu absolute left-0 top-12 w-56 bg-surface border border-color rounded-xl shadow-xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <button onclick="setCategoryFilter('all', 'All Categories')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Categories</button>
+                        <button onclick="setCategoryFilter('REGULAR', 'Standard Regular')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Standard Regular</button>
+                        <button onclick="setCategoryFilter('RSV ZONE', 'Reservation Only Zone')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservation Only Zone</button>
                     </div>
                 </div>
 
                 <?php if ($can_manage): ?>
-                <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex items-center gap-2 bg-brand text-white text-[10px] font-black uppercase tracking-widest px-6 h-11 rounded-2xl transition-all shadow-xl shadow-brand/20 hover:brightness-110">
+                <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex items-center gap-2 bg-brand text-white text-[11px] font-inter font-medium tracking-wider px-4 h-[38px] rounded-xl transition-all shadow-lg shadow-brand/20 hover:brightness-110">
                     <i class="fa-solid fa-plus-circle text-sm"></i> ADD SLOT
                 </button>
                 <?php endif; ?>
@@ -263,7 +271,7 @@ include '../../includes/header.php';
         </div>
 
         <!-- Card Body -->
-        <div class="flex-1 overflow-y-auto <?= $view === 'list' ? 'p-0' : 'p-8' ?> no-scrollbar bg-page/10">
+        <div class="flex-1 <?= $view === 'list' ? 'overflow-x-auto custom-scrollbar min-h-[350px]' : 'overflow-y-auto p-8 no-scrollbar bg-page/10' ?>">
             <?php if ($view === 'map'): ?>
                 <?php foreach ($types_map as $type => $slots): ?>
                 <div class="mb-12 last:mb-0 section-container" data-type="<?= $type ?>">
@@ -294,44 +302,54 @@ include '../../includes/header.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="overflow-visible">
-                    <table class="w-full activity-table font-inter border-separate border-spacing-0">
+                    <table class="w-full min-w-[1600px] font-inter border-collapse table-auto activity-table" id="slotTable">
                         <thead>
-                            <tr class="bg-surface sticky top-0 z-10">
-                                <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tl-2xl">Slot Index</th>
-                                <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Category</th>
-                                <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Type</th>
-                                <th class="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Status</th>
+                            <tr class="border-b border-color">
+                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-4">Slot Index</th>
+                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Category</th>
+                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Type</th>
+                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Status</th>
                                 <?php if ($can_manage): ?>
-                                <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color rounded-tr-2xl">Actions</th>
+                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-color">
+                        <tbody id="slotBody" class="divide-y divide-color">
                             <?php foreach ($all_slots as $s): ?>
-                             <tr class="hover:bg-surface-alt/30 transition-all group slot-row" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-number="<?= $s['slot_number'] ?>">
-                                <td class="px-8 py-5">
-                                    <div class="font-manrope font-extrabold text-primary text-[13px] leading-tight"><?= htmlspecialchars($s['display_label']) ?></div>
-                                    <div class="text-[10px] font-black uppercase tracking-widest text-tertiary mt-0.5 opacity-60"><?= htmlspecialchars($s['slot_number']) ?></div>
-                                </td>
-                                <td class="px-4 py-4 text-center text-[10px] font-black uppercase tracking-widest text-tertiary opacity-70"><?= $s['display_category'] ?></td>
-                                <td class="px-6 py-5 text-center">
-                                    <div class="flex items-center justify-center gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-surface border border-color flex items-center justify-center shadow-sm"><i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-[10px]"></i></div>
-                                        <span class="text-[11px] font-black uppercase tracking-widest text-secondary"><?= ucfirst($s['slot_type']) ?></span>
+                             <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row slot-row" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-timestamp="<?= $s['slot_id'] ?>">
+                                <td class="py-2 pl-4 pr-4 align-middle text-left">
+                                    <div class="flex items-center h-10 gap-3">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($s['display_label']) ?></span>
+                                            <span class="text-[10px] font-inter text-tertiary mt-1 uppercase tracking-widest opacity-60"><?= htmlspecialchars($s['slot_number']) ?></span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-5 text-center">
-                                    <?php 
-                                        $st = $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status'];
-                                    ?>
-                                    <div class="status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
-                                        <span class="status-dot-<?= $st ?>"></span>
-                                        <?= $s['eff_status'] ?>
+                                <td class="py-2 px-4 align-middle text-center">
+                                    <div class="flex items-center justify-center h-10">
+                                        <span class="text-[10px] font-inter font-medium uppercase tracking-widest text-tertiary"><?= $s['display_category'] ?></span>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-4 align-middle text-center">
+                                    <div class="flex items-center justify-center h-10 gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-surface border border-color flex items-center justify-center shadow-sm">
+                                            <i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-[10px]"></i>
+                                        </div>
+                                        <span class="text-[11px] font-manrope font-semibold text-secondary uppercase tracking-wider"><?= ucfirst($s['slot_type']) ?></span>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-4 align-middle text-center">
+                                    <div class="flex items-center justify-center h-10">
+                                        <?php $st = $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status']; ?>
+                                        <div class="status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
+                                            <span class="status-dot-<?= $st ?>"></span>
+                                            <?= $s['eff_status'] ?>
+                                        </div>
                                     </div>
                                 </td>
                                 <?php if ($can_manage): ?>
-                                <td class="px-8 py-5 text-right">
-                                    <div class="flex items-center justify-end">
+                                <td class="py-2 pr-4 pl-4 align-middle text-right">
+                                    <div class="flex items-center justify-end h-10">
                                         <div class="relative action-menu-container">
                                             <button onclick="toggleDropdown(event, 'action-<?= $s['slot_id'] ?>')" class="w-9 h-9 rounded-xl bg-surface border border-color text-tertiary hover:text-brand hover:border-brand/30 hover:shadow-lg transition-all flex items-center justify-center shadow-sm">
                                                 <i class="fa-solid fa-ellipsis-vertical text-sm"></i>

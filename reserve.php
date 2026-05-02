@@ -210,20 +210,11 @@ while ($r = $rates_stmt->fetch()) {
                         <input type="tel" name="client_phone" required placeholder="08123456789" class="form-input w-full h-14 px-6 rounded-2xl text-lg font-semibold text-white">
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                                <input type="text" id="entry_time" name="entry_time" required placeholder="Pick Entry" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Exit Time</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                                <input type="text" id="exit_time" name="exit_time" required placeholder="Pick Exit" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
-                            </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="entry_time" name="entry_time" required placeholder="Pick Entry" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
                         </div>
                     </div>
 
@@ -285,14 +276,10 @@ while ($r = $rates_stmt->fetch()) {
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-6 py-4 border-y border-white/5">
+                            <div class="py-4 border-y border-white/5">
                                 <div>
                                     <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Entry Schedule</div>
                                     <div id="receipt-entry" class="text-[11px] font-bold text-white">28 Apr, 10:00</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Exit Schedule</div>
-                                    <div id="receipt-exit" class="text-[11px] font-bold text-white">28 Apr, 14:00</div>
                                 </div>
                             </div>
 
@@ -407,22 +394,6 @@ while ($r = $rates_stmt->fetch()) {
             monthSelectorType: "dropdown",
             onReady: onReady,
             onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length > 0) {
-                    fpExit.set("minDate", selectedDates[0]);
-                }
-                updateSummary();
-            }
-        });
-
-        // Initialize Flatpickr for Exit
-        const fpExit = flatpickr("#exit_time", {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            minDate: "today",
-            time_24hr: true,
-            monthSelectorType: "dropdown",
-            onReady: onReady,
-            onChange: function(selectedDates, dateStr, instance) {
                 updateSummary();
             }
         });
@@ -431,17 +402,14 @@ while ($r = $rates_stmt->fetch()) {
 
         function updateSummary() {
             const entry = fpEntry.selectedDates[0];
-            const exit = fpExit.selectedDates[0];
             const summary = document.getElementById('booking-summary');
 
-            if (entry && exit && exit > entry) {
+            if (entry) {
                 summary.classList.remove('hidden');
-                const diffMs = exit - entry;
-                const diffHrs = Math.ceil(diffMs / (1000 * 60 * 60));
                 const vType = document.getElementById('vehicle_type').value;
                 const rate = rates[vType];
                 
-                document.getElementById('summary-duration').textContent = diffHrs + ' Hours';
+                document.getElementById('summary-duration').textContent = 'Open-Ended';
                 document.getElementById('summary-rate').textContent = 'Rp ' + Number(rate.first_hour_rate).toLocaleString();
             } else {
                 summary.classList.add('hidden');
@@ -453,18 +421,11 @@ while ($r = $rates_stmt->fetch()) {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             const entry = fpEntry.selectedDates[0];
-            const exit = fpExit.selectedDates[0];
             
-            if (!entry || !exit) {
-                const msg = !entry ? 'Please select entry time' : 'Please select exit time';
+            if (!entry) {
+                const msg = 'Please select entry time';
                 if (typeof pushNotify === 'function') pushNotify('Validation Error', msg, 'error');
                 else alert(msg);
-                return;
-            }
-
-            if (exit <= entry) {
-                if (typeof pushNotify === 'function') pushNotify('Validation Error', 'Exit time must be after entry time', 'error');
-                else alert('Exit time must be after entry time');
                 return;
             }
 
@@ -474,7 +435,6 @@ while ($r = $rates_stmt->fetch()) {
             const formData = new FormData(e.target);
             // Send as local date strings to avoid UTC shift
             formData.append('from', fpEntry.formatDate(entry, "Y-m-d H:i"));
-            formData.append('until', fpExit.formatDate(exit, "Y-m-d H:i"));
 
             try {
                 const response = await fetch('api/public_reserve.php', {
@@ -493,7 +453,6 @@ while ($r = $rates_stmt->fetch()) {
                     
                     const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
                     document.getElementById('receipt-entry').textContent = new Date(result.from).toLocaleString('en-GB', options);
-                    document.getElementById('receipt-exit').textContent = new Date(result.until).toLocaleString('en-GB', options);
 
                     document.getElementById('success-overlay').classList.remove('hidden');
                 } else {

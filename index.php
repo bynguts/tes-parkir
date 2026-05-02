@@ -436,7 +436,7 @@ include 'includes/header.php';
                         'reservation' as log_type,
                         r.reservation_id as id,
                         r.reserved_from as entry_time,
-                        r.reserved_until as exit_time,
+                        NULL as exit_time,
                         v.plate_number,
                         v.vehicle_type,
                         r.reservation_code as code,

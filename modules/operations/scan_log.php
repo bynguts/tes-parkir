@@ -38,9 +38,20 @@ if ($range !== 'custom') {
         case '24h': $start_date = date('Y-m-d H:i:s', strtotime('-24 hours')); break;
         case '1week': $start_date = date('Y-m-d', strtotime('-7 days')); break;
         case '1month': $start_date = date('Y-m-d', strtotime('-30 days')); break;
-        default: $start_date = date('Y-m-d'); break;
+        case '1year': $start_date = date('Y-m-d', strtotime('-1 year')); break;
     }
 }
+
+// Map range to readable labels for the UI
+$range_labels = [
+    'today'  => 'Today',
+    '24h'    => 'Past 24 Hours',
+    '1week'  => 'Last 7 Days',
+    '1month' => 'Last 30 Days',
+    '1year'  => 'Last 1 Year',
+    'custom' => 'Custom Range'
+];
+$current_range_label = $range_labels[$range] ?? 'Today';
 
 $db_start = $start_date . (strlen($start_date) <= 10 ? ' 00:00:00' : '');
 $db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
@@ -129,43 +140,13 @@ include '../../includes/header.php';
         </div>
         
         <div class="flex items-center gap-3">
-            <form id="filterForm" method="GET" class="flex items-center gap-3 bg-surface border border-color p-1.5 rounded-xl shadow-sm">
-                <div class="relative">
-                    <select name="range" id="range-select"
-                            class="appearance-none bg-surface-alt border-none px-5 py-2.5 pr-10 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none transition-all cursor-pointer">
-                        <option value="today"  <?= $range === 'today'  ? 'selected' : '' ?>>Today</option>
-                        <option value="24h"    <?= $range === '24h'    ? 'selected' : '' ?>>Past 24 Hours</option>
-                        <option value="1week"  <?= $range === '1week'  ? 'selected' : '' ?>>Last 7 Days</option>
-                        <option value="1month" <?= $range === '1month' ? 'selected' : '' ?>>Last 30 Days</option>
-                        <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom Range</option>
-                    </select>
-                    <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[8px]"></i>
-                </div>
-
-                <!-- Hidden inputs for custom range -->
-                <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
-                <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
-                <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
-
-                <?php if($range === 'custom'): ?>
-                <div class="flex items-center gap-2 px-3 border-l border-color">
-                    <button type="button" id="change-range-btn" class="flex items-center gap-2 hover:text-brand transition-colors group">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-primary">
-                            <?= date('d M Y', strtotime($start_date)) ?> &mdash; <?= date('d M Y', strtotime($end_date)) ?>
-                        </span>
-                        <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
-                    </button>
-                </div>
-                <?php endif; ?>
-            </form>
-
             <button type="button" onclick="openPurgeModal()" class="btn-danger-soft h-[38px]">
                 <i class="fa-solid fa-broom text-[12px]"></i>
                 <span>Purge Logs</span>
             </button>
         </div>
     </div>
-    
+
     <!-- Table Content Card -->
     <div class="bento-card overflow-hidden mt-6">
         <!-- Filters Header -->
@@ -181,6 +162,42 @@ include '../../includes/header.php';
             </div>
 
             <div class="flex items-center gap-4">
+                <!-- Date Filter Form -->
+                <form id="filterForm" method="GET" class="flex items-center gap-3">
+                    <div class="relative">
+                        <button type="button" onclick="toggleRangeDropdown(event)"
+                                class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                            <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $current_range_label ?></span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
+                        </button>
+                        <div id="rangeDropdown" class="hidden absolute left-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
+                            <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
+                            <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
+                            <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
+                            <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                            <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
+                        </div>
+                        <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
+                    </div>
+
+                    <!-- Hidden inputs for custom range -->
+                    <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+                    <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
+                    <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
+
+                    <?php if($range === 'custom'): ?>
+                    <div class="flex items-center gap-2 px-3 border-l border-color h-[24px]">
+                        <button type="button" id="change-range-btn" class="flex items-center gap-2 hover:text-brand transition-colors group">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-primary leading-none">
+                                <?= date('d M Y', strtotime($start_date)) ?> &mdash; <?= date('d M Y', strtotime($end_date)) ?>
+                            </span>
+                            <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </form>
+
                 <!-- Sort -->
                 <button onclick="toggleLogSort()" id="sortLogBtn" 
                         class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
@@ -449,6 +466,25 @@ let currentLogVehicleFilter = 'all';
 let currentLogCategoryFilter = 'all';
 let currentLogSortOrder = 'desc'; // newest first
 
+function toggleRangeDropdown(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('rangeDropdown');
+    if (dd) dd.classList.toggle('hidden');
+}
+
+let fp = null;
+function setRange(value, label) {
+    document.getElementById('range-value').value = value;
+    document.getElementById('rangeLabel').textContent = label;
+    document.getElementById('rangeDropdown').classList.add('hidden');
+
+    if (value === 'custom') {
+        if (fp) fp.open();
+    } else {
+        document.getElementById('filterForm').submit();
+    }
+}
+
 function toggleLogSort() {
     currentLogSortOrder = currentLogSortOrder === 'desc' ? 'asc' : 'desc';
     const icon = document.getElementById('sortLogIcon');
@@ -708,13 +744,19 @@ function applyScanLogFilters() {
 document.addEventListener('DOMContentLoaded', function() {
     applyScanLogFilters();
 
-    // --- FLATPICKR QUICK CALENDAR ---
-    const rangeSelect = document.getElementById('range-select');
-    const trigger     = document.getElementById('range-picker-trigger');
-    const form        = document.getElementById('filterForm');
+    const rangeLabels = {
+        'today': 'Today', '24h': 'Past 24 Hours', '1week': 'Last 7 Days',
+        '1month': 'Last 30 Days', '1year': 'Last 1 Year', 'custom': 'Custom Range'
+    };
+    const rangeLabelEl = document.getElementById('rangeLabel');
+    if (rangeLabelEl) rangeLabelEl.textContent = rangeLabels['<?= $range ?>'] || 'Today';
 
-    if (rangeSelect && trigger && form) {
-        const fp = flatpickr(trigger, {
+    // --- FLATPICKR QUICK CALENDAR ---
+    const trigger = document.getElementById('range-picker-trigger');
+    const form    = document.getElementById('filterForm');
+
+    if (trigger && form) {
+        fp = flatpickr(trigger, {
             mode: 'range',
             monthSelectorType: 'dropdown',
             dateFormat: 'Y-m-d',
@@ -724,19 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('start_date').value = instance.formatDate(selectedDates[0], 'Y-m-d');
                     document.getElementById('end_date').value   = instance.formatDate(selectedDates[1], 'Y-m-d');
                     form.submit();
-                } else {
-                    if (rangeSelect.value === 'custom' && '<?= $range ?>' !== 'custom') {
-                        rangeSelect.value = '<?= $range ?>';
-                    }
                 }
-            }
-        });
-
-        rangeSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                fp.open();
-            } else {
-                form.submit();
             }
         });
 
@@ -745,9 +775,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('click', (e) => {
-        const dd = document.getElementById('scanLogCategoryDropdown');
-        if (dd && !e.target.closest('.relative')) {
+        const dd = document.getElementById('rangeDropdown');
+        if (dd && !e.target.closest('#rangeDropdown') && !e.target.closest('[onclick*="toggleRangeDropdown"]')) {
             dd.classList.add('hidden');
+        }
+
+        const catDD = document.getElementById('scanLogCategoryDropdown');
+        if (catDD && !e.target.closest('.relative')) {
+            catDD.classList.add('hidden');
         }
     });
 });

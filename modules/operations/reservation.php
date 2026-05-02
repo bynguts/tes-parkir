@@ -5,9 +5,6 @@ require_once '../../config/connection.php';
 $msg   = '';
 $error = '';
 
-// Auto-expire reservations that are past reserved_until
-$pdo->exec("UPDATE reservation SET status='expired' WHERE status IN ('pending','confirmed') AND reserved_until < NOW()");
-
 // ── Handle form submissions ───────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
@@ -28,10 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $owner      = trim($_POST['owner_name'] ?? 'Guest');
         $phone      = trim($_POST['owner_phone'] ?? '');
         $date_from  = $_POST['reserved_from'] ?? '';
-        $date_until = $_POST['reserved_until'] ?? '';
-        if (!$date_until && $date_from) {
-            $date_until = date('Y-m-d H:i:s', strtotime($date_from . ' + 30 days'));
-        }
 
         if (!$res_id || !$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from) {
             $error = 'All fields are required.';
@@ -71,11 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             SELECT slot_id FROM reservation
                             WHERE status IN ('pending','confirmed')
                               AND reservation_id != ?
-                              AND NOT (reserved_until <= ? OR reserved_from >= ?)
+                              AND reserved_from = ?
                           )
                         ORDER BY f.floor_code, ps.slot_number LIMIT 1
                     ");
-                    $stmt->execute([$vtype, $res_id, $date_from, $date_until]);
+                    $stmt->execute([$vtype, $res_id, $date_from]);
                     $new_slot = $stmt->fetch();
 
                     if (!$new_slot) {
@@ -84,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $slot_id = $new_slot['slot_id'];
                 }
 
-                $pdo->prepare("UPDATE reservation SET plate_number=?, slot_id=?, reserved_from=?, reserved_until=?, client_name=?, client_phone=? WHERE reservation_id=?")
-                    ->execute([$plate, $slot_id, $date_from, $date_until, $owner ?: null, $phone ?: null, $res_id]);
+                $pdo->prepare("UPDATE reservation SET plate_number=?, slot_id=?, reserved_from=?, client_name=?, client_phone=? WHERE reservation_id=?")
+                    ->execute([$plate, $slot_id, $date_from, $owner ?: null, $phone ?: null, $res_id]);
 
                 $pdo->commit();
                 $msg = "Reservation updated successfully.";
@@ -98,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $reservations = $pdo->query("
-    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.reserved_until, r.status, r.slot_id, r.is_public,
+    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.status, r.slot_id, r.is_public,
            r.client_name, r.client_phone,
            v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
            ps.slot_number, f.floor_code AS floor
@@ -114,20 +107,6 @@ $rates_data = $pdo->query("SELECT * FROM parking_rate")->fetchAll();
 $rates = [];
 foreach ($rates_data as $r) {
     $rates[$r['vehicle_type']] = $r;
-}
-
-function calculateEstimation($from, $until, $rate) {
-    if (!$from || !$until || !$rate) return 0;
-    $duration = strtotime($until) - strtotime($from);
-    if ($duration <= 0) return 0;
-    
-    $hours = ceil($duration / 3600);
-    $fee = $rate['first_hour_rate'];
-    if ($hours > 1) {
-        $fee += ($hours - 1) * $rate['next_hour_rate'];
-    }
-    
-    return $fee;
 }
 
 
@@ -161,6 +140,12 @@ include '../../includes/header.php';
     border-color: var(--brand);
     background: var(--brand);
     color: var(--surface);
+}
+
+.locked-input {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 </style>
 
@@ -210,8 +195,6 @@ include '../../includes/header.php';
                                 <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Ticket</th>
                                 <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Slot</th>
                                 <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Entry</th>
-                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Exit</th>
-                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Est. Fee</th>
                                 <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Status</th>
                                 <th class="py-3 w-[6%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                             </tr>
@@ -268,20 +251,6 @@ include '../../includes/header.php';
                                     </div>
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
-                                    <div class="flex flex-col items-center justify-center gap-1">
-                                        <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_until'])) ?></span>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_until'])) ?></span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
-                                    <?php 
-                                    $est_fee = calculateEstimation($r['reserved_from'], $r['reserved_until'], $rates[$r['vehicle_type']] ?? null);
-                                    ?>
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-sm font-manrope font-semibold text-primary leading-none">Rp <?= number_format($est_fee, 0, ',', '.') ?></span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex justify-center">
                                         <?php if ($r['status'] === 'used'): ?>
                                             <div class="status-badge status-badge-parked">
@@ -310,8 +279,7 @@ include '../../includes/header.php';
                                                     'type' => $r['vehicle_type'],
                                                     'owner' => $r['client_name'] ?? $r['owner_name'],
                                                     'phone' => $r['client_phone'] ?? $r['owner_phone'],
-                                                    'from' => $r['reserved_from'],
-                                                    'until' => $r['reserved_until']
+                                                    'from' => $r['reserved_from']
                                                 ])) ?>)" class="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-brand/[0.03] transition-all group/item">
                                                     <div class="w-8 h-8 rounded-lg icon-container flex items-center justify-center shrink-0 !text-brand !bg-brand/5 transition-all group-hover/item:scale-110">
                                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
@@ -387,18 +355,21 @@ include '../../includes/header.php';
                 <div class="space-y-6">
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-3">Vehicle Identifier</label>
-                        <input type="text" name="plate_number" id="edit_plate"
-                               class="modal-input w-full border-2 border-transparent focus:border-brand rounded-2xl px-5 py-4 text-lg font-black font-manrope text-primary focus:outline-none text-center uppercase tracking-widest transition-all placeholder:opacity-20 shadow-inner"
-                               placeholder="B 1234 AB" required oninput="this.value=this.value.toUpperCase()">
+                        <div class="relative">
+                            <input type="text" name="plate_number" id="edit_plate"
+                                   class="modal-input w-full border-2 border-transparent rounded-2xl px-5 py-4 text-lg font-black font-manrope text-primary text-center uppercase tracking-widest transition-all placeholder:opacity-20 shadow-inner locked-input"
+                                   placeholder="B 1234 AB" required readonly>
+                            <i class="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none"></i>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-6">
+                    <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Vehicle Category</label>
                             <select name="vehicle_type" id="edit_vtype"
                                     class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all bg-surface">
-                                <option value="car">Car / Four-Wheeler</option>
-                                <option value="motorcycle">Motorcycle / Two-Wheeler</option>
+                                <option value="car">Car</option>
+                                <option value="motorcycle">Motorcycle</option>
                             </select>
                         </div>
                         <div>
@@ -406,15 +377,6 @@ include '../../includes/header.php';
                             <div class="relative">
                                 <input type="text" name="reserved_from" id="edit_from_dt" required
                                        class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer">
-                                <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">End Schedule</label>
-                            <div class="relative">
-                                <input type="text" name="reserved_until" id="edit_until_dt"
-                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer"
-                                       placeholder="Optional">
                                 <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
                             </div>
                         </div>
@@ -562,15 +524,6 @@ include '../../includes/header.php';
         onReady: onReady
     });
 
-    var editUntilPicker = flatpickr("#edit_until_dt", {
-        enableTime: true, 
-        dateFormat: "Y-m-d\\TH:i",
-        monthSelectorType: "dropdown",
-        time_24hr: true, 
-        minuteIncrement: 15,
-        onReady: onReady
-    });
-
     function openEditModal(data) {
         document.getElementById('edit_res_id').value = data.id;
         document.getElementById('edit_plate').value = data.plate;
@@ -581,13 +534,6 @@ include '../../includes/header.php';
         // Convert SQL format (YYYY-MM-DD HH:MM:SS) to ISO format (YYYY-MM-DDTHH:MM) for picker
         const isoDateFrom = data.from.replace(' ', 'T').substring(0, 16);
         editPicker.setDate(isoDateFrom);
-
-        if (data.until) {
-            const isoDateUntil = data.until.replace(' ', 'T').substring(0, 16);
-            editUntilPicker.setDate(isoDateUntil);
-        } else {
-            editUntilPicker.clear();
-        }
 
         document.getElementById('editResModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';

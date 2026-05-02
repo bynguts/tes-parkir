@@ -51,7 +51,7 @@ $active = $pdo->query("
         v.vehicle_type, 
         s.slot_id, 
         res.reserved_from as check_in_time, 
-        res.reserved_until as exit_time,
+        NULL as exit_time,
         TIMESTAMPDIFF(MINUTE, res.reserved_from, NOW()) as minutes_parked,
         r.first_hour_rate, 
         r.next_hour_rate, 
