@@ -244,8 +244,8 @@ include '../../includes/header.php';
                     </button>
                     <div id="vehicleDropdown" class="hidden dropdown-menu absolute left-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-[100] py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                             <button onclick="setVehicleFilter('all', 'All Types')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Types</button>
-                            <button onclick="setVehicleFilter('car', 'Automobiles')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Automobiles</button>
-                            <button onclick="setVehicleFilter('motorcycle', 'Two-Wheelers')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Two-Wheelers</button>
+                            <button onclick="setVehicleFilter('car', 'Automobiles')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Cars</button>
+                            <button onclick="setVehicleFilter('motorcycle', 'Two-Wheelers')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Motorcycles</button>
                         </div>
                     </div>
 
@@ -280,7 +280,7 @@ include '../../includes/header.php';
                             <i class="fa-solid <?= $type === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-lg"></i>
                         </div>
                         <div>
-                            <span class="text-[11px] font-black uppercase tracking-[0.2em] text-tertiary"><?= $type === 'car' ? 'Automobile Section' : 'Two-Wheeler Section' ?></span>
+                            <span class="text-[11px] font-black uppercase tracking-[0.2em] text-tertiary"><?= $type === 'car' ? 'Cars Section' : 'Motorcycles Section' ?></span>
                             <div class="text-[9px] text-tertiary/50 uppercase font-bold tracking-widest mt-0.5"><?= count($slots) ?> total slots</div>
                         </div>
                         <div class="flex-1 h-px bg-gradient-to-r from-border-color to-transparent"></div>
@@ -430,7 +430,7 @@ include '../../includes/header.php';
                 <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Slot Identifier <span class="text-brand">*</span></label>
                 <input type="text" name="slot_number" required placeholder="E.G. C-01" class="modal-input w-full border-2 border-color rounded-2xl px-6 py-5 text-base font-black font-manrope text-primary uppercase focus:outline-none focus:border-brand transition-all shadow-sm" oninput="this.value=this.value.toUpperCase()">
             </div>
-            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Vehicle Class</label><div class="relative"><select name="slot_type" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="car">🚗 Automobile</option><option value="motorcycle">🏍 Two-Wheeler</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
+            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Vehicle Class</label><div class="relative"><select name="slot_type" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="car">🚗 Cars</option><option value="motorcycle">🏍 Motorcycles</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
             <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Fleet Category</label><div class="relative"><select name="is_reservation_only" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="0">Standard Regular</option><option value="1">Reservation Only Zone</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
             <div class="flex gap-4 pt-6">
                 <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="flex-1 h-14 bg-surface-alt text-primary font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all border-2 border-color hover:bg-surface shadow-sm">Discard</button>
