@@ -43,21 +43,24 @@ try {
         $upd = $pdo->prepare("UPDATE ticket SET status = 'used' WHERE transaction_id = ?");
         $upd->execute([$trx['transaction_id']]);
 
+        // [VIP FIX] Mark reservation as completed if this transaction was from a reservation
+        $upd = $pdo->prepare("UPDATE reservation SET status = 'completed' WHERE reservation_id = (SELECT reservation_id FROM `transaction` WHERE transaction_id = ?)");
+        $upd->execute([$trx['transaction_id']]);
+
         $upd = $pdo->prepare("INSERT INTO plate_scan_log (plate_number, scan_type, ticket_code, matched, gate_action) VALUES (?, 'exit', ?, 1, 'open')");
         $upd->execute([$trx['plate_number'], $trx['ticket_code']]);
     }
 
-    // 2. Cancel Today's Confirmed Reservations
-    $upd = $pdo->prepare("UPDATE `reservation` SET status = 'cancelled' WHERE status = 'confirmed' AND DATE(reserved_from) = CURDATE()");
-    $upd->execute();
-    $cancelled_res = $upd->rowCount();
+    // 2. [REMOVED] Today's Confirmed Reservations should NOT be cancelled automatically
+    // The user requested they stay until manually cancelled or used.
+    $cancelled_res = 0;
 
     $pdo->commit();
     echo json_encode([
         'success' => true, 
         'checkout_count' => count($active_trxs), 
         'cancelled_count' => $cancelled_res,
-        'message' => 'Successfully cleared ' . (count($active_trxs) + $cancelled_res) . ' entries.'
+        'message' => 'Successfully cleared ' . count($active_trxs) . ' active entries. Reservations were preserved.'
     ]);
 
 } catch (Exception $e) {

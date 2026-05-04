@@ -39,19 +39,28 @@ if ($range !== 'custom') {
         case '1week': $start_date = date('Y-m-d', strtotime('-7 days')); break;
         case '1month': $start_date = date('Y-m-d', strtotime('-30 days')); break;
         case '1year': $start_date = date('Y-m-d', strtotime('-1 year')); break;
+        case 'all_time': $start_date = '1000-01-01'; $end_date = date('Y-m-d'); break;
     }
 }
 
 // Map range to readable labels for the UI
 $range_labels = [
-    'today'  => 'Today',
-    '24h'    => 'Past 24 Hours',
-    '1week'  => 'Last 7 Days',
-    '1month' => 'Last 30 Days',
-    '1year'  => 'Last 1 Year',
-    'custom' => 'Custom Range'
+    'today'    => 'Today',
+    '24h'      => 'Past 24 Hours',
+    '1week'    => 'Last 7 Days',
+    '1month'   => 'Last 30 Days',
+    '1year'    => 'Last 1 Year',
+    'all_time' => 'All Time',
+    'custom'   => 'Custom Range'
 ];
-$current_range_label = $range_labels[$range] ?? 'Today';
+// When custom range is active, show label + date range inside the button
+if ($range === 'custom' && $start_date && $end_date) {
+    $current_range_label = 'Custom Range';
+    $custom_date_label   = date('d M', strtotime($start_date)) . ' – ' . date('d M Y', strtotime($end_date));
+} else {
+    $current_range_label = $range_labels[$range] ?? 'Today';
+    $custom_date_label   = '';
+}
 
 $db_start = $start_date . (strlen($start_date) <= 10 ? ' 00:00:00' : '');
 $db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
@@ -72,6 +81,9 @@ $query = "
             t.payment_status,
             t.is_lost_ticket,
             t.is_force_checkout,
+            x.is_void,
+            x.void_reason,
+            x.void_at,
             COALESCE(t.reservation_id, r_existing.reservation_id) as reservation_id,
             COALESCE(v.plate_number, r_v_existing.plate_number, x.plate_number) as plate_number,
             COALESCE(v.vehicle_type, r_v_existing.vehicle_type) as vehicle_type,
@@ -102,6 +114,9 @@ $query = "
             'unpaid' as payment_status,
             0 as is_lost_ticket,
             0 as is_force_checkout,
+            res.is_void,
+            res.void_reason,
+            res.void_at,
             res.reservation_id,
             rv.plate_number,
             rv.vehicle_type,
@@ -125,6 +140,9 @@ $logs = $stmt->fetchAll();
 $page_title = 'Security Scan Log';
 $page_subtitle = "Viewing security sensor events from " . date('d M', strtotime($db_start)) . " to " . date('d M', strtotime($db_end));
 
+// Pre-count cancelled entries for instant server-side render (no JS delay on load)
+$void_count = count(array_filter($logs, fn($r) => (int)($r['is_void'] ?? 0) === 1));
+
 include '../../includes/header.php';
 ?>
 
@@ -140,10 +158,7 @@ include '../../includes/header.php';
         </div>
         
         <div class="flex items-center gap-3">
-            <button type="button" onclick="openPurgeModal()" class="btn-danger-soft h-[38px]">
-                <i class="fa-solid fa-broom text-[12px]"></i>
-                <span>Purge Logs</span>
-            </button>
+            <!-- Purge Logs button removed for safety, replaced by VOID system -->
         </div>
     </div>
 
@@ -159,6 +174,14 @@ include '../../includes/header.php';
                     <h3 class="card-title leading-tight">Operational Index</h3>
                     <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Gate sensor history</p>
                 </div>
+                <!-- Void History Button -->
+                <!-- Cancellation Log Button — visibility pre-rendered by PHP, no JS delay -->
+                <button onclick="openVoidHistory()" id="voidHistoryBtn"
+                        class="flex items-center gap-2 h-9 px-4 rounded-xl border border-rose-500/30 bg-rose-500/5 text-rose-500 hover:bg-rose-500/10 transition-all text-[11px] font-bold uppercase tracking-wider <?= $void_count > 0 ? '' : 'hidden' ?>">
+                    <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                    <span>Cancellation Log</span>
+                    <span id="voidHistoryCount" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] font-black"><?= $void_count ?></span>
+                </button>
             </div>
 
             <div class="flex items-center gap-4">
@@ -167,7 +190,12 @@ include '../../includes/header.php';
                     <div class="relative">
                         <button type="button" onclick="toggleRangeDropdown(event)"
                                 class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
-                            <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $current_range_label ?></span>
+                            <div class="flex flex-col leading-none">
+                                <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $current_range_label ?></span>
+                                <?php if ($custom_date_label): ?>
+                                <span class="text-[9px] font-inter text-tertiary tracking-wide mt-0.5"><?= $custom_date_label ?></span>
+                                <?php endif; ?>
+                            </div>
                             <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                         </button>
                         <div id="rangeDropdown" class="hidden absolute left-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -176,6 +204,7 @@ include '../../includes/header.php';
                             <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
                             <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
                             <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                            <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
                             <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
                         </div>
                         <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
@@ -186,30 +215,66 @@ include '../../includes/header.php';
                     <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
                     <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
 
-                    <?php if($range === 'custom'): ?>
-                    <div class="flex items-center gap-2 px-3 border-l border-color h-[24px]">
-                        <button type="button" id="change-range-btn" class="flex items-center gap-2 hover:text-brand transition-colors group">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-primary leading-none">
-                                <?= date('d M Y', strtotime($start_date)) ?> &mdash; <?= date('d M Y', strtotime($end_date)) ?>
-                            </span>
-                            <i class="fa-solid fa-calendar-days text-tertiary group-hover:text-brand text-xs"></i>
-                        </button>
-                    </div>
-                    <?php endif; ?>
+
                 </form>
 
-                <!-- Sort -->
-                <button onclick="toggleLogSort()" id="sortLogBtn" 
-                        class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
-                    <i id="sortLogIcon" class="fa-solid fa-sort text-[12px] text-tertiary group-hover:text-brand"></i>
-                    <span class="text-[11px] font-inter font-medium tracking-wider text-primary">Sort</span>
-                </button>
+                <!-- Sort & Status Filter -->
+                <div class="relative">
+                    <button onclick="toggleLogSortDropdown(event)" id="sortLogBtn" 
+                            class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <i class="fa-solid fa-arrow-down-wide-short text-[12px] text-tertiary group-hover:text-brand"></i>
+                        <span class="text-[11px] font-inter font-medium tracking-wider text-primary">Sort & Status</span>
+                    </button>
+                    <div id="logSortDropdown" class="hidden absolute left-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div class="px-4 py-1.5 text-[9px] font-black text-tertiary uppercase tracking-[0.2em] bg-surface-alt/50 mb-1">Sort By Entry</div>
+                        <button onclick="setLogSort('entry', 'desc')" class="sort-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-sort-type="entry" data-sort-order="desc">
+                            <span>Newest First</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setLogSort('entry', 'asc')" class="sort-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-sort-type="entry" data-sort-order="asc">
+                            <span>Oldest First</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+
+                        <div class="px-4 py-1.5 text-[9px] font-black text-tertiary uppercase tracking-[0.2em] bg-surface-alt/50 my-1">Sort By Activity</div>
+                        <button onclick="setLogSort('activity', 'desc')" class="sort-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-sort-type="activity" data-sort-order="desc">
+                            <span>Latest Event</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setLogSort('activity', 'asc')" class="sort-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-sort-type="activity" data-sort-order="asc">
+                            <span>Oldest Event</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+
+                        <div class="px-4 py-1.5 text-[9px] font-black text-tertiary uppercase tracking-[0.2em] bg-surface-alt/50 my-1">Filter Status</div>
+                        <button onclick="setScanLogStatusFilter('all', 'All Status')" class="status-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-status="all">
+                            <span>All Status</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setScanLogStatusFilter('reserved', 'Reserved')" class="status-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-status="reserved">
+                            <span>Reserved</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setScanLogStatusFilter('active', 'Parked')" class="status-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-status="active">
+                            <span>Parked</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setScanLogStatusFilter('departed', 'Departed')" class="status-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-status="departed">
+                            <span>Departed</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                        <button onclick="setScanLogStatusFilter('void', 'Cancelled')" class="status-option w-full px-4 py-2 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all flex items-center justify-between" data-status="void">
+                            <span>Cancelled</span>
+                            <i class="fa-solid fa-check text-[9px] opacity-0 transition-opacity"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Search -->
                 <div class="relative group">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm"></i>
                     <input type="text" id="searchLog" placeholder="Search plate or ticket..."
-                           oninput="applyScanLogFilters()"
+                           oninput="this.value = this.value.toUpperCase(); applyScanLogFilters()"
                            class="w-44 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
@@ -227,14 +292,14 @@ include '../../includes/header.php';
                     </button>
                 </div>
 
-                <!-- Type Filter -->
+                <!-- Category Filter -->
                 <div class="relative">
-                    <button onclick="toggleScanLogCategoryDropdown(event)" class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all">
-                        <span id="scanLogCategoryLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Entries</span>
+                    <button onclick="toggleScanLogCategoryDropdown(event)" class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <span id="scanLogCategoryLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary">All Types</span>
                         <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                     </button>
                     <div id="scanLogCategoryDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <button onclick="setScanLogCategoryFilter('all', 'All Entries')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Entries</button>
+                        <button onclick="setScanLogCategoryFilter('all', 'All Types')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Types</button>
                         <button onclick="setScanLogCategoryFilter('reservation', 'Reservations')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Reservations</button>
                         <button onclick="setScanLogCategoryFilter('regular', 'Regular')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Regular</button>
                     </div>
@@ -278,6 +343,9 @@ include '../../includes/header.php';
                         $is_res = !empty($row['reservation_id']);
                         $is_pending = empty($row['scan_id']);
                         $is_departed = !$is_pending && !empty($row['time_out']);
+                        $is_void = (int)($row['is_void'] ?? 0);
+                        $is_lost = (int)($row['is_lost_ticket'] ?? 0);
+                        $is_force = (int)($row['is_force_checkout'] ?? 0);
                         
                         $s_id = $row['slot_id'] ?? 0;
                         if ($is_departed) {
@@ -294,9 +362,14 @@ include '../../includes/header.php';
                         if ($is_pending) $dur = '---';
                     ?>
                     <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row log-row" 
+                        data-ticket="<?= $row['ticket_code'] ?>"
+                        data-plate="<?= htmlspecialchars($row['plate_number'] ?? '') ?>"
                         data-vehicle="<?= trim(strtolower($row['vehicle_type'] ?? '')) ?>"
                         data-category="<?= $is_res ? 'reservation' : 'regular' ?>"
-                        data-timestamp="<?= strtotime($row['time_in']) ?>">
+                        data-status="<?= $is_void ? 'void' : ($is_pending ? 'reserved' : ($is_departed ? 'departed' : 'active')) ?>"
+                        data-void-reason="<?= htmlspecialchars($row['void_reason'] ?? '') ?>"
+                        data-entry-timestamp="<?= strtotime($row['time_in']) ?>"
+                        data-activity-timestamp="<?= strtotime($row['scan_time']) ?>">
                         <!-- Vehicle -->
                         <td class="py-2 pl-4 pr-4 text-left align-middle">
                             <div class="flex items-center">
@@ -373,45 +446,87 @@ include '../../includes/header.php';
                         </td>
 
                         <!-- Status -->
-                        <td class="py-2 px-4 text-right align-middle">
+                        <td class="py-2 px-4 text-right align-middle" data-cell="status">
                             <div class="flex justify-end gap-1.5 ml-auto flex-wrap">
-                                <?php 
-                                    $pay_status = strtolower($row['payment_status'] ?? '');
-                                    $is_lost = (int)($row['is_lost_ticket'] ?? 0);
-                                    $is_force = (int)($row['is_force_checkout'] ?? 0);
-                                ?>
-                                <?php if ($is_pending): ?>
-                                    <span class="badge-soft badge-soft-amber">RESERVED</span>
+                                <?php if ($is_void): ?>
+                                    <span class="status-badge status-badge-issue cursor-help group/void relative" title="Reason: <?= htmlspecialchars($row['void_reason'] ?? 'N/A') ?>">
+                                        CANCELLED
+                                        <!-- Tooltip for void history -->
+                                        <div class="absolute bottom-full right-0 mb-2 w-48 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-2xl opacity-0 group-hover/void:opacity-100 pointer-events-none transition-all z-[100] border border-white/10">
+                                            <div class="font-black uppercase tracking-widest text-white/40 mb-1">Cancellation Log</div>
+                                            <div class="font-bold leading-relaxed mb-1"><?= htmlspecialchars($row['void_reason'] ?? 'No reason provided') ?></div>
+                                            <div class="text-white/40 italic">At: <?= date('d M, H:i', strtotime($row['void_at'])) ?></div>
+                                        </div>
+                                    </span>
+                                <?php elseif ($is_pending): ?>
+                                    <span class="status-badge status-badge-reserved">Reserved</span>
+                                <?php elseif ($is_lost): ?>
+                                    <span class="status-badge status-badge-issue">Lost Ticket</span>
+                                <?php elseif ($is_force): ?>
+                                    <span class="status-badge status-badge-issue">Forced Exit</span>
                                 <?php elseif ($is_departed): ?>
-                                    <span class="badge-soft badge-soft-slate">DEPARTED</span>
+                                    <span class="status-badge status-badge-departed">Departed</span>
                                 <?php else: ?>
-                                    <span class="badge-soft badge-soft-indigo">ACTIVE</span>
-                                <?php endif; ?>
-                                
-                                <?php if ($is_lost): ?>
-                                    <span class="badge-soft badge-soft-rose">LOST</span>
-                                <?php endif; ?>
-                                <?php if ($is_force): ?>
-                                    <span class="badge-soft badge-soft-amber">FORCE</span>
-                                <?php endif; ?>
-                                <?php if ($pay_status === 'paid'): ?>
-                                    <span class="badge-soft badge-soft-emerald">PAID</span>
+                                    <span class="status-badge status-badge-parked">Parked</span>
                                 <?php endif; ?>
                             </div>
                         </td>
 
                         <!-- Action -->
-                        <td class="py-2 pr-4 pl-4 text-right align-middle relative">
+                        <td class="py-2 pr-4 pl-4 text-right align-middle relative" data-cell="action">
+                            <?php if (!$is_void): ?>
                             <button type="button" 
-                                    onclick="deleteSingleLog(this, '<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
-                                    class="w-8 h-8 rounded-lg border border-color hover:border-rose-500 hover:bg-rose-500/5 text-secondary hover:text-rose-500 transition-all group/btn">
-                                <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                    onclick="openVoidModal('<?= $row['scan_id'] ?>', '<?= $row['reservation_id'] ?>', '<?= $row['ticket_code'] ?>')"
+                                    class="w-8 h-8 rounded-lg border border-color hover:border-rose-500 hover:bg-rose-500/5 text-secondary hover:text-rose-500 transition-all group/btn flex items-center justify-center ml-auto"
+                                    title="Cancel Entry">
+                                <i class="fa-solid fa-xmark text-[11px]"></i>
                             </button>
+                            <?php else: ?>
+                            <div class="w-8 h-8 flex items-center justify-center ml-auto opacity-20" title="Already Cancelled">
+                                <i class="fa-solid fa-ban text-[10px]"></i>
+                            </div>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Void Entry Modal -->
+<div id="voidModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeVoidModal()"></div>
+    <div class="bento-card relative w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 shadow-2xl border-color bg-surface">
+        <div class="p-8">
+            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-6 mx-auto">
+                <i class="fa-solid fa-ban text-2xl text-rose-500"></i>
+            </div>
+            <h3 class="text-xl font-manrope font-extrabold text-primary text-center mb-2">Cancel Log Entry</h3>
+            <p class="text-[12px] font-medium text-tertiary text-center leading-relaxed mb-6">Please provide a reason for cancelling this log entry. This action will be recorded.</p>
+            
+            <input type="hidden" id="voidScanId">
+            <input type="hidden" id="voidResId">
+            <input type="hidden" id="voidTicket">
+
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-tertiary ml-1">Cancellation Reason</label>
+                    <textarea id="voidReason" rows="3" 
+                              class="w-full bg-surface-alt border border-color rounded-xl px-4 py-3 text-sm text-primary font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all resize-none"
+                              placeholder="e.g., Wrong plate entry, System test..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeVoidModal()" class="flex-1 h-12 rounded-xl bg-surface-alt border border-color text-primary font-bold text-[11px] uppercase tracking-widest hover:bg-surface transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="executeVoid()" class="flex-1 h-12 rounded-xl bg-rose-500 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20">
+                        Confirm Cancellation
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -460,11 +575,54 @@ include '../../includes/header.php';
     </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════
+     VOID HISTORY DRAWER
+══════════════════════════════════════════════════ -->
+<div id="voidHistoryDrawer" class="fixed inset-0 z-[9000] hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeVoidHistory()"></div>
+    <!-- Panel -->
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-surface border-l border-color shadow-2xl flex flex-col translate-x-full transition-transform duration-300 ease-out" id="voidHistoryPanel">
+        <!-- Header -->
+        <div class="flex items-center gap-4 px-6 py-5 border-b border-color shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-ban text-lg text-rose-500"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="font-manrope font-extrabold text-primary text-base leading-tight">Cancellation History</h3>
+                <p class="text-[11px] text-tertiary font-medium uppercase tracking-wider">Invalidated log entries</p>
+            </div>
+            <button onclick="closeVoidHistory()" class="w-9 h-9 rounded-xl hover:bg-rose-500/10 text-tertiary hover:text-rose-500 transition-all flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="flex items-center gap-3 px-6 py-3 bg-rose-500/5 border-b border-rose-500/10 shrink-0">
+            <i class="fa-solid fa-circle-info text-rose-500/60 text-sm"></i>
+            <p class="text-[11px] text-rose-500/80 font-medium">
+                <span id="voidDrawerCount" class="font-black">0</span> entries cancelled in this period
+            </p>
+        </div>
+
+        <!-- Void Entry List -->
+        <div id="voidHistoryList" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Populated by JS -->
+            <div id="voidHistoryEmpty" class="hidden flex flex-col items-center justify-center h-48 opacity-40">
+                <i class="fa-solid fa-ban text-4xl mb-3 text-slate-300"></i>
+                <p class="text-secondary text-sm font-medium">No cancelled entries found</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const CSRF = '<?= htmlspecialchars(csrf_token()) ?>';
 let currentLogVehicleFilter = 'all';
 let currentLogCategoryFilter = 'all';
-let currentLogSortOrder = 'desc'; // newest first
+let currentLogStatusFilter = 'all';
+let currentLogSortOrder = 'desc'; 
+let currentLogSortBy = 'activity'; // default to latest activity as requested
 
 function toggleRangeDropdown(e) {
     e.stopPropagation();
@@ -485,15 +643,41 @@ function setRange(value, label) {
     }
 }
 
-function toggleLogSort() {
-    currentLogSortOrder = currentLogSortOrder === 'desc' ? 'asc' : 'desc';
-    const icon = document.getElementById('sortLogIcon');
-    if (currentLogSortOrder === 'desc') {
-        icon.className = 'fa-solid fa-sort-down text-[12px] text-brand';
-    } else {
-        icon.className = 'fa-solid fa-sort-up text-[12px] text-brand';
-    }
+function toggleLogSortDropdown(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('logSortDropdown');
+    if (dd) dd.classList.toggle('hidden');
+    updateLogSortDropdownUI();
+}
+
+function updateLogSortDropdownUI() {
+    // Update sort checks
+    document.querySelectorAll('.sort-option').forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (icon) {
+            const matches = btn.getAttribute('data-sort-type') === currentLogSortBy && 
+                          btn.getAttribute('data-sort-order') === currentLogSortOrder;
+            icon.style.opacity = matches ? '1' : '0';
+        }
+    });
+    // Update status checks
+    document.querySelectorAll('.status-option').forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.style.opacity = btn.getAttribute('data-status') === currentLogStatusFilter ? '1' : '0';
+        }
+    });
+}
+
+function setLogSort(type, order) {
+    currentLogSortBy = type;
+    currentLogSortOrder = order;
+    updateLogSortDropdownUI();
     applyScanLogFilters();
+}
+
+function toggleLogSort() {
+    setLogSort(currentLogSortBy, currentLogSortOrder === 'desc' ? 'asc' : 'desc');
 }
 let selectedDate = null;
 
@@ -607,7 +791,7 @@ function handleConfirm() {
 function confirmWipeAll() {
     showConfirm(
         'Critical Action',
-        'CRITICAL WARNING: This will permanently delete ALL gate sensor history. This cannot be undone. Continue?',
+        'CRITICAL WARNING: This will VOID ALL gate sensor history. This cannot be undone. Continue?',
         () => {
             deleteLog('all');
         }
@@ -623,48 +807,107 @@ function deleteLog(mode) {
         box.classList.remove('hidden');
         if (data.success) { 
             box.className = 'mt-4 py-3 rounded-xl bg-emerald-50 text-emerald-600 text-[11px] font-bold uppercase tracking-widest text-center'; 
-            box.innerHTML = 'Logs successfully purged'; 
+            box.innerHTML = 'Logs successfully cancelled'; 
             setTimeout(() => location.reload(), 1200); 
         } else {
             box.className = 'mt-4 py-3 rounded-xl bg-rose-50 text-rose-600 text-[11px] font-bold uppercase tracking-widest text-center';
-            box.innerHTML = data.message || 'Error purging logs';
+            box.innerHTML = data.message || 'Error cancelling logs';
         }
     });
 }
 
-function deleteSingleLog(btn, scanId, resId, ticket) {
-    showConfirm(
-        'Delete Log Entry',
-        `Permanently delete log entry for ticket ${ticket}? This action cannot be undone.`,
-        () => {
-            const row = btn.closest('tr');
-            row.classList.add('opacity-40', 'pointer-events-none');
-            
-            const body = `mode=single&scan_id=${scanId}&reservation_id=${resId}&ticket=${ticket}&csrf_token=${encodeURIComponent(CSRF)}`;
-            
-            fetch('delete_logs.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: body
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    row.classList.add('transition-all', 'duration-500', 'opacity-0', 'translate-x-4');
-                    setTimeout(() => {
-                        row.remove();
-                        applyScanLogFilters();
-                    }, 500);
-                } else {
-                    pushNotify('Error', data.message || 'Error deleting record', 'error');
-                    row.classList.remove('opacity-40', 'pointer-events-none');
+function openVoidModal(scanId, resId, ticket) {
+    document.getElementById('voidScanId').value = scanId;
+    document.getElementById('voidResId').value = resId;
+    document.getElementById('voidTicket').value = ticket;
+    document.getElementById('voidReason').value = '';
+    
+    const modal = document.getElementById('voidModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeVoidModal() {
+    const modal = document.getElementById('voidModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function executeVoid() {
+    const scanId = document.getElementById('voidScanId').value;
+    const resId = document.getElementById('voidResId').value;
+    const ticket = document.getElementById('voidTicket').value;
+    const reason = document.getElementById('voidReason').value.trim();
+
+    if (!reason) {
+        pushNotify('Reason Required', 'Please provide a reason for cancelling this entry', 'warning');
+        return;
+    }
+
+    const body = `mode=single&scan_id=${scanId}&reservation_id=${resId}&ticket=${ticket}&void_reason=${encodeURIComponent(reason)}&csrf_token=${encodeURIComponent(CSRF)}`;
+    
+    fetch('delete_logs.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            pushNotify('Success', 'Log entry has been cancelled', 'success');
+            closeVoidModal();
+
+            const targetRow = document.querySelector(`.log-row[data-ticket="${ticket}"]`);
+            if (targetRow) {
+                // Mark row as void
+                targetRow.setAttribute('data-status', 'void');
+                targetRow.setAttribute('data-void-reason', reason);
+                targetRow.setAttribute('data-activity-timestamp', Math.floor(Date.now() / 1000));
+
+                // Update Status cell
+                const statusTd = targetRow.querySelector('[data-cell="status"]');
+                if (statusTd) {
+                    statusTd.innerHTML = `
+                        <div class="flex justify-end gap-1.5 ml-auto flex-wrap">
+                            <span class="status-badge status-badge-issue cursor-help group/void relative" title="Reason: ${reason.replace(/"/g,'&quot;')}">
+                                CANCELLED
+                                <div class="absolute bottom-full right-0 mb-2 w-48 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-2xl opacity-0 group-hover/void:opacity-100 pointer-events-none transition-all z-[100] border border-white/10">
+                                    <div class="font-black uppercase tracking-widest text-white/40 mb-1">Cancellation Log</div>
+                                    <div class="font-bold leading-relaxed mb-1">${reason}</div>
+                                    <div class="text-white/40 italic">Just now</div>
+                                </div>
+                            </span>
+                        </div>`;
                 }
-            })
-            .catch(err => {
-                row.classList.remove('opacity-40', 'pointer-events-none');
-            });
+
+                // Update Action cell
+                const actionTd = targetRow.querySelector('[data-cell="action"]');
+                if (actionTd) {
+                    actionTd.innerHTML = `
+                        <div class="w-8 h-8 flex items-center justify-center ml-auto opacity-20" title="Already Cancelled">
+                            <i class="fa-solid fa-ban text-[10px]"></i>
+                        </div>`;
+                }
+
+                // Move row to top of tbody so it appears as latest event
+                const tbody = document.getElementById('logTableBody');
+                if (tbody) tbody.prepend(targetRow);
+
+                // Sync filter + void history badge in the same paint frame
+                requestAnimationFrame(() => {
+                    applyScanLogFilters();
+                    buildVoidHistory();
+                });
+            } else {
+                setTimeout(() => location.reload(), 800);
+            }
+        } else {
+            pushNotify('Error', data.message || 'Error voiding record', 'error');
         }
-    );
+    })
+    .catch(err => {
+        console.error('Void Error:', err);
+    });
 }
 
 function setScanLogVehicleFilter(type) {
@@ -696,6 +939,13 @@ function setScanLogCategoryFilter(val, label) {
     applyScanLogFilters();
 }
 
+function setScanLogStatusFilter(val, label) {
+    currentLogStatusFilter = val;
+    // We don't need a standalone label anymore as it's inside the sort dropdown
+    updateLogSortDropdownUI();
+    applyScanLogFilters();
+}
+
 function applyScanLogFilters() {
     const searchInput = document.getElementById('searchLog');
     if (!searchInput) return;
@@ -709,12 +959,14 @@ function applyScanLogFilters() {
         const text = tr.textContent.toLowerCase();
         const vehicle = (tr.getAttribute('data-vehicle') || '').trim();
         const category = (tr.getAttribute('data-category') || '').trim();
+        const status = (tr.getAttribute('data-status') || '').trim();
         
         const matchSearch = q === '' || text.includes(q);
         const matchVehicle = currentLogVehicleFilter === 'all' || vehicle === currentLogVehicleFilter;
         const matchCategory = currentLogCategoryFilter === 'all' || category === currentLogCategoryFilter;
+        const matchStatus = currentLogStatusFilter === 'all' || status === currentLogStatusFilter;
         
-        if (matchSearch && matchVehicle && matchCategory) {
+        if (matchSearch && matchVehicle && matchCategory && matchStatus) {
             tr.style.display = '';
             filteredCount++;
         } else {
@@ -728,12 +980,13 @@ function applyScanLogFilters() {
     }
 
     // Sort the filtered rows
-    const tbody = document.querySelector('#logTable tbody');
+    const tbody = document.querySelector('#logTableBody');
     const rowsArray = Array.from(document.querySelectorAll('.log-row'));
     
     rowsArray.sort((a, b) => {
-        const timeA = parseInt(a.dataset.timestamp);
-        const timeB = parseInt(b.dataset.timestamp);
+        const timestampAttr = currentLogSortBy === 'entry' ? 'data-entry-timestamp' : 'data-activity-timestamp';
+        const timeA = parseInt(a.getAttribute(timestampAttr) || 0);
+        const timeB = parseInt(b.getAttribute(timestampAttr) || 0);
         return currentLogSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
     });
 
@@ -784,8 +1037,77 @@ document.addEventListener('DOMContentLoaded', function() {
         if (catDD && !e.target.closest('.relative')) {
             catDD.classList.add('hidden');
         }
+
+        const sortDD = document.getElementById('logSortDropdown');
+        if (sortDD && !e.target.closest('.relative')) {
+            sortDD.classList.add('hidden');
+        }
     });
+
+    // --- VOID HISTORY: Build list from DOM rows ---
+    buildVoidHistory();
 });
+
+function buildVoidHistory() {
+    const rows = document.querySelectorAll('.log-row[data-status="void"]');
+    const btn = document.getElementById('voidHistoryBtn');
+    const countEl = document.getElementById('voidHistoryCount');
+    const drawerCount = document.getElementById('voidDrawerCount');
+    const list = document.getElementById('voidHistoryList');
+    const empty = document.getElementById('voidHistoryEmpty');
+    const count = rows.length;
+
+    if (countEl) countEl.textContent = count;
+    if (drawerCount) drawerCount.textContent = count;
+    if (btn) { count > 0 ? btn.classList.remove('hidden') : btn.classList.add('hidden'); }
+
+    if (list) list.querySelectorAll('.void-history-card').forEach(el => el.remove());
+
+    if (count === 0) { if (empty) empty.classList.remove('hidden'); return; }
+    if (empty) empty.classList.add('hidden');
+
+    rows.forEach(row => {
+        const reason     = row.dataset.voidReason || 'No reason provided';
+        const plate      = row.dataset.plate      || row.querySelector('.plate-number')?.textContent?.trim() || '---';
+        const ticketCode = row.dataset.ticket     || '---';
+        const card = document.createElement('div');
+        card.className = 'void-history-card bento-card !p-4 border border-rose-500/20 bg-rose-500/5 rounded-2xl';
+        card.innerHTML = `
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <i class="fa-solid fa-ban text-rose-500 text-[11px]"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[13px] font-manrope font-extrabold text-primary">${plate}</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-rose-500/60 bg-rose-500/10 px-2 py-0.5 rounded-full">CANCELLED</span>
+                    </div>
+                    <div class="text-[10px] font-mono text-tertiary mb-2 uppercase">${ticketCode}</div>
+                    <div class="bg-rose-500/10 rounded-xl px-3 py-2 border border-rose-500/15">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-rose-500/50 mb-1">Cancellation Reason</div>
+                        <p class="text-[11px] font-medium text-primary leading-relaxed">${reason}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        if (list) list.appendChild(card);
+    });
+}
+
+function openVoidHistory() {
+    buildVoidHistory();
+    const drawer = document.getElementById('voidHistoryDrawer');
+    const panel  = document.getElementById('voidHistoryPanel');
+    drawer.classList.remove('hidden');
+    requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; });
+}
+
+function closeVoidHistory() {
+    const panel  = document.getElementById('voidHistoryPanel');
+    const drawer = document.getElementById('voidHistoryDrawer');
+    panel.style.transform = 'translateX(100%)';
+    setTimeout(() => drawer.classList.add('hidden'), 300);
+}
 </script>
 
 <!-- Custom Confirm Modal -->

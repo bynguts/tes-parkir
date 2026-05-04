@@ -14,11 +14,13 @@ $end_date = $_GET['end_date'] ?? null;
 if ($range !== 'custom') {
     $end_date = date('Y-m-d');
     switch ($range) {
-        case 'today': $start_date = date('Y-m-d'); break;
-        case '1week': $start_date = date('Y-m-d', strtotime('-7 days')); break;
-        case '1month': $start_date = date('Y-m-d', strtotime('-30 days')); break;
-        case '1year': $start_date = date('Y-m-d', strtotime('-1 year')); break;
-        default: $start_date = date('Y-m-d', strtotime('-7 days')); break;
+        case 'today':    $start_date = date('Y-m-d'); break;
+        case '24h':      $start_date = date('Y-m-d H:i:s', strtotime('-24 hours')); break;
+        case '1week':    $start_date = date('Y-m-d', strtotime('-7 days')); break;
+        case '1month':   $start_date = date('Y-m-d', strtotime('-30 days')); break;
+        case '1year':    $start_date = date('Y-m-d', strtotime('-1 year')); break;
+        case 'all_time': $start_date = '1000-01-01'; break;
+        default:         $start_date = date('Y-m-d', strtotime('-7 days')); break;
     }
 }
 
@@ -131,9 +133,12 @@ include '../../includes/header.php';
                 </button>
                 <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                     <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
-                    <button type="button" onclick="setRange('1week', '1 Week')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Week</button>
-                    <button type="button" onclick="setRange('1month', '1 Month')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Month</button>
-                    <button type="button" onclick="setRange('1year', '1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Year</button>
+                    <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
+                    <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
+                    <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
+                    <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                    <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
+                    <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
                 </div>
                 <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
                 <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
@@ -279,13 +284,13 @@ include '../../includes/header.php';
                         </div>
                     </div>
                     <div class="flex gap-4">
-                        <div class="status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                        <div class="status-badge status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
                             <span class="status-dot-available"></span> Available
                         </div>
-                        <div class="status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                        <div class="status-badge status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
                             <span class="status-dot-parked"></span> Occupied
                         </div>
-                        <div class="status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+                        <div class="status-badge status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
                             <span class="status-dot-reserved"></span> Reserved
                         </div>
                     </div>
@@ -887,12 +892,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set initial label
     const rangeLabels = {
-        'today': 'Today',
-        '1week': '1 Week',
-        '1month': '1 Month',
-        '1year': '1 Year'
+        'today':    'Today',
+        '24h':      'Past 24 Hours',
+        '1week':    'Last 7 Days',
+        '1month':   'Last 30 Days',
+        '1year':    'Last 1 Year',
+        'all_time': 'All Time',
+        'custom':   'Custom Range'
     };
-    const label = rangeLabels['<?= $range ?>'] || '1 Week';
+    const label = rangeLabels['<?= $range ?>'] || 'Last 7 Days';
     const labelEl = document.getElementById('rangeLabel');
     if (labelEl) labelEl.textContent = label;
 

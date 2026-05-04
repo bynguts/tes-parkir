@@ -19,79 +19,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'edit') {
-        $res_id     = (int)($_POST['reservation_id'] ?? 0);
-        $plate      = strtoupper(trim($_POST['plate_number'] ?? ''));
-        $vtype      = $_POST['vehicle_type'] ?? '';
-        $owner      = trim($_POST['owner_name'] ?? 'Guest');
-        $phone      = trim($_POST['owner_phone'] ?? '');
-        $date_from  = $_POST['reserved_from'] ?? '';
+        $id = $_POST['reservation_id'] ?? null;
+        $from = $_POST['reserved_from'] ?? null;
+        $until = $_POST['reserved_until'] ?? null;
 
-        if (!$res_id || !$plate || !in_array($vtype, ['car', 'motorcycle']) || !$date_from) {
-            $error = 'All fields are required.';
-        } else {
-            try {
-                $pdo->beginTransaction();
-
-                // Get current reservation state
-                $stmt = $pdo->prepare("SELECT slot_id, reserved_from, vehicle_id FROM reservation WHERE reservation_id = ?");
-                $stmt->execute([$res_id]);
-                $current = $stmt->fetch();
-
-                if (!$current) {
-                    throw new Exception("Reservation not found.");
-                }
-
-                // Update vehicle info
-                $pdo->prepare("UPDATE vehicle SET plate_number=?, vehicle_type=?, owner_name=?, owner_phone=? WHERE vehicle_id=?")
-                    ->execute([$plate, $vtype, $owner ?: 'Guest', $phone ?: null, $current['vehicle_id']]);
-
-                // Check if slot needs to be reassigned (type or time change)
-                $needs_new_slot = false;
-                $old_vtype = $pdo->query("SELECT vehicle_type FROM vehicle WHERE vehicle_id=".$current['vehicle_id'])->fetchColumn();
-                
-                if ($vtype !== $old_vtype || $date_from !== $current['reserved_from']) {
-                    $needs_new_slot = true;
-                }
-
-                $slot_id = $current['slot_id'];
-                if ($needs_new_slot) {
-                    $stmt = $pdo->prepare("
-                        SELECT ps.slot_id FROM parking_slot ps
-                        JOIN floor f ON ps.floor_id = f.floor_id
-                        WHERE ps.slot_type = ?
-                          AND ps.status = 'available'
-                          AND ps.slot_id NOT IN (
-                            SELECT slot_id FROM reservation
-                            WHERE status IN ('pending','confirmed')
-                              AND reservation_id != ?
-                              AND reserved_from = ?
-                          )
-                        ORDER BY f.floor_code, ps.slot_number LIMIT 1
-                    ");
-                    $stmt->execute([$vtype, $res_id, $date_from]);
-                    $new_slot = $stmt->fetch();
-
-                    if (!$new_slot) {
-                        throw new Exception("No slots available for the new configuration.");
-                    }
-                    $slot_id = $new_slot['slot_id'];
-                }
-
-                $pdo->prepare("UPDATE reservation SET plate_number=?, slot_id=?, reserved_from=?, client_name=?, client_phone=? WHERE reservation_id=?")
-                    ->execute([$plate, $slot_id, $date_from, $owner ?: null, $phone ?: null, $res_id]);
-
-                $pdo->commit();
+        if ($id && $from) {
+            $stmt = $pdo->prepare("UPDATE reservation SET reserved_from = ?, reserved_until = ? WHERE reservation_id = ?");
+            if ($stmt->execute([$from, $until, $id])) {
                 $msg = "Reservation updated successfully.";
-            } catch (Exception $e) {
-                $pdo->rollBack();
-                $error = $e->getMessage();
+            } else {
+                $error = "Failed to update reservation.";
             }
         }
     }
 }
 
+// --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
+$all_slots_query = $pdo->query("
+    SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code
+    FROM parking_slot ps
+    JOIN floor f ON ps.floor_id = f.floor_id
+    ORDER BY ps.is_reservation_only ASC, f.floor_code ASC, ps.slot_type ASC, ps.slot_number ASC
+");
+$slot_mapping = [];
+$reg_idx = 1; $res_idx = 1;
+foreach ($all_slots_query as $s) {
+    if ((int)$s['is_reservation_only'] === 1) {
+        $slot_mapping[$s['slot_id']] = "#RES" . $res_idx++;
+    } else {
+        $slot_mapping[$s['slot_id']] = "#" . $reg_idx++;
+    }
+}
+
 $reservations = $pdo->query("
-    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.status, r.slot_id, r.is_public,
+    SELECT r.reservation_id, r.reservation_code, r.reserved_from, r.reserved_until, r.status, r.slot_id, r.is_public,
            r.client_name, r.client_phone,
            v.plate_number, v.vehicle_type, v.owner_name, v.owner_phone,
            ps.slot_number, f.floor_code AS floor
@@ -144,8 +105,13 @@ include '../../includes/header.php';
 
 .locked-input {
     background-color: #f3f4f6;
-    cursor: not-allowed;
+    cursor: not-allowed !important;
     opacity: 0.7;
+}
+
+/* Fix Flatpickr appearing behind modal */
+.flatpickr-calendar {
+    z-index: 9999999 !important;
 }
 </style>
 
@@ -195,8 +161,9 @@ include '../../includes/header.php';
                                 <th class="py-3 w-[10%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Ticket</th>
                                 <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Slot</th>
                                 <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Entry</th>
+                                <th class="py-3 w-[9%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Exit</th>
                                 <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4 whitespace-nowrap">Status</th>
-                                <th class="py-3 w-[6%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
+                                <th class="py-3 w-[8%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-color">
@@ -229,7 +196,7 @@ include '../../includes/header.php';
                                     <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($r['client_name'] ?? $r['owner_name'] ?? 'Guest') ?></span>
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
-                                    <span class="text-[10px] font-inter text-tertiary/40 italic">Not set</span>
+                                    <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($r['client_phone'] ?? $r['owner_phone'] ?? '-') ?></span>
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col gap-1 items-center">
@@ -238,16 +205,23 @@ include '../../includes/header.php';
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col items-center justify-center gap-1">
-                                        <?php 
-                                            $display_slot = "#RES " . $res_counter++;
-                                        ?>
-                                        <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $display_slot ?></span>
+                                        <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= $slot_mapping[$r['slot_id']] ?? "#???" ?></span>
                                     </div>
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_from'])) ?></span>
-                                        <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M Y', strtotime($r['reserved_from'])) ?></span>
+                                        <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M', strtotime($r['reserved_from'])) ?></span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
+                                    <div class="flex flex-col items-center justify-center gap-1">
+                                        <?php if ($r['reserved_until']): ?>
+                                            <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= date('H:i', strtotime($r['reserved_until'])) ?></span>
+                                            <span class="text-[10px] font-inter text-tertiary leading-none"><?= date('d M', strtotime($r['reserved_until'])) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-sm font-manrope font-semibold text-primary leading-none opacity-40">-</span>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                                 <td class="px-4 py-2 text-center align-middle whitespace-nowrap">
@@ -279,7 +253,8 @@ include '../../includes/header.php';
                                                     'type' => $r['vehicle_type'],
                                                     'owner' => $r['client_name'] ?? $r['owner_name'],
                                                     'phone' => $r['client_phone'] ?? $r['owner_phone'],
-                                                    'from' => $r['reserved_from']
+                                                    'from' => $r['reserved_from'],
+                                                    'until' => $r['reserved_until']
                                                 ])) ?>)" class="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-brand/[0.03] transition-all group/item">
                                                     <div class="w-8 h-8 rounded-lg icon-container flex items-center justify-center shrink-0 !text-brand !bg-brand/5 transition-all group-hover/item:scale-110">
                                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
@@ -350,7 +325,7 @@ include '../../includes/header.php';
             <form method="POST" class="p-8">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="reservation_id" id="edit_res_id">
+                <input type="hidden" name="reservation_id" id="edit_id">
                 
                 <div class="space-y-6">
                     <div>
@@ -366,32 +341,56 @@ include '../../includes/header.php';
                     <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Vehicle Category</label>
-                            <select name="vehicle_type" id="edit_vtype"
-                                    class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all bg-surface">
-                                <option value="car">Car</option>
-                                <option value="motorcycle">Motorcycle</option>
-                            </select>
+                            <div class="relative">
+                                <select name="vehicle_type" id="edit_vtype"
+                                        class="modal-input w-full border-2 border-transparent rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary bg-surface locked-input"
+                                        disabled>
+                                    <option value="car">Car</option>
+                                    <option value="motorcycle">Motorcycle</option>
+                                </select>
+                                <i class="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Start Schedule</label>
-                            <div class="relative">
-                                <input type="text" name="reserved_from" id="edit_from_dt" required
-                                       class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer">
-                                <i class="fa-solid fa-clock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"></i>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-tertiary px-1">Start Schedule</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-calendar-days absolute left-4 top-1/2 -translate-y-1/2 text-tertiary/40"></i>
+                                    <input type="text" name="reserved_from" id="edit_from_dt" required
+                                           class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl pl-10 pr-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer">
+                                </div>
                             </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-tertiary px-1">End Schedule</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-calendar-check absolute left-4 top-1/2 -translate-y-1/2 text-tertiary/40"></i>
+                                    <input type="text" name="reserved_until" id="edit_until_dt" required
+                                           class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl pl-10 pr-4 py-3.5 text-[12px] font-bold font-manrope text-primary focus:outline-none transition-all cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Owner Identity</label>
-                            <input type="text" name="owner_name" id="edit_owner"
-                                   class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all">
+                            <div class="relative">
+                                <input type="text" name="owner_name" id="edit_owner"
+                                       class="modal-input w-full border-2 border-transparent rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary bg-surface locked-input"
+                                       readonly>
+                                <i class="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-tertiary font-inter mb-2">Contact Info</label>
-                            <input type="tel" name="owner_phone" id="edit_phone"
-                                   class="modal-input w-full border-2 border-transparent focus:border-brand rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary focus:outline-none transition-all">
+                            <div class="relative">
+                                <input type="tel" name="owner_phone" id="edit_phone"
+                                       class="modal-input w-full border-2 border-transparent rounded-xl px-4 py-3.5 text-[13px] font-bold font-manrope text-primary bg-surface locked-input"
+                                       readonly>
+                                <i class="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -524,20 +523,36 @@ include '../../includes/header.php';
         onReady: onReady
     });
 
-    function openEditModal(data) {
-        document.getElementById('edit_res_id').value = data.id;
+    var editUntilPicker = flatpickr("#edit_until_dt", {
+        enableTime: true, 
+        dateFormat: "Y-m-d\\TH:i",
+        monthSelectorType: "dropdown",
+        time_24hr: true, 
+        minuteIncrement: 15,
+        onReady: onReady
+    });
+
+    window.openEditModal = function(data) {
+        document.getElementById('edit_id').value = data.id;
         document.getElementById('edit_plate').value = data.plate;
         document.getElementById('edit_vtype').value = data.type;
         document.getElementById('edit_owner').value = data.owner;
-        document.getElementById('edit_phone').value = data.phone || '';
+        document.getElementById('edit_phone').value = data.phone;
         
-        // Convert SQL format (YYYY-MM-DD HH:MM:SS) to ISO format (YYYY-MM-DDTHH:MM) for picker
-        const isoDateFrom = data.from.replace(' ', 'T').substring(0, 16);
-        editPicker.setDate(isoDateFrom);
-
+        // Convert dates to ISO for flatpickr
+        const fromDate = data.from.replace(' ', 'T');
+        editPicker.setDate(fromDate);
+        
+        if (data.until) {
+            const untilDate = data.until.replace(' ', 'T');
+            editUntilPicker.setDate(untilDate);
+        } else {
+            editUntilPicker.clear();
+        }
+        
         document.getElementById('editResModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
-    }
+    };
 
     function closeEditModal() {
         document.getElementById('editResModal').style.display = 'none';

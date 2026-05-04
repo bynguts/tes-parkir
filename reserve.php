@@ -210,11 +210,20 @@ while ($r = $rates_stmt->fetch()) {
                         <input type="tel" name="client_phone" required placeholder="08123456789" class="form-input w-full h-14 px-6 rounded-2xl text-lg font-semibold text-white">
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="entry_time" name="entry_time" required placeholder="Pick Entry" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Entry Time</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-calendar-days absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="text" id="entry_time" name="entry_time" required placeholder="Pick Entry" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Exit Time</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-calendar-check absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="text" id="exit_time" name="exit_time" required placeholder="Pick Exit" class="form-input w-full h-14 pl-12 pr-4 rounded-2xl text-sm font-semibold text-white cursor-pointer">
+                            </div>
                         </div>
                     </div>
 
@@ -276,10 +285,14 @@ while ($r = $rates_stmt->fetch()) {
                                 </div>
                             </div>
 
-                            <div class="py-4 border-y border-white/5">
+                            <div class="py-4 border-y border-white/5 flex justify-between">
                                 <div>
                                     <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Entry Schedule</div>
                                     <div id="receipt-entry" class="text-[11px] font-bold text-white">28 Apr, 10:00</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Exit Schedule</div>
+                                    <div id="receipt-exit" class="text-[11px] font-bold text-white">28 Apr, 12:00</div>
                                 </div>
                             </div>
 
@@ -394,6 +407,23 @@ while ($r = $rates_stmt->fetch()) {
             monthSelectorType: "dropdown",
             onReady: onReady,
             onChange: function(selectedDates, dateStr, instance) {
+                if (fpExit.selectedDates[0] && selectedDates[0] > fpExit.selectedDates[0]) {
+                    fpExit.clear();
+                }
+                fpExit.set("minDate", dateStr || "today");
+                updateSummary();
+            }
+        });
+
+        // Initialize Flatpickr for Exit
+        const fpExit = flatpickr("#exit_time", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+            time_24hr: true,
+            monthSelectorType: "dropdown",
+            onReady: onReady,
+            onChange: function(selectedDates, dateStr, instance) {
                 updateSummary();
             }
         });
@@ -402,15 +432,26 @@ while ($r = $rates_stmt->fetch()) {
 
         function updateSummary() {
             const entry = fpEntry.selectedDates[0];
+            const exit = fpExit.selectedDates[0];
             const summary = document.getElementById('booking-summary');
 
-            if (entry) {
+            if (entry && exit) {
                 summary.classList.remove('hidden');
                 const vType = document.getElementById('vehicle_type').value;
                 const rate = rates[vType];
                 
-                document.getElementById('summary-duration').textContent = 'Open-Ended';
-                document.getElementById('summary-rate').textContent = 'Rp ' + Number(rate.first_hour_rate).toLocaleString();
+                const diffMs = exit - entry;
+                const diffHrs = Math.ceil(diffMs / (1000 * 60 * 60));
+                
+                document.getElementById('summary-duration').textContent = diffHrs + ' Hour' + (diffHrs > 1 ? 's' : '');
+                
+                // Simplified calculation for display
+                let total = parseInt(rate.first_hour_rate);
+                if (diffHrs > 1) {
+                    total += (diffHrs - 1) * parseInt(rate.next_hour_rate);
+                }
+                
+                document.getElementById('summary-rate').textContent = 'Rp ' + total.toLocaleString();
             } else {
                 summary.classList.add('hidden');
             }
@@ -435,6 +476,9 @@ while ($r = $rates_stmt->fetch()) {
             const formData = new FormData(e.target);
             // Send as local date strings to avoid UTC shift
             formData.append('from', fpEntry.formatDate(entry, "Y-m-d H:i"));
+            if (fpExit.selectedDates[0]) {
+                formData.append('until', fpExit.formatDate(fpExit.selectedDates[0], "Y-m-d H:i"));
+            }
 
             try {
                 const response = await fetch('api/public_reserve.php', {
@@ -453,6 +497,7 @@ while ($r = $rates_stmt->fetch()) {
                     
                     const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
                     document.getElementById('receipt-entry').textContent = new Date(result.from).toLocaleString('en-GB', options);
+                    document.getElementById('receipt-exit').textContent = result.until ? new Date(result.until).toLocaleString('en-GB', options) : 'Open-Ended';
 
                     document.getElementById('success-overlay').classList.remove('hidden');
                 } else {

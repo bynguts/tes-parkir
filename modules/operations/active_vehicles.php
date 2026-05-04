@@ -14,7 +14,7 @@ $slot_mapping = [];
 $reg_idx = 1; $res_idx = 1;
 foreach ($all_slots_query as $s) {
     if ((int)$s['is_reservation_only'] === 1) {
-        $slot_mapping[$s['slot_id']] = ["label" => "#RES " . $res_idx++, "category" => "RSV ZONE"];
+        $slot_mapping[$s['slot_id']] = ["label" => "#RES" . $res_idx++, "category" => "RSV ZONE"];
     } else {
         $slot_mapping[$s['slot_id']] = ["label" => "#" . $reg_idx++, "category" => "REGULAR"];
     }
@@ -85,10 +85,6 @@ include '../../includes/header.php';
             <p class="text-sm font-inter text-tertiary mt-1"><?= $page_subtitle ?></p>
         </div>
         <div class="flex items-center gap-3">
-                <button type="button" onclick="forceCheckoutAll(this)"
-                    class="btn-danger-soft h-[38px]">
-                Force Checkout All
-            </button>
         </div>
     </div>
 
@@ -416,35 +412,7 @@ function handleForceDelete(ticket, plate) {
     }
 }
 
-function forceCheckoutAll(btn) {
-    if (!confirm('Critical Warning: This action will force checkout ALL vehicles. This cannot be undone. Continue?')) return;
-    
-    if (!btn) {
-        btn = document.querySelector('button[onclick="forceCheckoutAll(this)"]');
-    }
-    if (!btn) return;
-    const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
-    
-    fetch('../../api/force_checkout_all.php', {
-        method: 'POST'
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            pushNotify('Error', data.message, 'error');
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-        }
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
-    });
-}
+
 
 function processCheckout() {
     const formData = new FormData();
@@ -560,7 +528,10 @@ function setCategoryFilter(val, label) {
     applyFilters();
 }
 
-document.getElementById('logSearch').addEventListener('input', applyFilters);
+document.getElementById('logSearch').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+    applyFilters();
+});
 
 document.addEventListener('click', () => {
     document.querySelectorAll('.action-dropdown').forEach(m => m.classList.add('hidden'));

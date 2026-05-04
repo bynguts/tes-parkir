@@ -27,9 +27,17 @@ switch ($range) {
     case '1month': 
         $start_date = date('Y-m-d', strtotime('-30 days')); 
         break;
+    case '1year': 
+        $start_date = date('Y-m-d', strtotime('-1 year')); 
+        break;
     case 'all_time':
-        $start_date = '1000-01-01 00:00:00';
-        $end_date = '9999-12-31 23:59:59';
+        $start_date = '1000-01-01';
+        $end_date   = date('Y-m-d');
+        break;
+    case 'custom':
+        // start_date and end_date come from GET params; keep as-is
+        if (!$start_date) $start_date = date('Y-m-d', strtotime('-7 days'));
+        if (!$end_date)   $end_date   = date('Y-m-d');
         break;
     default: 
         $start_date = date('Y-m-d', strtotime('-7 days')); 
@@ -43,9 +51,17 @@ $range_labels = [
     '24h'      => 'Past 24 Hours',
     '1week'    => 'Last 7 Days',
     '1month'   => 'Last 30 Days',
-    'all_time' => 'All Time'
+    '1year'    => 'Last 1 Year',
+    'all_time' => 'All Time',
+    'custom'   => 'Custom Range'
 ];
-$current_range_label = $range_labels[$range] ?? 'Last 7 Days';
+if ($range === 'custom' && $start_date && $end_date) {
+    $current_range_label = 'Custom Range';
+    $custom_date_label   = date('d M', strtotime($start_date)) . ' – ' . date('d M Y', strtotime($end_date));
+} else {
+    $current_range_label = $range_labels[$range] ?? 'Last 7 Days';
+    $custom_date_label   = '';
+}
 
 $db_start = $start_date . (strlen($start_date) <= 10 ? ' 00:00:00' : '');
 $db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
@@ -98,26 +114,37 @@ include '../../includes/header.php';
         </div>
 
         <div class="flex items-center gap-3">
-            <form id="filterForm" method="GET" class="relative">
-                <button type="button" onclick="toggleRangeDropdown(event)"
-                        class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
-                    <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $current_range_label ?></span>
-                    <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
-                </button>
+            <form id="filterForm" method="GET" class="relative flex items-center gap-3">
+                <div class="relative">
+                    <button type="button" onclick="toggleRangeDropdown(event)"
+                            class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
+                        <div class="flex flex-col leading-none">
+                            <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $current_range_label ?></span>
+                            <?php if ($custom_date_label): ?>
+                            <span class="text-[9px] font-inter text-tertiary tracking-wide mt-0.5"><?= $custom_date_label ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
+                    </button>
 
-                <!-- Dropdown Menu -->
-                <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
-                    <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
-                    <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
-                    <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
-                    <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
-                    <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
+                    <!-- Dropdown Menu -->
+                    <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
+                        <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
+                        <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
+                        <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
+                        <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                        <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
+                        <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
+                    </div>
+
+                    <!-- Hidden inputs -->
+                    <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
+                    <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
+                    <input type="hidden" name="end_date"   id="end_date"   value="<?= $end_date ?>">
+                    <input type="text"   id="range-picker-trigger" class="absolute opacity-0 pointer-events-none w-0 h-0">
                 </div>
 
-                <!-- Hidden inputs for logic -->
-                <input type="hidden" name="range" id="range-value" value="<?= $range ?>">
-                <input type="hidden" name="start_date" id="start_date" value="<?= $start_date ?>">
-                <input type="hidden" name="end_date" id="end_date" value="<?= $end_date ?>">
             </form>
         </div>
     </div>
@@ -331,6 +358,11 @@ function setRange(value, label) {
     document.getElementById('range-value').value = value;
     document.getElementById('rangeLabel').textContent = label;
     document.getElementById('rangeDropdown').classList.add('hidden');
+    if (value === 'custom') {
+        // Open flatpickr if available, else submit with current dates
+        const fp = document.getElementById('range-picker-trigger')?._flatpickr;
+        if (fp) { fp.open(); return; }
+    }
     document.getElementById('filterForm').submit();
 }
 

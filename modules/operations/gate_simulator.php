@@ -1087,6 +1087,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Support Enter key for plate inputs
+document.addEventListener('DOMContentLoaded', () => {
+    const entryInput = document.getElementById('entry-manual-lp');
+    const exitInput = document.getElementById('exit-manual-lp');
+
+    if (entryInput) {
+        entryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processALPR('entry');
+            }
+        });
+    }
+
+    if (exitInput) {
+        exitInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processALPR('exit');
+            }
+        });
+    }
+});
+
+
 
 
     // TICKET MODAL LOGIC

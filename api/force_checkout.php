@@ -68,8 +68,12 @@ try {
     $stmt->execute([$trx_id]);
 
     // 4. Add Exit Scan Log (Sync with Scan Log module)
+    // Use the actual plate and ticket from transaction to ensure sync
+    $log_plate = !empty($trx['plate_number']) ? $trx['plate_number'] : $plate;
+    $log_ticket = !empty($trx['ticket_code']) ? $trx['ticket_code'] : $ticket;
+
     $stmt = $pdo->prepare("INSERT INTO plate_scan_log (plate_number, scan_type, ticket_code, matched, gate_action) VALUES (?, 'exit', ?, 1, 'open')");
-    $stmt->execute([$plate, $ticket]);
+    $stmt->execute([$log_plate, $log_ticket]);
 
     $pdo->commit();
     echo json_encode(['success' => true]);

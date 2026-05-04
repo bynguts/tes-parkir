@@ -33,13 +33,16 @@ $plate  = $tkt['plate_number'];
 $stmt = $pdo->prepare("
     SELECT t.*, v.vehicle_type, v.owner_name,
            s.slot_number, f.floor_code AS floor,
-           r.first_hour_rate, r.next_hour_rate,
-           TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
+           pr.first_hour_rate, pr.next_hour_rate,
+           r.reserved_from,
+           -- Calculate minutes from reserved_from if it exists, otherwise from check_in_time
+           TIMESTAMPDIFF(MINUTE, COALESCE(r.reserved_from, t.check_in_time), NOW()) AS minutes_parked
     FROM `transaction` t
     JOIN vehicle v       ON t.vehicle_id  = v.vehicle_id
     JOIN parking_slot s  ON t.slot_id     = s.slot_id
     JOIN floor f         ON s.floor_id    = f.floor_id
-    JOIN parking_rate r  ON t.rate_id     = r.rate_id
+    JOIN parking_rate pr ON t.rate_id     = pr.rate_id
+    LEFT JOIN reservation r ON t.reservation_id = r.reservation_id
     WHERE t.transaction_id = ? AND t.payment_status = 'unpaid'
     LIMIT 1
 ");
@@ -240,7 +243,7 @@ if (!in_array($theme, ['light', 'dark'], true)) {
         <div class="space-y-3 mb-5">
             <?php
             $rows = [
-                ['In',       date('H:i', strtotime($trx['check_in_time']))],
+                ['In',       date('H:i', strtotime($trx['reserved_from'] ?? $trx['check_in_time']))],
                 ['Out',      date('H:i')],
                 ['Duration', $duration_label],
                 ['Slot',     $slot_label],

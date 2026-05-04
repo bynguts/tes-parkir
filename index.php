@@ -449,7 +449,7 @@ include 'includes/header.php';
                      WHERE r.status IN ('pending', 'confirmed', 'used')
                        AND NOT EXISTS (SELECT 1 FROM `transaction` t WHERE t.reservation_id = r.reservation_id)
                     )
-                    ORDER BY entry_time DESC 
+                    ORDER BY COALESCE(exit_time, entry_time) DESC 
                     LIMIT 7
                 ")->fetchAll();
             ?>

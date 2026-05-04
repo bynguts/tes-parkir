@@ -243,6 +243,22 @@ $page_title = $page_title ?? 'Parking System';
             justify-content: center !important;
         }
 
+        /* Notifications */
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes notification-progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .animate-slide-in { animation: slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .animate-slide-out { animation: slide-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .notification-progress { animation: notification-progress 5s linear forwards; }
     </style>
 </head>
 <body class="bg-page text-primary overflow-hidden">

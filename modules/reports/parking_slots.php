@@ -341,7 +341,7 @@ include '../../includes/header.php';
                                 <td class="py-2 px-4 align-middle text-center">
                                     <div class="flex items-center justify-center h-10">
                                         <?php $st = $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status']; ?>
-                                        <div class="status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
+                                        <div class="status-badge status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
                                             <span class="status-dot-<?= $st ?>"></span>
                                             <?= $s['eff_status'] ?>
                                         </div>
