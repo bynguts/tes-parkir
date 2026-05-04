@@ -3,6 +3,8 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+sync_slot_statuses($pdo);
+
 // --- GLOBAL SLOT MAPPING (Indigo Night Standard) ---
 $all_slots_query = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.is_reservation_only, f.floor_code

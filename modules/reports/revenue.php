@@ -3,11 +3,13 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+sync_slot_statuses($pdo);
+
 $page_title = 'Revenue Intelligence';
 
 // --- DATE FILTER LOGIC ---
 $range = $_GET['range'] ?? '1week';
-$page_subtitle = 'Financial auditing for ' . ucfirst(str_replace('_', ' ', $range));
+$range = rtrim($range, 's');
 $start_date = $_GET['start_date'] ?? null;
 $end_date = $_GET['end_date'] ?? null;
 
@@ -49,9 +51,12 @@ switch ($range) {
 $range_labels = [
     'today'    => 'Today',
     '24h'      => 'Past 24 Hours',
-    '1week'    => 'Last 7 Days',
-    '1month'   => 'Last 30 Days',
-    '1year'    => 'Last 1 Year',
+    '1week'    => '1 Week',
+    '1weeks'   => '1 Week',
+    '1month'   => '1 Month',
+    '1months'  => '1 Month',
+    '1year'    => '1 Year',
+    '1years'   => '1 Year',
     'all_time' => 'All Time',
     'custom'   => 'Custom Range'
 ];
@@ -62,6 +67,7 @@ if ($range === 'custom' && $start_date && $end_date) {
     $current_range_label = $range_labels[$range] ?? 'Last 7 Days';
     $custom_date_label   = '';
 }
+$page_subtitle = 'Financial auditing for ' . $current_range_label;
 
 $db_start = $start_date . (strlen($start_date) <= 10 ? ' 00:00:00' : '');
 $db_end = $end_date . (strlen($end_date) <= 10 ? ' 23:59:59' : '');
@@ -131,9 +137,9 @@ include '../../includes/header.php';
                     <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                         <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
                         <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
-                        <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
-                        <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
-                        <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                        <button type="button" onclick="setRange('1week', '1 Week')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Week</button>
+                        <button type="button" onclick="setRange('1month', '1 Month')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Month</button>
+                        <button type="button" onclick="setRange('1year', '1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Year</button>
                         <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
                         <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
                     </div>

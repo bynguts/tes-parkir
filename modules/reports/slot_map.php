@@ -1,6 +1,9 @@
 <?php
 require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
+require_once '../../includes/functions.php';
+
+sync_slot_statuses($pdo);
 
 $stmt = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status, ps.is_reservation_only,
@@ -12,7 +15,7 @@ $stmt = $pdo->query("
     JOIN floor f ON ps.floor_id = f.floor_id
     LEFT JOIN `transaction` t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
     LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-    ORDER BY ps.is_reservation_only, f.floor_code, ps.slot_type, ps.slot_number
+    ORDER BY ps.is_reservation_only, CAST(REPLACE(REPLACE(ps.slot_number, '#RES', ''), '#', '') AS UNSIGNED)
 ");
 $all_slots = $stmt->fetchAll();
 
@@ -118,17 +121,10 @@ include '../../includes/header.php';
         
         <div class="legend-bar">
             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-tertiary">Live Status Legend:</span>
-            <div class="flex items-center gap-2.5 text-[11px] font-bold text-primary uppercase tracking-wider">
-                <div class="w-2.5 h-2.5 rounded-full bg-status-available-text"></div> Available
-            </div>
-            <div class="flex items-center gap-2.5 text-[11px] font-bold text-primary uppercase tracking-wider">
-                <div class="w-2.5 h-2.5 rounded-full bg-status-parked-text"></div> Occupied
-            </div>
-            <div class="flex items-center gap-2.5 text-[11px] font-bold text-primary uppercase tracking-wider">
-                <div class="w-2.5 h-2.5 rounded-full bg-status-reserved-text"></div> Reserved
-            </div>
-            <div class="flex items-center gap-2.5 text-[11px] font-bold text-primary uppercase tracking-wider">
-                <div class="w-2.5 h-2.5 rounded-full bg-status-maintenance-text"></div> Service
+            <div class="flex items-center gap-3">
+                <div class="status-badge status-badge-available">Available</div>
+                <div class="status-badge status-badge-parked">Parked</div>
+                <div class="status-badge status-badge-reserved">Reserved</div>
             </div>
             <div class="h-8 w-px bg-border-color mx-2"></div>
             <div class="flex items-center gap-3 bg-brand/5 px-4 py-2 rounded-xl border border-brand/10">

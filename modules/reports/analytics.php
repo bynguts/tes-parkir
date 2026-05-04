@@ -8,6 +8,7 @@ $page_subtitle = 'Advanced operational insights and real-time data analytics.';
 
 // --- DATE FILTER LOGIC ---
 $range = $_GET['range'] ?? '1week';
+$range = rtrim($range, 's');
 $start_date = $_GET['start_date'] ?? null;
 $end_date = $_GET['end_date'] ?? null;
 
@@ -24,7 +25,23 @@ if ($range !== 'custom') {
     }
 }
 
+// Range Labels for Display
+$range_labels = [
+    'today' => 'Today',
+    '24h' => '24 Hours',
+    '1week' => '1 Week',
+    '1weeks' => '1 Week',
+    '1month' => '1 Month',
+    '1months' => '1 Month',
+    '1year' => '1 Year',
+    '1years' => '1 Year',
+    'all_time' => 'All Time',
+    'custom' => 'Custom Range'
+];
+$display_range = $range_labels[$range] ?? ucfirst($range);
+
 // --- DATA FETCHING ---
+sync_slot_statuses($pdo);
 $data = get_ai_context_data($pdo, $start_date, $end_date);
 
 // Heatmap Data
@@ -33,17 +50,19 @@ $display_areas = [
     ['id' => 0, 'name' => 'Standard Regular Area', 'code' => 'REG'],
     ['id' => 1, 'name' => 'Reservation Only Zone', 'code' => 'RSV']
 ];
-$slots = $pdo->query("SELECT * FROM parking_slot ORDER BY is_reservation_only, slot_number")->fetchAll();
+$slots = $pdo->query("SELECT ps.* FROM parking_slot ps ORDER BY ps.is_reservation_only, CAST(REPLACE(REPLACE(ps.slot_number, '#RES', ''), '#', '') AS UNSIGNED)")->fetchAll();
 
-// Revenue Data
+// Revenue Data — Monthly grouped within selected range
 $rev_daily = array_reverse($data['daily_trend']);
-$rev_monthly = $pdo->query("
+$rev_monthly_stmt = $pdo->prepare("
     SELECT MONTHNAME(check_out_time) as month, SUM(total_fee) as revenue
-    FROM `transaction` 
-    WHERE payment_status='paid' AND check_out_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-    GROUP BY MONTH(check_out_time)
-    ORDER BY check_out_time ASC
-")->fetchAll();
+    FROM `transaction`
+    WHERE payment_status='paid' AND check_out_time BETWEEN ? AND ?
+    GROUP BY MONTH(check_out_time), YEAR(check_out_time)
+    ORDER BY MIN(check_out_time) ASC
+");
+$rev_monthly_stmt->execute([$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+$rev_monthly = $rev_monthly_stmt->fetchAll();
 
 // Dwell Time
 $dwell_avg = $pdo->prepare("
@@ -121,22 +140,22 @@ include '../../includes/header.php';
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-3xl font-manrope font-extrabold text-primary tracking-tight">Analytics Dashboard</h2>
-            <p class="text-sm font-inter text-tertiary mt-1">Insights for <span class="text-primary font-bold"><?= ucfirst($range) ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
+            <p class="text-sm font-inter text-tertiary mt-1">Insights for <span class="text-primary font-bold"><?= $display_range ?></span> (<?= date('d M', strtotime($start_date)) ?> - <?= date('d M', strtotime($end_date)) ?>)</p>
         </div>
 
         <div class="flex items-center gap-4">
             <div class="relative">
                 <button type="button" onclick="toggleRangeDropdown(event)"
                         class="flex items-center gap-2 bg-surface-alt border border-color rounded-xl px-4 h-[38px] hover:border-brand/20 transition-all group">
-                    <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= ucfirst($range) ?></span>
+                    <span id="rangeLabel" class="text-[11px] font-inter font-medium tracking-wider text-primary"><?= $display_range ?></span>
                     <i class="fa-solid fa-chevron-down text-[10px] text-tertiary"></i>
                 </button>
                 <div id="rangeDropdown" class="hidden absolute right-0 top-12 w-48 bg-surface border border-color rounded-xl shadow-xl z-50 py-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                     <button type="button" onclick="setRange('today', 'Today')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Today</button>
                     <button type="button" onclick="setRange('24h', 'Past 24 Hours')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Past 24 Hours</button>
-                    <button type="button" onclick="setRange('1week', 'Last 7 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 7 Days</button>
-                    <button type="button" onclick="setRange('1month', 'Last 30 Days')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 30 Days</button>
-                    <button type="button" onclick="setRange('1year', 'Last 1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Last 1 Year</button>
+                    <button type="button" onclick="setRange('1week', '1 Week')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Week</button>
+                    <button type="button" onclick="setRange('1month', '1 Month')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Month</button>
+                    <button type="button" onclick="setRange('1year', '1 Year')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">1 Year</button>
                     <button type="button" onclick="setRange('all_time', 'All Time')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">All Time</button>
                     <button type="button" onclick="setRange('custom', 'Custom Range')" class="w-full px-4 py-2.5 text-left text-[11px] font-inter font-medium tracking-wider text-primary hover:bg-surface-alt hover:text-brand transition-all">Custom Range</button>
                 </div>
@@ -149,7 +168,7 @@ include '../../includes/header.php';
 
     <!-- STICKY JUMP MENU -->
     <div class="sticky top-[72px] lg:top-20 z-40 bg-page/80 backdrop-blur-xl py-4 -mx-10 px-10 border-b border-color shadow-sm mb-10 transition-all">
-        <div class="flex items-center gap-4 overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-6 overflow-x-auto no-scrollbar">
             <?php 
             $sections = [
                 ['id' => 'overview', 'icon' => 'fa-th-large', 'label' => 'Overview'],
@@ -168,7 +187,7 @@ include '../../includes/header.php';
     </div>
 
     <!-- 1. OVERVIEW SECTION -->
-    <section id="overview" class="scroll-section space-y-6 mb-24">
+    <section id="overview" class="scroll-section space-y-6 mb-16">
         <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -181,14 +200,14 @@ include '../../includes/header.php';
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
-                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-money-bill-trend-up text-6xl"></i>
                 </div>
-                <div class="p-8 relative z-10">
-                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Revenue Today' : 'Total Revenue' ?></p>
+                <div class="p-4 relative z-10">
+                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Revenue Today' : 'Revenue — ' . $display_range ?></p>
                     <div class="flex items-baseline gap-2 whitespace-nowrap">
                         <span class="text-xl font-black text-tertiary">Rp</span>
                         <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= number_format((float)$data['summary']['revenue_today'], 0, ',', '.') ?></p>
@@ -201,10 +220,10 @@ include '../../includes/header.php';
 
             <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
-                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-gauge-high text-6xl"></i>
                 </div>
-                <div class="p-8 relative z-10">
+                <div class="p-4 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Occupancy Rate</p>
                     <div class="flex items-baseline gap-3">
                         <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['active_vehicles'] ?></p>
@@ -219,10 +238,10 @@ include '../../includes/header.php';
 
             <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
-                <div class="absolute top-0 right-0 p-8 opacity-15 group-hover:opacity-25 transition-opacity">
+                <div class="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-25 transition-opacity">
                     <img src="../../assets/img/logo_p.png" alt="Logo" class="w-16 h-16 object-contain grayscale brightness-0">
                 </div>
-                <div class="p-8 relative z-10">
+                <div class="p-4 relative z-10">
                     <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Intake Capacity</p>
                     <div class="flex items-baseline gap-3">
                         <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['available_slots'] ?></p>
@@ -240,11 +259,11 @@ include '../../includes/header.php';
 
             <div class="bento-card overflow-hidden group relative">
                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-brand/5 rounded-full blur-3xl group-hover:bg-brand/10 transition-all duration-500"></div>
-                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i class="fa-solid fa-route text-6xl"></i>
                 </div>
-                <div class="p-8 relative z-10">
-                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Traffic Today' : 'Total Traffic' ?></p>
+                <div class="p-4 relative z-10">
+                    <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10"><?= $range === 'today' ? 'Traffic Today' : 'Traffic — ' . $display_range ?></p>
                     <div class="flex items-baseline gap-3">
                         <p class="text-[32px] font-manrope font-black text-primary tracking-tighter"><?= $data['summary']['entries_today'] ?></p>
                         <p class="text-[11px] font-black text-tertiary uppercase">Flow-ins</p>
@@ -258,7 +277,7 @@ include '../../includes/header.php';
     </section>
 
     <!-- 2. HEATMAP SECTION -->
-    <section id="heatmap" class="scroll-section space-y-6 mb-24">
+    <section id="heatmap" class="scroll-section space-y-6 mb-16">
         <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -270,12 +289,12 @@ include '../../includes/header.php';
                 </div>
             </div>
         </div>
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <?php foreach($display_areas as $area): ?>
-            <div class="bento-card p-8 border-color shadow-xl bg-surface/50 backdrop-blur-sm">
-                <div class="flex justify-between items-center mb-10">
+            <div class="bento-card flex flex-col overflow-hidden border-color shadow-xl bg-surface/50 backdrop-blur-sm">
+                <div class="flex flex-wrap lg:flex-nowrap justify-between items-center py-5 px-6 border-b border-color gap-4">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-2xl bg-brand/5 text-brand flex items-center justify-center border border-brand/10">
+                        <div class="w-10 h-10 rounded-2xl bg-brand/5 text-brand flex items-center justify-center border border-brand/10 shrink-0">
                             <i class="fa-solid fa-layer-group"></i>
                         </div>
                         <div>
@@ -283,20 +302,16 @@ include '../../includes/header.php';
                             <span class="text-[10px] font-black text-tertiary uppercase tracking-[0.2em]">ZONE ID: <?= $area['code'] ?></span>
                         </div>
                     </div>
-                    <div class="flex gap-4">
-                        <div class="status-badge status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                            <span class="status-dot-available"></span> Available
-                        </div>
-                        <div class="status-badge status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                            <span class="status-dot-parked"></span> Occupied
-                        </div>
-                        <div class="status-badge status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                            <span class="status-dot-reserved"></span> Reserved
-                        </div>
+                    <div class="flex gap-3">
+                        <div class="status-badge status-badge-available">Available</div>
+                        <div class="status-badge status-badge-parked">Parked</div>
+                        <div class="status-badge status-badge-reserved">Reserved</div>
                     </div>
                 </div>
-                <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
+                <div class="flex-1 p-6 bg-surface-alt/30">
+                    <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
                     <?php 
+                    $heatmap_counter = 1;
                     foreach($slots as $slot) {
                         if ($slot['is_reservation_only'] == $area['id']) {
                             $cls = 'heatmap-slot';
@@ -304,11 +319,14 @@ include '../../includes/header.php';
                             elseif ($slot['status'] === 'reserved') $cls .= ' reserved shadow-md';
                             else $cls .= ' available';
                             
-                            $num = explode('-', $slot['slot_number'])[1] ?? $slot['slot_number'];
-                            echo "<div class='$cls'>$num</div>";
+                            $is_rsv = (int)$area['id'] === 1;
+                            $label = $is_rsv ? ('#RES' . $heatmap_counter) : ('#' . $heatmap_counter);
+                            $heatmap_counter++;
+                            echo "<div class='$cls'>$label</div>";
                         }
                     }
                     ?>
+                    </div>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -316,7 +334,7 @@ include '../../includes/header.php';
     </section>
 
     <!-- 3. FINANCIAL & FLOW SECTION -->
-    <section id="financial" class="scroll-section space-y-6 mb-24">
+    <section id="financial" class="scroll-section space-y-6 mb-16">
         <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -330,30 +348,30 @@ include '../../includes/header.php';
         </div>
         
         <!-- Revenue Trajectory Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bento-card p-8 border-color shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bento-card p-4 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Daily Trajectory</h4>
-                    <span class="badge-soft badge-soft-indigo px-4 py-2">14-Day View</span>
+                    <span class="badge-soft badge-soft-indigo px-4 py-2"><?= $display_range ?></span>
                 </div>
-                <div class="h-[280px] w-full">
-                    <canvas id="revDailyChart"></canvas>
+                <div class="relative h-[280px] -mx-4">
+                    <canvas id="revDailyChart" class="w-full h-full"></canvas>
                 </div>
             </div>
-            <div class="bento-card p-8 border-color shadow-xl">
+            <div class="bento-card p-4 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Monthly Performance</h4>
-                    <span class="badge-soft badge-soft-slate px-4 py-2">H1 Analysis</span>
+                    <span class="badge-soft badge-soft-slate px-4 py-2"><?= date('M Y', strtotime($start_date)) ?> – <?= date('M Y', strtotime($end_date)) ?></span>
                 </div>
-                <div class="h-[280px] w-full">
-                    <canvas id="revMonthlyChart"></canvas>
+                <div class="relative h-[280px] -mx-4">
+                    <canvas id="revMonthlyChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Traffic Intelligence Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bento-card p-4 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary text-center">Fleet Composition</h4>
                 <div class="w-full max-w-[220px] relative">
                     <canvas id="vehicleMixChart"></canvas>
@@ -362,7 +380,7 @@ include '../../includes/header.php';
                         <span class="text-[9px] font-black text-tertiary uppercase tracking-widest">Total</span>
                     </div>
                 </div>
-                <div class="mt-12 grid grid-cols-2 gap-8 w-full text-center border-t border-color pt-10">
+                <div class="mt-12 grid grid-cols-2 gap-6 w-full text-center border-t border-color pt-10">
                     <div>
                         <div class="flex items-center justify-center gap-2 mb-2">
                             <div class="w-2 h-2 rounded-full bg-[#6366f1]"></div>
@@ -379,7 +397,7 @@ include '../../includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="lg:col-span-2 bento-card p-8 border-color shadow-xl">
+            <div class="lg:col-span-2 bento-card p-4 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Hourly Intake Distribution</h4>
                     <div class="flex items-center gap-3">
@@ -387,15 +405,15 @@ include '../../includes/header.php';
                         <span class="text-[10px] font-black text-tertiary uppercase tracking-widest">Peak Load Tracking</span>
                     </div>
                 </div>
-                <div class="h-[280px] w-full">
-                    <canvas id="peakChart"></canvas>
+                <div class="relative h-[300px] -mx-4">
+                    <canvas id="peakChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- 4. DURATION & EFFICIENCY SECTION -->
-    <section id="duration" class="scroll-section space-y-6 mb-24">
+    <section id="duration" class="scroll-section space-y-6 mb-16">
         <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -408,8 +426,8 @@ include '../../includes/header.php';
             </div>
         </div>
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="bento-card p-8 border-color shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bento-card p-4 border-color shadow-xl">
                 <p class="text-[10px] text-tertiary font-black uppercase tracking-[0.25em] mb-10">Utilization Velocity</p>
                 <div class="flex items-baseline gap-3 mb-8">
                     <p class="text-6xl font-manrope font-black text-primary tracking-tighter"><?= number_format($avg_turnover, 1) ?></p>
@@ -433,35 +451,35 @@ include '../../includes/header.php';
                 </p>
             </div>
 
-            <div class="lg:col-span-2 bento-card p-8 border-color shadow-xl">
+            <div class="lg:col-span-2 bento-card p-4 border-color shadow-xl">
                 <div class="flex items-center justify-between mb-10">
                     <h4 class="font-manrope font-black text-lg text-primary">Turnover Trend Analysis</h4>
                     <span class="badge-soft badge-soft-indigo px-4 py-2">Velocity Tracking</span>
                 </div>
-                <div class="h-[280px] w-full">
-                    <canvas id="turnoverChart"></canvas>
+                <div class="relative h-[300px] -mx-4">
+                    <canvas id="turnoverChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bento-card p-8 border-color shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bento-card p-4 border-color shadow-xl">
                 <h4 class="font-manrope font-black text-lg mb-10 text-primary">Avg Duration per Vehicle Class</h4>
-                <div class="h-[280px] w-full">
-                    <canvas id="dwellTypeChart"></canvas>
+                <div class="relative h-[280px] -mx-4">
+                    <canvas id="dwellTypeChart" class="w-full h-full"></canvas>
                 </div>
             </div>
-            <div class="bento-card p-8 border-color shadow-xl">
+            <div class="bento-card p-4 border-color shadow-xl">
                 <h4 class="font-manrope font-black text-lg mb-10 text-primary">Stay Length by Inbound Period</h4>
-                <div class="h-[280px] w-full">
-                    <canvas id="dwellPeriodChart"></canvas>
+                <div class="relative h-[280px] -mx-4">
+                    <canvas id="dwellPeriodChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- 5. OPERATIONS & PERSONNEL SECTION -->
-    <section id="operations" class="scroll-section space-y-6 mb-24">
+    <section id="operations" class="scroll-section space-y-6 mb-16">
         <div class="flex items-center justify-between pt-5 pb-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0">
@@ -474,12 +492,12 @@ include '../../includes/header.php';
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bento-card p-8 border-color shadow-xl flex flex-col items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bento-card p-4 border-color shadow-xl flex flex-col items-center">
                 <h4 class="font-manrope font-black text-lg mb-12 w-full text-primary">Reservation Conversion</h4>
-                <div class="w-full max-w-[260px]"><canvas id="resConversionChart"></canvas></div>
+                <div class="w-full max-w-[260px] relative h-[260px]"><canvas id="resConversionChart" class="w-full h-full"></canvas></div>
             </div>
-            <div class="bento-card bg-surface border-color p-8 shadow-2xl flex flex-col justify-center space-y-10 relative overflow-hidden">
+            <div class="bento-card bg-surface border-color p-4 shadow-2xl flex flex-col justify-center space-y-10 relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-tertiary text-[10px] font-black uppercase tracking-[0.25em] mb-12">System Efficiency</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-12">
@@ -497,55 +515,66 @@ include '../../includes/header.php';
         </div>
 
         <div class="bento-card overflow-hidden shadow-xl border-color">
-            <div class="p-8 border-b border-color bg-surface-alt/20">
+            <div class="p-6 border-b border-color bg-surface-alt/20">
                 <h4 class="font-manrope font-black text-lg text-primary">Personnel Intelligence</h4>
             </div>
-            <table class="w-full activity-table font-inter border-separate border-spacing-0">
-                <thead>
-                    <tr class="bg-surface-alt/50">
-                        <th class="text-left px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Operator</th>
-                        <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Shift</th>
-                        <th class="text-center px-6 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Throughput</th>
-                        <th class="text-right px-8 py-6 text-[10px] font-black uppercase tracking-widest text-tertiary border-b border-color">Total Handled</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-color">
-                    <?php if (!empty($data['operator_performance'])): ?>
-                    <?php foreach($data['operator_performance'] as $op): 
-                        $opName = trim((string)($op['full_name'] ?? 'Unknown Operator'));
-                        $opInitial = strtoupper(substr($opName, 0, 1));
-                    ?>
-                    <tr class="hover:bg-surface-alt/30 transition-all group">
-                        <td class="px-8 py-5">
-                            <div class="flex items-center gap-5">
-                                <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-white text-base font-black shadow-lg shadow-brand/20 group-hover:scale-110 transition-all duration-300"><?= $opInitial ?: 'U' ?></div>
-                                <div>
-                                    <span class="text-base font-extrabold text-primary block leading-tight"><?= htmlspecialchars($opName) ?></span>
-                                    <span class="text-[10px] font-bold text-tertiary uppercase tracking-widest mt-1 block">ID: OP-<?= (int)($op['operator_id'] ?? 0) ?></span>
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full font-inter border-collapse table-fixed activity-table">
+                    <thead>
+                        <tr class="border-b border-color">
+                            <th class="py-3 w-[35%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-6">Operator</th>
+                            <th class="py-3 w-[20%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Shift</th>
+                            <th class="py-3 w-[20%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Throughput</th>
+                            <th class="py-3 w-[25%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-6">Total Handled</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-color">
+                        <?php if (!empty($data['operator_performance'])): ?>
+                        <?php foreach($data['operator_performance'] as $op): 
+                            $opName = trim((string)($op['full_name'] ?? 'Unknown Operator'));
+                            $opInitial = strtoupper(substr($opName, 0, 1));
+                        ?>
+                        <tr class="group hover:bg-surface-alt/50 transition-colors">
+                            <td class="py-2 pl-6 pr-4 text-left align-middle">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white text-xs font-black shadow-lg shadow-brand/20 group-hover:scale-110 transition-all duration-300"><?= $opInitial ?: 'U' ?></div>
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($opName) ?></span>
+                                        <span class="text-[10px] font-inter text-tertiary leading-none uppercase tracking-widest mt-1">ID: OP-<?= (int)($op['operator_id'] ?? 0) ?></span>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <?php 
-                                $shift = (string)($op['shift'] ?? 'N/A');
-                                $shiftBadge = 'badge-soft-slate';
-                                if (strpos($shift, '1') !== false || strpos($shift, 'Day') !== false) $shiftBadge = 'badge-soft-emerald';
-                                elseif (strpos($shift, '2') !== false) $shiftBadge = 'badge-soft-indigo';
-                                elseif (strpos($shift, '3') !== false || strpos($shift, 'Night') !== false) $shiftBadge = 'badge-soft-rose';
-                            ?>
-                            <span class="badge-soft <?= $shiftBadge ?> px-5 py-2"><?= htmlspecialchars($shift) ?></span>
-                        </td>
-                        <td class="px-6 py-6 text-center font-manrope font-black text-primary text-xl"><?= (int)($op['total_transactions'] ?? 0) ?></td>
-                        <td class="px-8 py-5 text-right font-manrope font-black status-text-available text-xl"><?= fmt_idr((float)($op['total_revenue_handled'] ?? 0)) ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                    <?php else: ?>
-                    <tr>
-                        <td colspan="4" class="px-10 py-12 text-center text-tertiary text-sm font-semibold">No personnel intelligence data in selected range.</td>
-                    </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                            </td>
+                            <td class="py-2 px-4 text-center align-middle">
+                                <?php 
+                                    $shift = (string)($op['shift'] ?? 'N/A');
+                                    $shiftBadge = 'badge-soft-slate';
+                                    if (strpos($shift, '1') !== false || strpos($shift, 'Day') !== false) $shiftBadge = 'badge-soft-emerald';
+                                    elseif (strpos($shift, '2') !== false) $shiftBadge = 'badge-soft-indigo';
+                                    elseif (strpos($shift, '3') !== false || strpos($shift, 'Night') !== false) $shiftBadge = 'badge-soft-rose';
+                                ?>
+                                <span class="badge-soft <?= $shiftBadge ?> text-[10px] leading-none px-3 py-1.5 font-bold uppercase tracking-widest"><?= htmlspecialchars($shift) ?></span>
+                            </td>
+                            <td class="py-2 px-4 text-center align-middle">
+                                <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= (int)($op['total_transactions'] ?? 0) ?></span>
+                            </td>
+                            <td class="py-2 pl-4 pr-6 text-right align-middle">
+                                <span class="text-sm font-manrope font-semibold status-text-available leading-none"><?= fmt_idr((float)($op['total_revenue_handled'] ?? 0)) ?></span>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php else: ?>
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center align-middle">
+                                <div class="flex flex-col items-center opacity-40">
+                                    <i class="fa-solid fa-users text-5xl mb-4 text-slate-300"></i>
+                                    <p class="text-slate-500 font-inter font-medium text-sm">No personnel intelligence data in selected range.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 
@@ -589,48 +618,43 @@ const chartColors = {
     border: chartGrid
 };
 
-const commonOptions = {
+const getCommonOptions = () => ({
     responsive: true,
     maintainAspectRatio: false,
-    interaction: {
-        intersect: false,
-        mode: 'index',
-    },
-    plugins: { 
+    interaction: { intersect: false, mode: 'index' },
+    plugins: {
         legend: { display: false },
         tooltip: {
-            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
-            titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
-            bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
-            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+            backgroundColor: chartTooltipBg,
+            titleColor: chartTextColor,
+            bodyColor: chartTextColor,
+            borderColor: chartGrid,
             borderWidth: 1,
-            titleFont: { weight: 'bold', size: 12 },
-            bodyFont: { size: 11 },
             padding: 12,
-            cornerRadius: 8,
+            cornerRadius: 12,
             displayColors: true,
             usePointStyle: true,
-            boxPadding: 8
+            boxPadding: 6
         }
     },
     scales: {
-        y: { 
-            grid: { 
-                display: true,
-                color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
-                drawBorder: false,
-                borderDash: [5, 5]
-            },
-            border: { display: false },
+        y: {
             beginAtZero: true,
+            grid: { display: true, color: chartGrid, drawBorder: false, borderDash: [4, 4] },
+            border: { display: false },
             ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10, precision: 0 }
         },
         x: { 
             grid: { display: false },
+            border: { 
+                display: true, 
+                color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() || chartGrid,
+                width: 1
+            },
             ticks: { font: { weight: '800', size: 10 }, color: chartTextColor, padding: 10 }
         }
     }
-};
+});
 
 const createChartGradient = (ctx, color) => {
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -658,7 +682,7 @@ initChart('revDailyChart', {
             pointRadius: 0, pointHoverRadius: 8, pointHoverBackgroundColor: chartColors.green, pointHoverBorderWidth: 4, pointHoverBorderColor: '#fff'
         }]
     },
-    options: commonOptions
+    options: getCommonOptions()
 });
 
 initChart('revMonthlyChart', {
@@ -667,7 +691,7 @@ initChart('revMonthlyChart', {
         labels: <?= json_encode(array_column($rev_monthly, 'month')) ?>,
         datasets: [{ data: <?= json_encode(array_column($rev_monthly, 'revenue')) ?>, backgroundColor: chartColors.green, borderRadius: 12, hoverBackgroundColor: '#059669' }]
     },
-    options: commonOptions
+    options: getCommonOptions()
 });
 
 // 2. Traffic Charts
@@ -677,21 +701,28 @@ initChart('vehicleMixChart', {
         labels: ['Cars', 'Motos'],
         datasets: [{ 
             data: [<?= array_sum(array_column($rev_daily, 'cars')) ?>, <?= array_sum(array_column($rev_daily, 'motos')) ?>], 
-            backgroundColor: ['#6366f1', '#f43f5e'], 
+            backgroundColor: [chartColors.indigo, chartColors.rose], 
             borderWidth: 0, 
             hoverOffset: 20 
         }]
     },
     options: { 
         cutout: '72%', 
+        layout: { padding: 30 },
         plugins: { 
             legend: { display: false },
             tooltip: {
-                enabled: true,
+                backgroundColor: chartTooltipBg,
+                titleColor: chartTextColor,
+                bodyColor: chartTextColor,
+                borderColor: chartGrid,
+                borderWidth: 1,
                 padding: 12,
                 cornerRadius: 12,
                 titleFont: { weight: 'bold', size: 14 },
-                bodyFont: { size: 13 }
+                bodyFont: { size: 13 },
+                displayColors: true,
+                usePointStyle: true
             }
         } 
     }
@@ -726,9 +757,9 @@ initChart('peakChart', {
         ]
     },
     options: {
-        ...commonOptions,
+        ...getCommonOptions(),
         plugins: {
-            ...commonOptions.plugins,
+            ...getCommonOptions().plugins,
             legend: {
                 display: true,
                 position: 'bottom',
@@ -741,9 +772,9 @@ initChart('peakChart', {
             }
         },
         scales: {
-            ...commonOptions.scales,
-            y: { ...commonOptions.scales.y, stacked: true },
-            x: { ...commonOptions.scales.x, stacked: true }
+            ...getCommonOptions().scales,
+            y: { ...getCommonOptions().scales.y, stacked: true },
+            x: { ...getCommonOptions().scales.x, stacked: true }
         }
     }
 });
@@ -755,7 +786,7 @@ initChart('dwellTypeChart', {
         labels: <?= json_encode(array_column($dwell_avg, 'vehicle_type')) ?>,
         datasets: [{ data: <?= json_encode(array_column($dwell_avg, 'avg_min')) ?>, backgroundColor: chartColors.cyan, borderRadius: 20 }]
     },
-    options: commonOptions
+    options: getCommonOptions()
 });
 
 initChart('dwellPeriodChart', {
@@ -764,7 +795,7 @@ initChart('dwellPeriodChart', {
         labels: <?= json_encode(array_column($dwell_period, 'period')) ?>,
         datasets: [{ data: <?= json_encode(array_column($dwell_period, 'avg_min')) ?>, borderColor: chartColors.cyan, borderWidth: 5, tension: 0.5, pointRadius: 0 }]
     },
-    options: commonOptions
+    options: getCommonOptions()
 });
 
 initChart('turnoverChart', {
@@ -780,8 +811,8 @@ initChart('turnoverChart', {
         }]
     },
     options: {
-        ...commonOptions,
-        plugins: { ...commonOptions.plugins, legend: { display: false } }
+        ...getCommonOptions(),
+        plugins: { ...getCommonOptions().plugins, legend: { display: false } }
     }
 });
 
@@ -790,9 +821,24 @@ initChart('resConversionChart', {
     type: 'doughnut',
     data: {
         labels: <?= json_encode(array_column($data['reservation_summary'], 'status')) ?>,
-        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: [chartColors.amber, chartColors.car, chartColors.moto, '#94a3b8'], borderWidth: 0 }]
+        datasets: [{ data: <?= json_encode(array_column($data['reservation_summary'], 'count')) ?>, backgroundColor: [chartColors.amber, chartColors.car, chartColors.moto, chartColors.slate], borderWidth: 0 }]
     },
-    options: { cutout: '80%', plugins: { legend: { display: false } } }
+    options: { 
+        cutout: '80%', 
+        layout: { padding: 25 },
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: chartTooltipBg,
+                titleColor: chartTextColor,
+                bodyColor: chartTextColor,
+                borderColor: chartGrid,
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 12
+            }
+        } 
+    }
 });
 
 initChart('paymentChart', {
@@ -938,3 +984,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php include '../../includes/footer.php'; ?>
+

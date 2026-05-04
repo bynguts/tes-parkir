@@ -3,6 +3,8 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+sync_slot_statuses($pdo);
+
 $summary   = get_slot_summary($pdo);
 $car_avail  = $summary['car']['avail'] ?? 0;
 $car_total  = $summary['car']['total'] ?? 0;

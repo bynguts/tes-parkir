@@ -122,10 +122,10 @@ include '../../includes/header.php';
                     </tr>
                     <?php else: foreach ($slots as $s):
                         $stMap = [
-                            'available'   => ['status-badge-parked', 'AVAILABLE'],
-                            'occupied'    => ['status-badge-over',   'OCCUPIED'],
-                            'reserved'    => ['status-badge-paid',   'RESERVED'],
-                            'maintenance' => ['status-badge-maintenance', 'MAINTENANCE'],
+                            'available'   => ['status-badge-available', 'AVAILABLE'],
+                            'occupied'    => ['status-badge-parked',    'PARKED'],
+                            'reserved'    => ['status-badge-reserved',  'RESERVED'],
+                            'maintenance' => ['status-badge-maintenance','MAINTENANCE'],
                         ];
                         [$stCls, $stLabel] = $stMap[$s['status']] ?? ['status-badge-maintenance', strtoupper($s['status'])];
                     ?>

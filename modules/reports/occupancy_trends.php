@@ -3,11 +3,14 @@ require_once '../../includes/auth_guard.php';
 require_once '../../config/connection.php';
 require_once '../../includes/functions.php';
 
+sync_slot_statuses($pdo);
+
 $page_title = 'Occupancy Analytics';
 $page_subtitle = 'Temporal utilization patterns and spatial intelligence.';
 
 // --- DATE FILTER LOGIC ---
 $range = $_GET['range'] ?? '1week';
+$range = rtrim($range, 's');
 $start_date = $_GET['start_date'] ?? null;
 $end_date = $_GET['end_date'] ?? null;
 

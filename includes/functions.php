@@ -199,7 +199,9 @@ function get_active_attendance(PDO $pdo, ?string $filter_type = null): array {
 function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): array {
     $start_date = $start_date ?? date('Y-m-d', strtotime('-7 days'));
     $end_date   = $end_date   ?? date('Y-m-d');
-    $date_clause = "DATE(t.check_out_time) BETWEEN '$start_date' AND '$end_date'";
+    // Datetime boundaries for precise range filtering
+    $dt_start = $start_date . ' 00:00:00';
+    $dt_end   = $end_date   . ' 23:59:59';
 
     // ── 1. ALL-TIME STATS ───────────────────────────────────────────────────
     $all_time = $pdo->query("
@@ -211,31 +213,39 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
         WHERE payment_status = 'paid'
     ")->fetch();
 
-    // ── 2. PERIOD STATS (Default: Today or Range) ──────────────────────────
-    $today_revenue = $pdo->query("
-        SELECT COALESCE(SUM(total_fee), 0) FROM `transaction` 
-        WHERE payment_status = 'paid' AND DATE(check_out_time) = CURDATE()
-    ")->fetchColumn() ?: 0;
+    // ── 2. PERIOD STATS (scoped to selected date range) ──────────────────────
+    $period_revenue = $pdo->prepare("
+        SELECT COALESCE(SUM(total_fee), 0) FROM `transaction`
+        WHERE payment_status = 'paid' AND check_out_time BETWEEN ? AND ?
+    ");
+    $period_revenue->execute([$dt_start, $dt_end]);
+    $period_revenue = $period_revenue->fetchColumn() ?: 0;
 
-    $today_entries = $pdo->query("
-        SELECT COUNT(*) FROM `transaction` WHERE DATE(check_in_time) = CURDATE()
-    ")->fetchColumn();
+    $period_entries = $pdo->prepare("
+        SELECT COUNT(*) FROM `transaction` WHERE check_in_time BETWEEN ? AND ?
+    ");
+    $period_entries->execute([$dt_start, $dt_end]);
+    $period_entries = $period_entries->fetchColumn();
 
-    $today_transactions = $pdo->query("
-        SELECT COUNT(*) FROM `transaction` 
-        WHERE payment_status = 'paid' AND DATE(check_out_time) = CURDATE()
-    ")->fetchColumn() ?: 0;
+    $period_transactions = $pdo->prepare("
+        SELECT COUNT(*) FROM `transaction`
+        WHERE payment_status = 'paid' AND check_out_time BETWEEN ? AND ?
+    ");
+    $period_transactions->execute([$dt_start, $dt_end]);
+    $period_transactions = $period_transactions->fetchColumn() ?: 0;
 
-    $range_stats = $pdo->query("
-        SELECT 
-            COALESCE(SUM(total_fee), 0) AS revenue,
+    $range_stats_stmt = $pdo->prepare("
+        SELECT
+            COALESCE(SUM(t.total_fee), 0) AS revenue,
             COUNT(*) AS transactions,
             SUM(v.vehicle_type = 'car') AS cars,
             SUM(v.vehicle_type = 'motorcycle') AS motos
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        WHERE t.payment_status = 'paid' AND $date_clause
-    ")->fetch();
+        WHERE t.payment_status = 'paid' AND t.check_out_time BETWEEN ? AND ?
+    ");
+    $range_stats_stmt->execute([$dt_start, $dt_end]);
+    $range_stats = $range_stats_stmt->fetch();
 
     // ── 3. YESTERDAY'S STATS ────────────────────────────────────────────────
     $yesterday = $pdo->query("
@@ -271,7 +281,7 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     ")->fetchAll();
 
     // ── 5. TRENDS & DISTRIBUTIONS ──────────────────────────────────────────
-    $daily_trend = $pdo->query("
+    $dt_stmt = $pdo->prepare("
         SELECT DATE(check_out_time) AS date,
                COUNT(*) AS volume,
                SUM(total_fee) AS revenue,
@@ -279,47 +289,66 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
                SUM(vehicle_type='motorcycle') AS motos
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        WHERE payment_status='paid' AND $date_clause
+        WHERE payment_status='paid' AND check_out_time BETWEEN ? AND ?
         GROUP BY DATE(check_out_time)
         ORDER BY date DESC
-    ")->fetchAll();
+    ");
+    $dt_stmt->execute([$dt_start, $dt_end]);
+    $daily_trend = $dt_stmt->fetchAll();
 
-    $hourly = $pdo->query("
-        SELECT HOUR(check_in_time) AS hour, 
+    $hourly_stmt = $pdo->prepare("
+        SELECT HOUR(check_in_time) AS hour,
                COUNT(*) AS total_entries,
                SUM(v.vehicle_type = 'car') AS cars,
                SUM(v.vehicle_type = 'motorcycle') AS motos,
                SUM(t.reservation_id IS NOT NULL) AS reservations
         FROM `transaction` t
         JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-        WHERE check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        WHERE t.check_in_time BETWEEN ? AND ?
         GROUP BY HOUR(check_in_time)
         ORDER BY hour ASC
-    ")->fetchAll();
+    ");
+    $hourly_stmt->execute([$dt_start, $dt_end]);
+    $hourly = $hourly_stmt->fetchAll();
 
-    // ── 6. VEHICLE & OPERATOR METRICS ──────────────────────────────────────
-    $vehicle_stats = $pdo->query("
-        SELECT v.vehicle_type, COUNT(DISTINCT v.vehicle_id) AS total_registered,
-               COUNT(t.transaction_id) AS total_count, COALESCE(SUM(t.total_fee),0) AS total_revenue
+    // ── 6. VEHICLE & OPERATOR METRICS (scoped to date range) ─────────────────
+    $vs_stmt = $pdo->prepare("
+        SELECT v.vehicle_type,
+               COUNT(DISTINCT v.vehicle_id) AS total_registered,
+               COUNT(t.transaction_id) AS total_count,
+               COALESCE(SUM(t.total_fee),0) AS total_revenue
         FROM vehicle v
-        LEFT JOIN `transaction` t ON v.vehicle_id = t.vehicle_id AND t.payment_status='paid'
+        LEFT JOIN `transaction` t ON v.vehicle_id = t.vehicle_id
+            AND t.payment_status='paid'
+            AND t.check_out_time BETWEEN ? AND ?
         GROUP BY v.vehicle_type
-    ")->fetchAll();
+    ");
+    $vs_stmt->execute([$dt_start, $dt_end]);
+    $vehicle_stats = $vs_stmt->fetchAll();
 
-    $operator_perf = $pdo->query("
-        SELECT o.full_name, o.shift, COUNT(t.transaction_id) AS total_transactions,
+    $op_stmt = $pdo->prepare("
+        SELECT o.full_name, o.shift, o.operator_id,
+               COUNT(t.transaction_id) AS total_transactions,
                COALESCE(SUM(t.total_fee),0) AS total_revenue_handled,
                COALESCE(AVG(TIMESTAMPDIFF(MINUTE, t.check_in_time, t.check_out_time))/60, 0) AS avg_duration_hours
         FROM operator o
-        LEFT JOIN `transaction` t ON o.operator_id = t.operator_id AND t.payment_status='paid'
-        WHERE t.check_out_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) OR t.transaction_id IS NULL
+        LEFT JOIN `transaction` t ON o.operator_id = t.operator_id
+            AND t.payment_status='paid'
+            AND t.check_out_time BETWEEN ? AND ?
         GROUP BY o.operator_id
-    ")->fetchAll();
+        ORDER BY total_transactions DESC
+    ");
+    $op_stmt->execute([$dt_start, $dt_end]);
+    $operator_perf = $op_stmt->fetchAll();
 
-    // ── 7. RESERVATIONS SUMMARY ────────────────────────────────────────────
-    $res_summary = $pdo->query("
-        SELECT status, COUNT(*) AS count FROM reservation GROUP BY status
-    ")->fetchAll();
+    // ── 7. RESERVATIONS SUMMARY (scoped to date range) ─────────────────────
+    $rs_stmt = $pdo->prepare("
+        SELECT status, COUNT(*) AS count FROM reservation
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY status
+    ");
+    $rs_stmt->execute([$dt_start, $dt_end]);
+    $res_summary = $rs_stmt->fetchAll();
 
     $active_reservations = $pdo->query("
         SELECT r.reservation_code, v.plate_number, v.vehicle_type, ps.slot_number, r.reserved_from, r.status,
@@ -331,20 +360,25 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
         ORDER BY r.created_at DESC LIMIT 5
     ")->fetchAll();
 
-    $recent_transactions = $pdo->query("
+    $rt_stmt = $pdo->prepare("
         SELECT t.ticket_code, v.plate_number, v.vehicle_type, ps.slot_number, t.check_in_time, t.check_out_time, t.total_fee, t.payment_status,
                CASE WHEN ps.is_reservation_only = 1 THEN 'VIP Reservation' ELSE 'Standard Regular' END AS zone
-        FROM `transaction` t 
-        JOIN vehicle v ON t.vehicle_id = v.vehicle_id 
+        FROM `transaction` t
+        JOIN vehicle v ON t.vehicle_id = v.vehicle_id
         LEFT JOIN parking_slot ps ON t.slot_id = ps.slot_id
+        WHERE t.check_in_time BETWEEN ? AND ?
         ORDER BY t.transaction_id DESC LIMIT 10
-    ")->fetchAll();
+    ");
+    $rt_stmt->execute([$dt_start, $dt_end]);
+    $recent_transactions = $rt_stmt->fetchAll();
 
-    $payment_methods = $pdo->query("
+    $pm_stmt = $pdo->prepare("
         SELECT payment_method, COUNT(*) AS count, SUM(total_fee) AS revenue
-        FROM `transaction` WHERE payment_status='paid' AND DATE(check_out_time) = CURDATE()
+        FROM `transaction` WHERE payment_status='paid' AND check_out_time BETWEEN ? AND ?
         GROUP BY payment_method
-    ")->fetchAll();
+    ");
+    $pm_stmt->execute([$dt_start, $dt_end]);
+    $payment_methods = $pm_stmt->fetchAll();
 
     $floors = $pdo->query("SELECT * FROM floor ORDER BY floor_id")->fetchAll();
     $rates  = $pdo->query("SELECT * FROM parking_rate")->fetchAll();
@@ -352,21 +386,22 @@ function get_ai_context_data(PDO $pdo, $start_date = null, $end_date = null): ar
     return [
         'system_name'  => 'Cereza Parkhere v2',
         'generated_at' => date('Y-m-d H:i:s'),
+        'date_range'   => ['start' => $start_date, 'end' => $end_date],
         'summary' => [
-            'revenue_today'           => (float)$today_revenue,
-            'transactions_today'      => (int)$today_transactions,
-            'entries_today'           => (int)$today_entries,
-            'revenue_yesterday'       => (float)$yesterday['revenue'],
-            'transactions_yesterday'   => (int)$yesterday['transactions'],
-            'active_vehicles'         => (int)$active_v,
-            'total_slots'             => (int)($slot_totals['total_slots'] ?? 0),
-            'available_slots'         => (int)$avail_s,
-            'occupied_slots'          => (int)($slot_totals['occupied_slots'] ?? 0),
-            'reserved_slots'          => (int)($slot_totals['reserved_slots'] ?? 0),
-            'all_time_revenue'        => (float)$all_time['revenue'],
-            'all_time_transactions'   => (int)$all_time['transactions'],
-            'first_record_date'       => $all_time['first_record'],
-            'total_reservations'      => array_sum(array_column($res_summary, 'count')),
+            'revenue_today'          => (float)$period_revenue,      // = selected range
+            'transactions_today'     => (int)$period_transactions,
+            'entries_today'          => (int)$period_entries,
+            'revenue_yesterday'      => (float)$yesterday['revenue'],
+            'transactions_yesterday' => (int)$yesterday['transactions'],
+            'active_vehicles'        => (int)$active_v,
+            'total_slots'            => (int)($slot_totals['total_slots'] ?? 0),
+            'available_slots'        => (int)$avail_s,
+            'occupied_slots'         => (int)($slot_totals['occupied_slots'] ?? 0),
+            'reserved_slots'         => (int)($slot_totals['reserved_slots'] ?? 0),
+            'all_time_revenue'       => (float)$all_time['revenue'],
+            'all_time_transactions'  => (int)$all_time['transactions'],
+            'first_record_date'      => $all_time['first_record'],
+            'total_reservations'     => array_sum(array_column($res_summary, 'count')),
         ],
         'slots'               => $slots,
         'daily_trend'         => $daily_trend,

@@ -25,12 +25,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_manage) {
         if (!$num || !in_array($type, ['car','motorcycle']) || !$floor_id) {
             $error = 'Slot configuration data is incomplete.';
         } else {
-            try {
-                $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor_id, is_reservation_only) VALUES (?,?,?,?)")
-                    ->execute([$num, $type, $floor_id, $is_res]);
-                $msg = "Slot <strong>{$num}</strong> successfully initialized.";
-            } catch (PDOException $e) {
-                $error = 'Slot number is already registered.';
+            // Strict Pattern Validation (Prepend # as it's now locked in UI)
+            $num = "#" . $num;
+            
+            $isValidPattern = false;
+            if (strpos($num, '#RES') === 0) {
+                // User typed RES...
+                if ($is_res !== 1) {
+                    $error = 'Format <strong>#RES</strong> detected. Please change the Fleet Category to <strong>Reservation Only Zone</strong>.';
+                } else if (preg_match('/^#RES[0-9]+$/', $num)) {
+                    $isValidPattern = true;
+                } else {
+                    $error = 'Invalid format. Reservation slots must be <strong>RES</strong> followed by numbers (e.g., RES1).';
+                }
+            } else {
+                // User typed regular number...
+                if ($is_res === 1) {
+                    $error = 'Regular number detected. Please change the Fleet Category to <strong>Standard Regular</strong> or add <strong>RES</strong> prefix.';
+                } else if (preg_match('/^#[0-9]+$/', $num)) {
+                    $isValidPattern = true;
+                } else {
+                    $error = 'Invalid format. Regular slots must be numbers (e.g., 1).';
+                }
+            }
+
+            if ($isValidPattern) {
+                try {
+                    $pdo->prepare("INSERT INTO parking_slot (slot_number, slot_type, floor_id, is_reservation_only) VALUES (?,?,?,?)")
+                        ->execute([$num, $type, $floor_id, $is_res]);
+                    $msg = "Slot <strong>{$num}</strong> successfully initialized.";
+                } catch (PDOException $e) {
+                    $error = 'Slot number is already registered.';
+                }
             }
         }
     }
@@ -38,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_manage) {
     if ($action === 'status') {
         $id     = (int)$_POST['slot_id'];
         $status = $_POST['status'] ?? '';
-        if (!in_array($status, ['available','occupied','reserved','maintenance'])) {
+        if (!in_array($status, ['available','occupied','reserved'])) {
             $error = 'Invalid state value.';
         } else {
             $pdo->prepare("UPDATE parking_slot SET status=? WHERE slot_id=?")->execute([$status, $id]);
@@ -60,22 +86,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_manage) {
 }
 
 // --- DATA FETCHING ---
+sync_slot_statuses($pdo);
+
 $stmt = $pdo->query("
     SELECT ps.slot_id, ps.slot_number, ps.slot_type, ps.status, ps.floor_id, ps.is_reservation_only,
-           f.floor_code, f.floor_name,
+           COALESCE(f.floor_code, 'N/A') AS floor_code, COALESCE(f.floor_name, 'Unknown') AS floor_name,
            t.check_in_time, t.ticket_code, t.reservation_id AS trans_res_id,
            v.plate_number, v.owner_name,
-           TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked,
-           res.reservation_id AS future_res_id
+           TIMESTAMPDIFF(MINUTE, t.check_in_time, NOW()) AS minutes_parked
     FROM parking_slot ps
-    JOIN floor f ON ps.floor_id = f.floor_id
+    LEFT JOIN floor f ON ps.floor_id = f.floor_id
     LEFT JOIN `transaction` t ON t.slot_id = ps.slot_id AND t.payment_status = 'unpaid'
     LEFT JOIN vehicle v ON t.vehicle_id = v.vehicle_id
-    LEFT JOIN `reservation` res ON res.slot_id = ps.slot_id 
-         AND res.status = 'confirmed' 
-         AND DATE(res.reserved_from) = CURDATE()
-         AND NOT EXISTS (SELECT 1 FROM `transaction` t2 WHERE t2.reservation_id = res.reservation_id)
-    ORDER BY ps.is_reservation_only, f.floor_code, ps.slot_type, ps.slot_number
+    ORDER BY ps.is_reservation_only, COALESCE(f.floor_code, 'ZZZ'), ps.slot_type, LENGTH(ps.slot_number), ps.slot_number
 ");
 $all_slots = $stmt->fetchAll();
 
@@ -86,13 +109,11 @@ $reg_counter = 1; $res_counter = 1;
 
 foreach ($all_slots as &$s) {
     $eff_status = $s['status'];
-    if (!empty($s['ticket_code'])) $eff_status = 'occupied';
-    elseif (!empty($s['future_res_id'])) $eff_status = 'reserved';
     $s['eff_status'] = $eff_status;
 
     $is_res_area = (int)$s['is_reservation_only'] === 1;
     if ($is_res_area) {
-        $s['display_label'] = "#RES " . $res_counter++;
+        $s['display_label'] = "#RES" . $res_counter++;
         $s['display_category'] = "RSV ZONE";
     } else {
         $s['display_label'] = "#" . $reg_counter++;
@@ -106,6 +127,13 @@ foreach ($all_slots as &$s) {
 unset($s);
 
 $floors_list = $pdo->query("SELECT floor_id, floor_code FROM floor ORDER BY floor_code")->fetchAll();
+
+// --- NEXT SEQUENCE LOGIC ---
+$max_reg = $pdo->query("SELECT MAX(CAST(REPLACE(slot_number, '#', '') AS UNSIGNED)) FROM parking_slot WHERE is_reservation_only = 0 AND slot_number REGEXP '^#[0-9]+$'")->fetchColumn() ?: 0;
+$max_res = $pdo->query("SELECT MAX(CAST(REPLACE(slot_number, '#RES', '') AS UNSIGNED)) FROM parking_slot WHERE is_reservation_only = 1 AND slot_number REGEXP '^#RES[0-9]+$'")->fetchColumn() ?: 0;
+
+$next_reg_id = "#" . ($max_reg + 1);
+$next_res_id = "#RES" . ($max_res + 1);
 
 $page_title = 'Parking Inventory';
 $page_subtitle = 'Visual slot mapping and inventory management system.';
@@ -142,7 +170,6 @@ include '../../includes/header.php';
 .slot-box.available   { border-left-color: var(--status-available-text); background: var(--status-available-bg); }
 .slot-box.occupied    { border-left-color: var(--status-parked-text); background: var(--status-parked-bg); }
 .slot-box.reserved    { border-left-color: var(--status-reserved-text); background: var(--status-reserved-bg); }
-.slot-box.maintenance { border-left-color: var(--status-maintenance-text); background: var(--status-maintenance-bg); }
 
 .slot-num  { font-weight: 800; font-size: 16px; font-family: 'Manrope', sans-serif; color: var(--text-primary); margin-bottom: 2px; }
 .slot-icon { font-size: 22px; color: var(--brand); opacity: 0.3; margin-bottom: 8px; transition: all 0.3s ease; }
@@ -233,6 +260,7 @@ include '../../includes/header.php';
                 <div class="relative group">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-tertiary text-sm transition-colors group-focus-within:text-brand"></i>
                     <input type="text" id="slotSearch" placeholder="Search slot identifier..." 
+                           oninput="this.value = this.value.toUpperCase()"
                            class="w-48 bg-surface-alt border border-color rounded-xl h-[38px] pl-10 pr-4 text-[11px] font-inter text-primary focus:outline-none focus:border-brand/20 focus:bg-surface transition-all">
                 </div>
 
@@ -287,7 +315,7 @@ include '../../includes/header.php';
                     </div>
                     <div class="slot-grid">
                         <?php foreach ($slots as $s): ?>
-                        <div class="slot-box <?= $s['eff_status'] ?> slot-item" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-number="<?= $s['slot_number'] ?>">
+                        <div class="slot-box <?= $s['eff_status'] ?> slot-item" data-id="<?= $s['slot_id'] ?>" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-number="<?= $s['slot_number'] ?>">
                             <span class="slot-icon"><i class="fa-solid <?= $type === 'car' ? 'fa-car' : 'fa-motorcycle' ?>"></i></span>
                             <div class="slot-num"><?= htmlspecialchars($s['display_label']) ?></div>
                             <div class="text-[10px] font-bold text-tertiary uppercase tracking-wider opacity-60"><?= $s['display_category'] ?></div>
@@ -301,55 +329,58 @@ include '../../includes/header.php';
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <div class="overflow-visible">
-                    <table class="w-full min-w-[1600px] font-inter border-collapse table-auto activity-table" id="slotTable">
+                <div class="overflow-x-auto custom-scrollbar flex-grow no-scrollbar">
+                    <table class="w-full font-inter border-collapse table-fixed activity-table" id="slotTable">
                         <thead>
                             <tr class="border-b border-color">
-                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-4">Slot Index</th>
-                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Category</th>
-                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Type</th>
-                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Status</th>
+                                <th class="py-3 w-[25%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-left pl-4">Slot Index</th>
+                                <th class="py-3 w-[20%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Category</th>
+                                <th class="py-3 w-[20%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Type</th>
+                                <th class="py-3 w-[20%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-center px-4">Status</th>
                                 <?php if ($can_manage): ?>
-                                <th class="py-3 text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
+                                <th class="py-3 w-[15%] text-[11px] font-inter text-tertiary font-medium uppercase tracking-wider text-right pr-4">Actions</th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody id="slotBody" class="divide-y divide-color">
                             <?php foreach ($all_slots as $s): ?>
-                             <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row slot-row" data-type="<?= $s['slot_type'] ?>" data-category="<?= $s['display_category'] ?>" data-timestamp="<?= $s['slot_id'] ?>">
+                             <tr class="group hover:bg-surface-alt/50 transition-colors fleet-row slot-row" 
+                                 data-type="<?= $s['slot_type'] ?>" 
+                                 data-category="<?= $s['display_category'] ?>" 
+                                 data-number="<?= $s['slot_number'] ?>"
+                                 data-timestamp="<?= $s['slot_id'] ?>">
                                 <td class="py-2 pl-4 pr-4 align-middle text-left">
-                                    <div class="flex items-center h-10 gap-3">
+                                    <div class="flex items-center gap-3">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-manrope font-semibold text-primary leading-none"><?= htmlspecialchars($s['display_label']) ?></span>
-                                            <span class="text-[10px] font-inter text-tertiary mt-1 uppercase tracking-widest opacity-60"><?= htmlspecialchars($s['slot_number']) ?></span>
+                                            <span class="text-[9px] font-inter text-tertiary mt-1 uppercase tracking-widest opacity-60"><?= htmlspecialchars($s['slot_number']) ?></span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 align-middle text-center">
-                                    <div class="flex items-center justify-center h-10">
+                                    <div class="flex items-center justify-center">
                                         <span class="text-[10px] font-inter font-medium uppercase tracking-widest text-tertiary"><?= $s['display_category'] ?></span>
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 align-middle text-center">
-                                    <div class="flex items-center justify-center h-10 gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-surface border border-color flex items-center justify-center shadow-sm">
-                                            <i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-[10px]"></i>
+                                    <div class="flex items-center gap-3 w-32 mx-auto">
+                                        <div class="w-10 h-10 rounded-xl icon-container flex items-center justify-center shrink-0 transition-all">
+                                            <i class="fa-solid <?= $s['slot_type'] === 'car' ? 'fa-car text-brand' : 'fa-motorcycle text-status-available-text' ?> text-lg"></i>
                                         </div>
                                         <span class="text-[11px] font-manrope font-semibold text-secondary uppercase tracking-wider"><?= ucfirst($s['slot_type']) ?></span>
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 align-middle text-center">
-                                    <div class="flex items-center justify-center h-10">
+                                    <div class="flex items-center justify-center">
                                         <?php $st = $s['eff_status'] === 'occupied' ? 'parked' : $s['eff_status']; ?>
-                                        <div class="status-badge status-badge-<?= $st ?> px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
-                                            <span class="status-dot-<?= $st ?>"></span>
-                                            <?= $s['eff_status'] ?>
+                                        <div class="status-badge status-badge-<?= $st ?>">
+                                            <?= ucfirst($st) ?>
                                         </div>
                                     </div>
                                 </td>
                                 <?php if ($can_manage): ?>
                                 <td class="py-2 pr-4 pl-4 align-middle text-right">
-                                    <div class="flex items-center justify-end h-10">
+                                    <div class="flex items-center justify-end">
                                         <div class="relative action-menu-container">
                                             <button onclick="toggleDropdown(event, 'action-<?= $s['slot_id'] ?>')" class="w-9 h-9 rounded-xl bg-surface border border-color text-tertiary hover:text-brand hover:border-brand/30 hover:shadow-lg transition-all flex items-center justify-center shadow-sm">
                                                 <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
@@ -365,11 +396,11 @@ include '../../includes/header.php';
                                                 ?>
                                                 <form method="POST" class="w-full">
                                                     <?= csrf_field() ?><input type="hidden" name="action" value="status"><input type="hidden" name="slot_id" value="<?= $s['slot_id'] ?>"><input type="hidden" name="status" value="<?= $st ?>">
-                                                    <button type="submit" class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-brand/[0.03] transition-all group/item <?= $s['status'] === $st ? 'bg-brand/[0.05] text-brand' : 'text-primary' ?>">
+                                                    <button type="submit" class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-status-<?= $vis_st ?>-text/5 transition-all group/item">
                                                         <div class="w-2 h-2 rounded-full status-dot-<?= $vis_st ?> shadow-[0_0_8px_var(--status-<?= $vis_st ?>-text)]"></div>
-                                                        <span class="text-[10px] font-bold uppercase tracking-wider"><?= ucfirst($st) ?></span>
+                                                        <span class="text-[10px] font-bold uppercase tracking-wider text-status-<?= $vis_st ?>-text"><?= ucfirst($vis_st) ?></span>
                                                         <?php if ($s['status'] === $st): ?>
-                                                        <i class="fa-solid fa-check text-[9px] ml-auto"></i>
+                                                        <i class="fa-solid fa-check text-[9px] ml-auto text-status-<?= $vis_st ?>-text"></i>
                                                         <?php endif; ?>
                                                     </button>
                                                 </form>
@@ -399,15 +430,10 @@ include '../../includes/header.php';
         <div class="px-8 py-4 border-t border-color bg-surface-alt/20 flex justify-between items-center shrink-0">
             <p id="showingCount" class="text-[10px] font-black uppercase tracking-widest text-tertiary">Showing <?= count($all_slots) ?> indexed slots</p>
             <div class="flex gap-4">
-                <div class="status-badge-available px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                    <span class="status-dot-available"></span> Available
-                </div>
-                <div class="status-badge-parked px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                    <span class="status-dot-parked"></span> Occupied
-                </div>
-                <div class="status-badge-reserved px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                    <span class="status-dot-reserved"></span> Reserved
-                </div>
+                <div class="status-badge status-badge-available">Available</div>
+                <div class="status-badge status-badge-parked">Parked</div>
+                <div class="status-badge status-badge-reserved">Reserved</div>
+                <div class="status-badge status-badge-departed">Departed</div>
             </div>
         </div>
     </div>
@@ -428,10 +454,19 @@ include '../../includes/header.php';
             <?= csrf_field() ?><input type="hidden" name="action" value="add">
             <div class="space-y-3">
                 <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Slot Identifier <span class="text-brand">*</span></label>
-                <input type="text" name="slot_number" required placeholder="E.G. C-01" class="modal-input w-full border-2 border-color rounded-2xl px-6 py-5 text-base font-black font-manrope text-primary uppercase focus:outline-none focus:border-brand transition-all shadow-sm" oninput="this.value=this.value.toUpperCase()">
+                <div class="flex items-center">
+                    <div class="h-16 px-6 flex items-center justify-center bg-surface-alt border-2 border-r-0 border-color rounded-l-2xl text-xl font-black font-manrope text-tertiary">#</div>
+                    <input type="text" name="slot_number" id="slot_number_input" required 
+                           value="<?= str_replace('#', '', $next_reg_id) ?>" 
+                           pattern="^(RES)?[0-9]+$" 
+                           title="Enter number or RES followed by number"
+                           placeholder="E.G. 1 or RES1" 
+                           class="modal-input flex-1 border-2 border-color rounded-r-2xl px-6 h-16 text-base font-black font-manrope text-primary uppercase focus:outline-none focus:border-brand transition-all shadow-sm" 
+                           oninput="this.value=this.value.toUpperCase(); detectCategory(this.value)">
+                </div>
             </div>
-            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Vehicle Class</label><div class="relative"><select name="slot_type" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="car">🚗 Cars</option><option value="motorcycle">🏍 Motorcycles</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
-            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Fleet Category</label><div class="relative"><select name="is_reservation_only" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="0">Standard Regular</option><option value="1">Reservation Only Zone</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
+            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Vehicle Class</label><div class="relative"><select name="slot_type" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="car">Cars</option><option value="motorcycle">Motorcycles</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
+            <div class="space-y-3"><label class="block text-[10px] font-black uppercase tracking-[0.2em] text-tertiary ml-1">Fleet Category</label><div class="relative"><select name="is_reservation_only" id="category_select" onchange="updateIdentifierSuggestion()" class="appearance-none h-14 w-full modal-input border-2 border-color rounded-2xl px-6 text-[11px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-brand transition-all cursor-pointer shadow-sm"><option value="0">Standard Regular</option><option value="1">Reservation Only Zone</option></select><i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-tertiary/50 pointer-events-none text-[9px]"></i></div></div>
             <div class="flex gap-4 pt-6">
                 <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="flex-1 h-14 bg-surface-alt text-primary font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all border-2 border-color hover:bg-surface shadow-sm">Discard</button>
                 <button type="submit" class="flex-1 h-14 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-brand/40 hover:brightness-110 active:scale-95">Complete Sync</button>
@@ -480,7 +515,7 @@ function applyFilters() {
     if (slots.length > 0) {
         slots.forEach(slot => {
             const matchesSearch = search === '' || 
-                                 slot.dataset.number.toLowerCase().includes(search) || 
+                                 (slot.dataset.number && slot.dataset.number.toLowerCase().includes(search)) || 
                                  slot.textContent.toLowerCase().includes(search);
             const matchesVehicle = currentVehicleFilter === 'all' || slot.dataset.type === currentVehicleFilter;
             const matchesCategory = currentCategoryFilter === 'all' || slot.dataset.category === currentCategoryFilter;
@@ -508,7 +543,7 @@ function applyFilters() {
     if (rows.length > 0) {
         rows.forEach(row => {
             const matchesSearch = search === '' || 
-                                 row.dataset.number.toLowerCase().includes(search) || 
+                                 (row.dataset.number && row.dataset.number.toLowerCase().includes(search)) || 
                                  row.textContent.toLowerCase().includes(search);
             const matchesVehicle = currentVehicleFilter === 'all' || row.dataset.type === currentVehicleFilter;
             const matchesCategory = currentCategoryFilter === 'all' || row.dataset.category === currentCategoryFilter;
@@ -544,6 +579,130 @@ let countdown = 60; setInterval(() => { countdown--; if (countdown <= 0) locatio
 
 const addModal = document.getElementById('addModal');
 if (addModal) { addModal.addEventListener('click', function(e) { if (e.target === this) this.classList.add('hidden'); }); }
+
+function updateIdentifierSuggestion() {
+    const isRes = document.getElementById('category_select').value === '1';
+    const input = document.getElementById('slot_number_input');
+    const nextReg = '<?= str_replace('#', '', $next_reg_id) ?>';
+    const nextRes = '<?= str_replace('#', '', $next_res_id) ?>';
+    
+    input.value = isRes ? nextRes : nextReg;
+    updatePattern(isRes);
+}
+
+function updatePattern(isRes) {
+    const input = document.getElementById('slot_number_input');
+    input.placeholder = isRes ? 'E.G. RES1' : 'E.G. 1';
+    input.pattern = isRes ? '^RES[0-9]+$' : '^[0-9]+$';
+    input.title = isRes ? 'Must be RES followed by numbers (e.g., RES1)' : 'Must be numbers (e.g., 1)';
+}
+
+function detectCategory(val) {
+    const select = document.getElementById('category_select');
+    if (val.startsWith('RES')) {
+        if (select.value !== '1') {
+            select.value = '1';
+            updatePattern(true);
+        }
+    } else if (/^[0-9]/.test(val)) {
+        if (select.value !== '0') {
+            select.value = '0';
+            updatePattern(false);
+        }
+    }
+}
 </script>
+
+<?php if ($can_manage): ?>
+    <!-- Context Menu for Map Mode -->
+    <div id="slotContextMenu" class="hidden fixed bg-surface border border-color rounded-xl shadow-2xl z-[200] py-2 w-56 overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="px-4 py-2 border-b border-color bg-surface-alt/50 flex items-center justify-between">
+            <span class="text-[9px] font-black uppercase tracking-[0.15em] text-tertiary/50">Quick Status Sync</span>
+            <span id="ctxSlotLabel" class="text-[9px] font-bold text-brand"></span>
+        </div>
+        
+        <?php foreach (['available','occupied','reserved'] as $st): 
+            $vis_st = ($st === 'occupied') ? 'parked' : $st;
+        ?>
+        <form method="POST" class="w-full status-form">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="status">
+            <input type="hidden" name="slot_id" class="ctx-slot-id" value="">
+            <input type="hidden" name="status" value="<?= $st ?>">
+            <button type="submit" class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-status-<?= $vis_st ?>-text/5 transition-all group/item">
+                <div class="w-2 h-2 rounded-full status-dot-<?= $vis_st ?> shadow-[0_0_8px_var(--status-<?= $vis_st ?>-text)]"></div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-status-<?= $vis_st ?>-text"><?= ucfirst($vis_st) ?></span>
+                <i class="fa-solid fa-check text-[9px] ml-auto text-status-<?= $vis_st ?>-text hidden check-<?= $st ?>"></i>
+            </button>
+        </form>
+        <?php endforeach; ?>
+
+        <div class="px-4 py-2 border-t border-color bg-surface-alt/30">
+            <span class="text-[9px] font-black uppercase tracking-[0.15em] text-tertiary/50">Settings</span>
+        </div>
+        
+        <form method="POST" class="w-full" onsubmit="return confirm('Archive this slot? This will permanently remove its tracking history.')">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="slot_id" class="ctx-slot-id" value="">
+            <button type="submit" class="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-status-lost-text/5 text-status-lost-text transition-all group/item">
+                <i class="fa-solid fa-trash-alt text-[10px] opacity-70"></i>
+                <span class="text-[10px] font-bold uppercase tracking-wider">Archive Slot</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+    document.addEventListener('contextmenu', function(e) {
+        const slot = e.target.closest('.slot-box');
+        if (slot) {
+            e.preventDefault();
+            const slotId = slot.dataset.id;
+            const slotNum = slot.dataset.number;
+            const currentStatus = slot.classList.contains('available') ? 'available' : 
+                                 slot.classList.contains('occupied') ? 'occupied' : 
+                                 slot.classList.contains('reserved') ? 'reserved' : 'maintenance';
+            
+            showSlotContextMenu(e.clientX, e.clientY, slotId, slotNum, currentStatus);
+        } else {
+            hideSlotContextMenu();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#slotContextMenu')) hideSlotContextMenu();
+    });
+
+    function showSlotContextMenu(x, y, id, num, status) {
+        const menu = document.getElementById('slotContextMenu');
+        if (!menu) return;
+        
+        document.getElementById('ctxSlotLabel').textContent = num;
+        menu.querySelectorAll('.ctx-slot-id').forEach(input => input.value = id);
+        menu.querySelectorAll('.fa-check').forEach(check => check.classList.add('hidden'));
+        const activeCheck = menu.querySelector('.check-' + status);
+        if (activeCheck) activeCheck.classList.remove('hidden');
+
+        menu.classList.remove('hidden');
+        
+        const menuWidth = menu.offsetWidth || 224;
+        const menuHeight = menu.offsetHeight || 280;
+        
+        let posX = x;
+        let posY = y;
+        
+        if (x + menuWidth > window.innerWidth) posX = x - menuWidth;
+        if (y + menuHeight > window.innerHeight) posY = y - menuHeight;
+        
+        menu.style.left = posX + 'px';
+        menu.style.top = posY + 'px';
+    }
+
+    function hideSlotContextMenu() {
+        const menu = document.getElementById('slotContextMenu');
+        if (menu) menu.classList.add('hidden');
+    }
+    </script>
+<?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>
